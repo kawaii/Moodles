@@ -1,0 +1,254 @@
+﻿using Dalamud.Game.ClientState.Objects.SubKinds;
+using ECommons.GameHelpers;
+using FFXIVClientStructs.FFXIV.Client.Game.Object;
+using Lumina.Excel.GeneratedSheets;
+using Moodles.Data;
+
+namespace Moodles.Gui;
+public unsafe static class UI
+{
+    static MyStatus Status = new();
+    static int Duration = 20;
+    static string Owner = "";
+    public static bool Suppress = false;
+    public static readonly Vector2 StatusIconSize = new(24, 32);
+
+    public static void Draw()
+    {
+        ImGuiEx.EzTabBar("##main", [
+            ("Moodles", TabMoodles.Draw, null, true),
+            ("Presets", TabPresets.Draw, null, true),
+            ("Automation", TabAutomation.Draw, null, true),
+            ("Settings", TabSettings.Draw, null, true),
+            ("Debugger", DrawDebugger, ImGuiColors.DalamudGrey, true),
+            InternalLog.ImGuiTab(),
+            ]);
+    }
+
+    public static void DrawDebugger()
+    {
+        if(ImGui.CollapsingHeader("Flytext debugger"))
+        {
+            if(ImGui.Button("Enable hook"))
+            {
+                P.Memory.UnkDelegateHook.Enable();
+            }
+            ImGui.SameLine();
+            if(ImGui.Button("Disable hook"))
+            {
+                P.Memory.UnkDelegateHook.Disable();
+            }
+            ImGui.SameLine();
+            ImGui.Checkbox($"Suppress", ref Suppress); 
+            if (ImGui.Button("Enable ac hook"))
+            {
+                P.Memory.ProcessActorControlPacketHook.Enable();
+            }
+            ImGui.SameLine();
+            if (ImGui.Button("Disable ac hook"))
+            {
+                P.Memory.ProcessActorControlPacketHook.Disable();
+            }
+        }
+        ImGui.Checkbox("Enable UI modifications", ref C.Enabled);
+        if (ImGui.CollapsingHeader("Status debugging"))
+        {
+            ImGuiEx.Text($"{P.CommonProcessor.HoveringOver:X16}");
+            ImGuiEx.Text($"Statuses: {Player.Object.StatusList.Count(x => P.CommonProcessor.PositiveStatuses.Contains(x.StatusId))}|{Player.Object.StatusList.Count(x => P.CommonProcessor.NegativeStatuses.Contains(x.StatusId))}|{Player.Object.StatusList.Count(x => P.CommonProcessor.SpecialStatuses.Contains(x.StatusId))}");
+            foreach(var x in Player.Object.StatusList)
+            {
+                if(x.StatusId != 0)
+                {
+                    ImGuiEx.Text($"{x.StatusId}, {x.GameData.Name}, permanent: {x.GameData.IsPermanent}, category: {x.GameData.StatusCategory}");
+                }
+            }
+            if(Svc.Targets.Target is PlayerCharacter pc)
+            {
+                ImGuiEx.Text($"Target id: {(nint)ClientObjectManager.Instance()->GetObjectByIndex(16):X16}");
+            }
+
+            ImGuiEx.Text($"SeenPlayers:\n{P.SeenPlayers.Print("\n")}");
+        }
+        if (ImGui.BeginCombo("Select status manager", $"{Owner}"))
+        {
+            foreach(var x in C.StatusManagers)
+            {
+                if (ImGui.Selectable(x.Key))
+                {
+                    Owner = x.Key;
+                }
+            }
+            ImGui.EndCombo();
+        }
+        if (ImGui.Button("Self"))
+        {
+            Owner = Player.NameWithWorld;
+        }
+        ImGui.SameLine();
+        if (ImGui.Button("Target") && Svc.Targets.Target is PlayerCharacter pct)
+        {
+            Owner = pct.GetNameWithWorld();
+        }
+        ImGui.SameLine();
+        ImGuiEx.SetNextItemWidthScaled(200f);
+        if (ImGui.BeginCombo("##Players around", "Players around"))
+        {
+            foreach (var x in Svc.Objects)
+            {
+                if (x is PlayerCharacter pc)
+                {
+                    if (ImGui.Selectable(pc.GetNameWithWorld())) Owner = pc.GetNameWithWorld();
+                }
+            }
+            ImGui.EndCombo();
+        }
+        ImGui.SameLine();
+        ImGuiEx.SetNextItemWidthScaled(200f);
+        if (ImGui.BeginCombo("##party", "Party"))
+        {
+            foreach (var x in Svc.Party)
+            {
+                if (x.GameObject is PlayerCharacter pc)
+                {
+                    if (ImGui.Selectable(pc.GetNameWithWorld())) Owner = pc.GetNameWithWorld();
+                }
+            }
+            ImGui.EndCombo();
+        }
+        if (C.StatusManagers.TryGetValue(Owner, out var manager))
+        {
+            if (ImGui.CollapsingHeader("Add##collap"))
+            {
+                var iconArray = new List<uint>();
+                foreach (var x in Svc.Data.GetExcelSheet<Status>())
+                {
+                    if (iconArray.Contains(x.Icon)) continue;
+                    if (x.Icon == 0) continue;
+                    iconArray.Add(x.Icon);
+                    if (x.MaxStacks > 1)
+                    {
+                        for (int i = 2; i < x.MaxStacks; i++)
+                        {
+                            iconArray.Add((uint)(x.Icon + i - 1));
+                        }
+                    }
+                }
+                ImGuiEx.SetNextItemWidthScaled(100f);
+                if (ImGui.BeginCombo("##sel", $"Icon: {Status.IconID}", ImGuiComboFlags.HeightLargest))
+                {
+                    var cnt = 0;
+                    foreach (var x in iconArray)
+                    {
+                        if (ThreadLoadImageHandler.TryGetIconTextureWrap(x, false, out var t))
+                        {
+                            ImGui.Image(t.ImGuiHandle, new(24, 32));
+                            if (ImGuiEx.HoveredAndClicked())
+                            {
+                                Status.IconID = (int)x;
+                                ImGui.CloseCurrentPopup();
+                            }
+                            cnt++;
+                            if (cnt % 20 != 0) ImGui.SameLine();
+                        }
+                    }
+                    ImGui.Dummy(Vector2.One);
+                    ImGui.EndCombo();
+                }
+                ImGui.SameLine();
+                ImGuiEx.SetNextItemWidthScaled(100f);
+                ImGui.SameLine();
+                ImGuiEx.SetNextItemWidthScaled(100f);
+                ImGui.InputText("Name", ref Status.Title, 50);
+                ImGui.SameLine();
+                ImGuiEx.InputTextMultilineExpanding("Description", ref Status.Description, 500, 1, 10, 100);
+                ImGui.SameLine();
+                ImGuiEx.SetNextItemWidthScaled(100f);
+                ImGui.InputInt("Duration, s", ref Duration);
+                ImGuiEx.SetNextItemWidthScaled(100f);
+                ImGui.InputText("Applier", ref Status.Applier, 50);
+                ImGui.SameLine();
+                if (ImGui.Button("Me")) Status.Applier = Player.NameWithWorld;
+                ImGui.SameLine();
+                ImGuiEx.EnumCombo("Type", ref Status.Type);
+                if (ImGui.Button("Add"))
+                {
+                    Status.GUID = Guid.NewGuid();
+                    Status.ExpiresAt = Utils.Time + Duration * 1000;
+                    if (Duration == 0) Status.ExpiresAt = long.MaxValue;
+                    manager.AddOrUpdate(Status.JSONClone());
+                }
+                ImGui.SameLine();
+                if (ImGui.Button("Randomize and add"))
+                {
+                    Status.GUID = Guid.NewGuid();
+                    Status.Title = $"Random status {Random.Shared.Next()}";
+                    Status.IconID = (int)iconArray[Random.Shared.Next(iconArray.Count)];
+                    Status.Type = (StatusType)Random.Shared.Next(3);
+                    Status.Applier = Random.Shared.Next(2) == 0?Player.NameWithWorld:"";
+                    Status.ExpiresAt = Utils.Time + Random.Shared.Next(5, 30) * 1000;
+                    if (Random.Shared.Next(10) == 0) Status.ExpiresAt = Utils.Time + Random.Shared.Next(5, 60 * 60) * 1000;
+                    if (Random.Shared.Next(30) == 0) Status.ExpiresAt = Utils.Time + Random.Shared.Next(5, 60 * 60*60) * 1000;
+                    manager.AddOrUpdate(Status.JSONClone());
+                }
+                ImGui.Separator();
+            }
+            List<ImGuiEx.EzTableEntry> entries = [];
+            foreach(var x in manager.Statuses)
+            {
+                entries.Add(new("", false, delegate
+                {
+                    if(ThreadLoadImageHandler.TryGetIconTextureWrap((uint)x.IconID, false, out var icon))
+                    {
+                        ImGui.Image(icon.ImGuiHandle, new Vector2(24, 32) * 0.75f);
+                    }
+                }));
+                entries.Add(new("Name", delegate
+                {
+                    ImGuiEx.SetNextItemFullWidth();
+                    ImGui.InputText($"##Name{x.ID}", ref x.Title, 50);
+                }));
+                entries.Add(new("Description", delegate
+                {
+                    ImGuiEx.InputTextMultilineExpanding($"##Description{x.ID}", ref x.Description, 150, 1, 10);
+                }));
+                entries.Add(new("Applier", delegate
+                {
+                    ImGuiEx.SetNextItemFullWidth();
+                    ImGui.InputText($"##Applier{x.ID}", ref x.Applier, 50);
+                    if (ImGui.IsItemClicked(ImGuiMouseButton.Right)) x.Applier = Player.NameWithWorld;
+                }));
+                entries.Add(new("Expires", delegate
+                {
+                    ImGuiEx.SetNextItemFullWidth();
+                    ImGuiEx.InputLong($"##Expires{x.ID}", ref x.ExpiresAt);
+                    if (ImGui.IsItemClicked(ImGuiMouseButton.Right)) x.ExpiresAt = long.MaxValue;
+                }));
+                entries.Add(new("Type", false, delegate
+                {
+                    ImGuiEx.EnumCombo($"Type##{x.ID}", ref x.Type);
+                }));
+                entries.Add(new("Dispelable", false, delegate
+                {
+                    ImGui.Checkbox($"Dispel##{x.ID}", ref x.Dispelable);
+                }));
+                entries.Add(new("AddShown", false, delegate
+                {
+                    ImGuiEx.CollectionCheckbox($"AddShown##{x.ID}", x.GUID, manager.AddTextShown);
+                }));
+                entries.Add(new("RemoveShown", false, delegate
+                {
+                    ImGuiEx.CollectionCheckbox($"RemoveShown##{x.ID}", x.GUID, manager.RemTextShown);
+                }));
+                entries.Add(new("Ctrl", false, delegate
+                {
+                    if (ImGui.Button($"Del##{x.ID}"))
+                    {
+                        x.ExpiresAt = 0;
+                    }
+                }));
+            }
+            ImGuiEx.EzTable(null, ImGuiTableFlags.RowBg | ImGuiTableFlags.Borders, entries);
+        }
+    }
+
+}
