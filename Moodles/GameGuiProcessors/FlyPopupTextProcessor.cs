@@ -6,6 +6,7 @@ using Dalamud.Plugin.Services;
 using ECommons.GameHelpers;
 using FFXIVClientStructs.FFXIV.Component.GUI;
 using Moodles.Data;
+using static Lumina.Data.Parsing.Uld.NodeData;
 
 namespace Moodles.GameGuiProcessors;
 public sealed unsafe class FlyPopupTextProcessor : IDisposable
@@ -22,16 +23,17 @@ public sealed unsafe class FlyPopupTextProcessor : IDisposable
     {
         ProcessPopupText();
         ProcessFlyText();
+        if (CurrentElement != null) CurrentElement = null;
         while (Queue.TryDequeue(out var e))
         {
             var target = Svc.Objects.FirstOrDefault(x => x.ObjectId == e.Owner);
-            if(target is PlayerCharacter pc)
+            if (target is PlayerCharacter pc)
             {
                 PluginLog.Debug($"Processing {e.Status.Title} at {Utils.Frame} for {pc}...");
                 CurrentElement = e;
                 var isMine = e.Status.Applier == Player.NameWithWorld && e.IsAddition;
                 FlyTextKind kind;
-                if(e.Status.Type == StatusType.Negative)
+                if (e.Status.Type == StatusType.Negative)
                 {
                     kind = e.IsAddition ? FlyTextKind.Debuff : FlyTextKind.DebuffFading;
                 }
@@ -64,8 +66,9 @@ public sealed unsafe class FlyPopupTextProcessor : IDisposable
                             var c = candidate->GetAsAtkComponentNode()->Component;
                             var sestr = new SeStringBuilder().AddText(CurrentElement.IsAddition ? "+ " : "- ").Append(Utils.ParseBBSeString(CurrentElement.Status.Title));
                             c->UldManager.NodeList[1]->GetAsAtkTextNode()->SetText(sestr.Encode());
-                            c->UldManager.NodeList[2]->GetAsAtkImageNode()->LoadIconTexture((int)CurrentElement.Status.AdjustedIconID, 1);
+                            c->UldManager.NodeList[2]->GetAsAtkImageNode()->LoadTexture(Svc.Texture.GetIconPath(CurrentElement.Status.AdjustedIconID), 1);
                             CurrentElement = null;
+                            return;
                         }
                     }
                 }
@@ -88,8 +91,9 @@ public sealed unsafe class FlyPopupTextProcessor : IDisposable
                             var c = candidate->GetAsAtkComponentNode()->Component;
                             var sestr = new SeStringBuilder().AddText(CurrentElement.IsAddition ? "+ " : "- ").Append(Utils.ParseBBSeString(CurrentElement.Status.Title));
                             c->UldManager.NodeList[1]->GetAsAtkTextNode()->SetText(sestr.Encode());
-                            c->UldManager.NodeList[2]->GetAsAtkImageNode()->LoadIconTexture((int)CurrentElement.Status.AdjustedIconID, 1);
+                            c->UldManager.NodeList[2]->GetAsAtkImageNode()->LoadTexture(Svc.Texture.GetIconPath(CurrentElement.Status.AdjustedIconID), 1);
                             CurrentElement = null;
+                            return;
                         }
                     }
                 }

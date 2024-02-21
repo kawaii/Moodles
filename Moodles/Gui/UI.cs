@@ -156,6 +156,11 @@ public unsafe static class UI
             }
             ImGui.EndCombo();
         }
+        ImGui.SameLine();
+        if (ImGui.Button("Clear all managers"))
+        {
+            C.StatusManagers.Clear();
+        }
         if (C.StatusManagers.TryGetValue(Owner, out var manager))
         {
             if (ImGui.CollapsingHeader("Add##collap"))
@@ -225,11 +230,28 @@ public unsafe static class UI
                     Status.Title = $"Random status {Random.Shared.Next()}";
                     Status.IconID = (int)iconArray[Random.Shared.Next(iconArray.Count)];
                     Status.Type = (StatusType)Random.Shared.Next(3);
-                    Status.Applier = Random.Shared.Next(2) == 0?Player.NameWithWorld:"";
-                    Status.ExpiresAt = Utils.Time + Random.Shared.Next(5, 30) * 1000;
-                    if (Random.Shared.Next(10) == 0) Status.ExpiresAt = Utils.Time + Random.Shared.Next(5, 60 * 60) * 1000;
-                    if (Random.Shared.Next(30) == 0) Status.ExpiresAt = Utils.Time + Random.Shared.Next(5, 60 * 60*60) * 1000;
-                    manager.AddOrUpdate(Status.JSONClone());
+                    Status.Applier = Random.Shared.Next(2) == 0 ? Player.NameWithWorld : "";
+                    Status.Seconds = Random.Shared.Next(5, 60);
+                    if (Random.Shared.Next(20) == 0) Status.Minutes = Random.Shared.Next(5, 60);
+                    if (Random.Shared.Next(100) == 0) Status.Hours = Random.Shared.Next(5, 60);
+                    manager.AddOrUpdate(Status.JSONClone().PrepareToApply());
+                }
+                ImGui.SameLine();
+                if (ImGui.Button("Random buffs to 10 people"))
+                {
+                    for (int i = 0; i < 10; i++)
+                    {
+                        Status.GUID = Guid.NewGuid();
+                        Status.Title = $"Random status {Random.Shared.Next()}";
+                        Status.IconID = (int)iconArray[Random.Shared.Next(iconArray.Count)];
+                        Status.Type = (StatusType)Random.Shared.Next(3);
+                        Status.Applier = Random.Shared.Next(2) == 0 ? Player.NameWithWorld : "";
+                        Status.Seconds = Random.Shared.Next(5, 60);
+                        if (Random.Shared.Next(20) == 0) Status.Minutes = Random.Shared.Next(5, 60);
+                        if (Random.Shared.Next(100) == 0) Status.Hours = Random.Shared.Next(5, 60);
+                        var array = Svc.Objects.Where(x => x is PlayerCharacter pc && pc.IsTargetable).Cast<PlayerCharacter>().ToArray();
+                        Utils.GetMyStatusManager(array[Random.Shared.Next(array.Length)]).AddOrUpdate(Status.JSONClone().PrepareToApply());
+                    }
                 }
                 ImGui.Separator();
             }
