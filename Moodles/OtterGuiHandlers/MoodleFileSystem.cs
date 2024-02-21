@@ -7,6 +7,7 @@ using System.IO;
 using Lumina.Excel.GeneratedSheets;
 using Moodles.Data;
 using Dalamud.Interface.Internal.Notifications;
+using OtterGui.Raii;
 
 namespace Moodles.OtterGuiHandlers;
 public sealed class MoodleFileSystem : FileSystem<MyStatus> , IDisposable
@@ -114,6 +115,9 @@ public sealed class MoodleFileSystem : FileSystem<MyStatus> , IDisposable
             AddButton(DeleteButton, 1000);
         }
 
+        protected override uint CollapsedFolderColor => ImGuiColors.DalamudViolet.ToUint();
+        protected override uint ExpandedFolderColor => CollapsedFolderColor;
+
         private void CopyToClipboardButton(Vector2 vector)
         {
             if (!ImGuiUtil.DrawDisabledButton(FontAwesomeIcon.Copy.ToIconString(), vector, "Copy to clipboard.", Selected == null, true)) return;
@@ -212,5 +216,10 @@ public sealed class MoodleFileSystem : FileSystem<MyStatus> , IDisposable
         }
 
         public record struct State { }
+        protected override bool ApplyFilters(IPath path)
+        {
+            return FilterValue.Length > 0 && !path.FullName().Contains(this.FilterValue, StringComparison.OrdinalIgnoreCase);
+        }
+
     }
 }

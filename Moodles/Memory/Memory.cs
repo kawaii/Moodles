@@ -12,7 +12,7 @@ using System.Text;
 using System.Threading.Tasks;
 
 namespace Moodles;
-public unsafe class Memory : IDisposable
+public unsafe partial class Memory : IDisposable
 {
     public delegate nint AtkComponentIconText_LoadIconByIDDelegate(void* iconText, int iconId);
     public AtkComponentIconText_LoadIconByIDDelegate AtkComponentIconText_LoadIconByID = EzDelegate.Get<AtkComponentIconText_LoadIconByIDDelegate>("E8 ?? ?? ?? ?? 41 8D 47 2E");
@@ -35,8 +35,8 @@ public unsafe class Memory : IDisposable
     [EzHook("E8 ?? ?? ?? ?? FF C7 41 D1 C7", false)]
     EzHook<AddFlyTextDelegate> AddFlyTextHook;
 
-    public delegate void UnkDelegate(nint a1, nint a2, nint a3, int a4, byte a5);
-    [EzHook("85 D2 0F 84 ?? ?? ?? ?? 48 89 5C 24 ?? 48 89 74 24 ?? 57 48 83 EC 30 41 8B F9", false)]
+    public delegate nint UnkDelegate(nint a1, uint a2, int a3);
+    [EzHook("48 89 5C 24 ?? 48 89 74 24 ?? 57 48 83 EC 50 48 8B F1 41 8B F8 8B CA 8B DA E8 ?? ?? ?? ?? 48 85 C0 74 4C", false)]
     public EzHook<UnkDelegate> UnkDelegateHook;
 
     const string PacketDispatcher_OnReceivePacketHookSig = "40 53 56 48 81 EC ?? ?? ?? ?? 48 8B 05 ?? ?? ?? ?? 48 33 C4 48 89 44 24 ?? 8B F2";
@@ -92,18 +92,18 @@ public unsafe class Memory : IDisposable
         PacketDispatcher_OnReceivePacketHook.Original(a1, a2, a3);
     }
 
-    public void UnkDelegateDetour(nint a1, nint a2, nint a3, int a4, byte a5)
+    public nint UnkDelegateDetour(nint a1, uint a2, int a3)
     {
         try
         {
-            PluginLog.Debug($"{a1:X16}, {a2:X16}, {a3:X16}, {a4}, {a5}");
-            if (UI.Suppress) return;
+            PluginLog.Debug($"{a1:X16}, {a2:X8}, {a3}");
+            if (UI.Suppress) return 0;
         }
         catch(Exception e)
         {
             e.Log();
         }
-        UnkDelegateHook.Original(a1, a2, a3,a4,a5);
+        return UnkDelegateHook.Original(a1, a2, a3);
     }
 
     void AddFlyTextDetour(IntPtr a1, uint actorIndex, uint a3, IntPtr a4, uint a5, uint a6, IntPtr a7, uint a8, uint a9, int a10)
@@ -146,6 +146,6 @@ public unsafe class Memory : IDisposable
 
     public void Dispose()
     {
-        
+
     }
 }

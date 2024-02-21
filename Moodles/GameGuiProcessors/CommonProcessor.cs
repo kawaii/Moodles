@@ -20,6 +20,7 @@ public unsafe class CommonProcessor : IDisposable
     public StatusCustomProcessor StatusCustomProcessor;
     public TargetInfoProcessor TargetInfoProcessor;
     public FocusTargetInfoProcessor FocusTargetInfoProcessor;
+    public FlyPopupTextProcessor FlyPopupTextProcessor;
     public readonly HashSet<uint> NegativeStatuses = [];
     public readonly HashSet<uint> PositiveStatuses = [];
     public readonly HashSet<uint> SpecialStatuses = [];
@@ -73,6 +74,17 @@ public unsafe class CommonProcessor : IDisposable
         TargetInfoProcessor = new();
         FocusTargetInfoProcessor = new();
         TooltipMemory = Marshal.AllocHGlobal(2*1024);
+        FlyPopupTextProcessor = new();
+    }
+
+    public void Dispose()
+    {
+        PartyListProcessor.Dispose();
+        StatusCustomProcessor.Dispose();
+        TargetInfoProcessor.Dispose();
+        FocusTargetInfoProcessor.Dispose();
+        FlyPopupTextProcessor.Dispose();
+        Marshal.FreeHGlobal(TooltipMemory);
     }
 
     public void HideAll()
@@ -110,12 +122,13 @@ public unsafe class CommonProcessor : IDisposable
                     {
                         if (P.CanModifyUI() && TryFindIndex(statusManager.Key, out var index, out var pc) && Utils.CanSpawnVfxFlytext(pc))
                         {
-                            if (statusManager.Key == Player.NameWithWorld || x.Applier == Player.NameWithWorld)
+                            /*if (statusManager.Key == Player.NameWithWorld || x.Applier == Player.NameWithWorld)
                             {
                                 var col = x.Type == StatusType.Negative ? 0xff00008A : 0xFF005D2A;
                                 var type = x.Type == StatusType.Negative ? FlyTextKind.Debuff : FlyTextKind.Buff;
                                 if (index != -1) Svc.FlyText.AddFlyText(type, (uint)index, 0, 0, new SeStringBuilder().AddText($"+ ").Append(Utils.ParseBBSeString(x.Title)).Build(), "", col, (uint)x.AdjustedIconID, 0);
-                            }
+                            }*/
+                            FlyPopupTextProcessor.Queue.Enqueue(new(x, true, pc.ObjectId));
                             if (x.Type == StatusType.Negative)
                             {
                                 VFXCandidates.Add((pc, "vfx/common/eff/dk05th_stdn0t.avfx"));
@@ -134,12 +147,13 @@ public unsafe class CommonProcessor : IDisposable
                     {
                         if (P.CanModifyUI() && TryFindIndex(statusManager.Key, out var index, out var pc) && Utils.CanSpawnVfxFlytext(pc))
                         {
-                            if (statusManager.Key == Player.NameWithWorld || x.Applier == Player.NameWithWorld)
+                            /*if (statusManager.Key == Player.NameWithWorld || x.Applier == Player.NameWithWorld)
                             {
                                 var col = 0xFF454545;
                                 var type = x.Type == StatusType.Negative ? FlyTextKind.DebuffFading : FlyTextKind.BuffFading;
                                 if (index != -1) Svc.FlyText.AddFlyText(type, (uint)index, 0, 0, new SeStringBuilder().AddText($"- ").Append(Utils.ParseBBSeString(x.Title)).Build(), "", col, (uint)x.AdjustedIconID, 0);
-                            }
+                            }*/
+                            FlyPopupTextProcessor.Queue.Enqueue(new(x, false, pc.ObjectId));
                             VFXCandidates.Add((pc, "vfx/common/eff/dk04ht_canc0h.avfx"));
                         }
                         statusManager.Value.RemTextShown.Add(x.GUID);
@@ -180,15 +194,6 @@ public unsafe class CommonProcessor : IDisposable
         index = -1;
         pcr = null;
         return false;
-    }
-
-    public void Dispose()
-    {
-        PartyListProcessor.Dispose();
-        StatusCustomProcessor.Dispose();
-        TargetInfoProcessor.Dispose();
-        FocusTargetInfoProcessor.Dispose();
-        Marshal.FreeHGlobal(TooltipMemory);
     }
 
     public void SetIcon(AtkUnitBase* addon, AtkResNode* container, MyStatus status)

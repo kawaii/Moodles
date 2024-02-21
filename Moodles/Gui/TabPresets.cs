@@ -1,13 +1,17 @@
 ﻿using Dalamud.Game.ClientState.Objects.SubKinds;
+using ECommons;
 using ECommons.GameHelpers;
 using Moodles.Data;
+using Moodles.GameGuiProcessors;
 using Moodles.OtterGuiHandlers;
 using OtterGui.Raii;
+using System.Data;
 
 namespace Moodles.Gui;
 public static class TabPresets
 {
     static bool IsMoodleSelection = false;
+    static Guid CurrentDrag = Guid.Empty;
     private static Dictionary<PresetApplicationType, string> ApplicationTypes = new()
     {
         [PresetApplicationType.ReplaceAll] = "Replace all current statuses",
@@ -99,7 +103,7 @@ public static class TabPresets
                 ImGui.TableSetupColumn("Name", ImGuiTableColumnFlags.WidthStretch);
                 ImGui.TableSetupColumn(" ");
 
-
+                List<(Vector2 RowPos, Action AcceptDraw)> MoveCommands = [];
                 for (var i = 0;i< Selected.Statuses.Count;i++) 
                 {
                     var statusId = Selected.Statuses[i];
@@ -108,18 +112,49 @@ public static class TabPresets
                     if(status != null)
                     {
                         ImGui.PushID(status.ID);
-                        if(i>0)ImGui.TableNextRow();
+                        ImGui.TableNextRow();
+
+                        if (CurrentDrag == statusId)
+                        {
+                            var color = GradientColor.Get(EColor.Green, EColor.Green with { W = EColor.Green.W / 4 }, 500).ToUint();
+                            ImGui.TableSetBgColor(ImGuiTableBgTarget.RowBg0, color);
+                            ImGui.TableSetBgColor(ImGuiTableBgTarget.RowBg1, color);
+                        }
                         ImGui.TableNextColumn();
 
-                        if (ImGui.ArrowButton("up", ImGuiDir.Up) && i > 0)
+                        var rowPos = ImGui.GetCursorPos();
+                        ImGui.PushFont(UiBuilder.IconFont);
+                        ImGui.Button($"{FontAwesomeIcon.ArrowsUpDownLeftRight.ToIconString()}##Move{status.GUID}");
+                        ImGui.PopFont();
+                        if (ImGui.IsItemHovered())
                         {
-                            (Selected.Statuses[i - 1], Selected.Statuses[i]) = (Selected.Statuses[i], Selected.Statuses[i - 1]);
+                            ImGui.SetMouseCursor(ImGuiMouseCursor.ResizeAll);
                         }
-                        ImGui.SameLine();
-                        if (ImGui.ArrowButton("down", ImGuiDir.Down) && i < Selected.Statuses.Count - 1)
+                        if (ImGui.BeginDragDropSource(ImGuiDragDropFlags.SourceNoPreviewTooltip))
                         {
-                            (Selected.Statuses[i + 1], Selected.Statuses[i]) = (Selected.Statuses[i], Selected.Statuses[i + 1]);
+                            ImGuiDragDrop.SetDragDropPayload("MoveRule", status.GUID);
+                            CurrentDrag = status.GUID;
+                            InternalLog.Verbose($"DragDropSource = {status.GUID}");
+                            ImGui.EndDragDropSource();
                         }
+                        else if (CurrentDrag == status.GUID)
+                        {
+                            InternalLog.Verbose($"Current drag reset!");
+                            CurrentDrag = Guid.Empty;
+                        }
+
+                        var moveItemIndex = i;
+                        MoveCommands.Add((rowPos, () => 
+                        {
+                            if (ImGui.BeginDragDropTarget())
+                            {
+                                if (ImGuiDragDrop.AcceptDragDropPayload("MoveRule", out Guid payload, ImGuiDragDropFlags.AcceptBeforeDelivery | ImGuiDragDropFlags.AcceptNoDrawDefaultRect))
+                                {
+                                    MoveItemToPosition(Selected.Statuses, (x) => x == payload, moveItemIndex);
+                                }
+                                ImGui.EndDragDropTarget();
+                            }
+                        }));
 
                         ImGui.TableNextColumn();
 
@@ -147,6 +182,12 @@ public static class TabPresets
                 }
 
                 ImGui.EndTable();
+                foreach (var x in MoveCommands)
+                {
+                    ImGui.SetCursorPos(x.RowPos);
+                    ImGui.Dummy(new Vector2(ImGui.GetContentRegionAvail().X, ImGuiHelpers.GetButtonSize(" ").Y));
+                    x.AcceptDraw();
+                }
             }
         }
     }

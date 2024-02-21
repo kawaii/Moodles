@@ -1,8 +1,10 @@
 ﻿using Dalamud.Game.ClientState.Objects.SubKinds;
+using Dalamud.Game.Gui.FlyText;
 using ECommons.GameHelpers;
 using FFXIVClientStructs.FFXIV.Client.Game.Object;
 using Lumina.Excel.GeneratedSheets;
 using Moodles.Data;
+using System.Security.Cryptography;
 
 namespace Moodles.Gui;
 public unsafe static class UI
@@ -12,6 +14,12 @@ public unsafe static class UI
     static string Owner = "";
     public static bool Suppress = false;
     public static readonly Vector2 StatusIconSize = new(24, 32);
+    static uint OID = 0;
+    static FlyTextKind MessageID = FlyTextKind.Debuff;
+    static uint a4 = 0;
+    static uint a5 = 0;
+    static uint StatusID = 0;
+    static bool My = false;
 
     public static void Draw()
     {
@@ -39,7 +47,7 @@ public unsafe static class UI
                 P.Memory.UnkDelegateHook.Disable();
             }
             ImGui.SameLine();
-            ImGui.Checkbox($"Suppress", ref Suppress); 
+            ImGui.Checkbox($"Suppress", ref Suppress);
             if (ImGui.Button("Enable ac hook"))
             {
                 P.Memory.ProcessActorControlPacketHook.Enable();
@@ -49,6 +57,39 @@ public unsafe static class UI
             {
                 P.Memory.ProcessActorControlPacketHook.Disable();
             }
+            if (ImGui.Button("Enable bl hook"))
+            {
+                P.Memory.BattleLog_AddToScreenLogWithScreenLogKindHook.Enable();
+            }
+            ImGui.SameLine();
+            if (ImGui.Button("Disable bl hook"))
+            {
+                P.Memory.BattleLog_AddToScreenLogWithScreenLogKindHook.Disable();
+            }
+
+            if(ImGui.BeginCombo("object", $"{OID:X8}"))
+            {
+                foreach (var x in Svc.Objects.Where(x => x is PlayerCharacter).Cast<PlayerCharacter>())
+                {
+                    if (ImGui.Selectable($"{x.Name}")) OID = x.ObjectId;
+                }
+                ImGui.EndCombo();
+            }
+            ImGuiEx.EnumCombo("Message id", ref MessageID);
+            ImGuiEx.InputUint("status id", ref StatusID);
+            ImGuiEx.InputUint("a4", ref a4);
+            ImGuiEx.InputUint("a5", ref a5);
+            ImGui.Checkbox("From me", ref My);
+            ImGui.Button("Execute");
+            if (ImGui.IsItemHovered() && (ImGui.IsMouseClicked(ImGuiMouseButton.Left) || ImGui.IsMouseDown(ImGuiMouseButton.Right)))
+            {
+                if(Svc.Objects.TryGetFirst(x => x.ObjectId == OID, out var obj))
+                {
+                    P.Memory.BattleLog_AddToScreenLogWithScreenLogKindHook.Original(obj.Address, My ? Player.Object.Address : obj.Address, MessageID, 5, 0, 0, (int)StatusID, 0, 0);
+                    Notify.Info($"Success");
+                }
+            }
+
         }
         ImGui.Checkbox("Enable UI modifications", ref C.Enabled);
         if (ImGui.CollapsingHeader("Status debugging"))

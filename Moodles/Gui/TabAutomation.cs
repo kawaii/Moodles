@@ -3,6 +3,7 @@ using ECommons.ExcelServices;
 using ECommons.GameHelpers;
 using Moodles.Data;
 using Moodles.OtterGuiHandlers;
+using OtterGui;
 using OtterGui.Raii;
 using System.Data;
 using static System.ComponentModel.Design.ObjectSelectorEditor;
@@ -93,6 +94,7 @@ public static class TabAutomation
         }
 
         if (Selected.Combos.Count == 0) Selected.Combos.Add(new());
+        List<(Vector2 RowPos, Action AcceptDraw)> MoveCommands = [];
 
         if (ImGui.BeginTable("##automation", 3, ImGuiTableFlags.RowBg | ImGuiTableFlags.SizingFixedFit))
         {
@@ -109,6 +111,7 @@ public static class TabAutomation
                 var combo = Selected.Combos[i];
                 ImGui.TableNextRow();
                 ImGui.TableNextColumn();
+                var rowPos = ImGui.GetCursorPos();
 
                 if (ImGuiEx.IconButton(FontAwesomeIcon.Trash))
                 {
@@ -118,7 +121,32 @@ public static class TabAutomation
 
                 ImGui.TableNextColumn();
 
-                ImGuiEx.TextV($"#{i + 1}");
+                ImGui.Selectable($"#{i + 1}");
+                if (ImGui.BeginDragDropSource())
+                {
+                    ImGuiEx.Text($"Moving Rule {i+1}...");
+                    ImGuiDragDrop.SetDragDropPayload("ReorderAutomation", i);
+                    ImGui.EndDragDropSource();
+                }
+                if (ImGui.IsItemHovered())
+                {
+                    ImGui.SetMouseCursor(ImGuiMouseCursor.ResizeAll);
+                }
+
+                var moveIndex = i;
+                MoveCommands.Add((rowPos, () =>
+                    {
+                        if (ImGui.BeginDragDropTarget())
+                        {
+                            if (ImGuiDragDrop.AcceptDragDropPayload("ReorderAutomation", out int index))
+                            {
+                                MoveItemToPosition(Selected.Combos, x => Selected.Combos[index] == x, moveIndex);
+                            }
+                            ImGui.EndDragDropTarget();
+                        }
+                    }
+                ));
+
                 ImGui.TableNextColumn();
 
                 ImGuiEx.SetNextItemFullWidth();
@@ -139,6 +167,13 @@ public static class TabAutomation
             DrawNewSelector();
 
             ImGui.EndTable();
+
+            foreach (var x in MoveCommands)
+            {
+                ImGui.SetCursorPos(x.RowPos);
+                ImGui.Dummy(new Vector2(ImGui.GetContentRegionAvail().X, ImGuiHelpers.GetButtonSize(" ").Y * 2 + ImGui.GetStyle().ItemSpacing.Y));
+                x.AcceptDraw();
+            }
         }
 
     }
