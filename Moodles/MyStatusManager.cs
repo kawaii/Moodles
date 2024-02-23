@@ -1,4 +1,6 @@
 ﻿using ECommons.ChatMethods;
+using MessagePack;
+using MessagePack.Resolvers;
 using Moodles.Data;
 using System;
 using System.Collections.Generic;
@@ -7,6 +9,7 @@ using System.Text;
 using System.Threading.Tasks;
 
 namespace Moodles;
+[Serializable]
 public class MyStatusManager
 {
     public HashSet<Guid> AddTextShown = [];
@@ -87,5 +90,10 @@ public class MyStatusManager
                 }
             }
         }
+    }
+
+    public byte[] BinarySerialize()
+    {
+        return MessagePackSerializer.Serialize(this.Statuses);
     }
 }

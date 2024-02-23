@@ -2,7 +2,7 @@
 <Project Sdk="Microsoft.NET.Sdk">
     <PropertyGroup>
         <Authors>kawaii</Authors>
-        <Version>1.0.0.2</Version>
+        <Version>1.0.0.3</Version>
     </PropertyGroup>
 
     <PropertyGroup>
@@ -34,6 +34,12 @@
 
     <ItemGroup>
         <PackageReference Include="DalamudPackager" Version="2.1.12" />
+        <PackageReference Include="MessagePack" Version="2.5.140" />
+        <PackageReference Include="MessagePack.Annotations" Version="2.5.140" />
+        <PackageReference Include="MessagePackAnalyzer" Version="2.5.140">
+            <PrivateAssets>all</PrivateAssets>
+            <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
+        </PackageReference>
         <Reference Include="Newtonsoft.Json">
             <HintPath>$(DalamudLibPath)Newtonsoft.Json.dll</HintPath>
             <Private>False</Private>

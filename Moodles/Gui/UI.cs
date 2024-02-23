@@ -4,6 +4,7 @@ using ECommons.GameHelpers;
 using FFXIVClientStructs.FFXIV.Client.Game.Object;
 using Lumina.Excel.GeneratedSheets;
 using Moodles.Data;
+using System.IO;
 using System.Security.Cryptography;
 
 namespace Moodles.Gui;
@@ -35,6 +36,10 @@ public unsafe static class UI
 
     public static void DrawDebugger()
     {
+        if(ImGui.CollapsingHeader("Visible party"))
+        {
+            ImGuiEx.Text(P.CommonProcessor.PartyListProcessor.GetVisibleParty().Print("\n"));
+        }
         if(ImGui.CollapsingHeader("Flytext debugger"))
         {
             if(ImGui.Button("Enable hook"))
@@ -252,6 +257,11 @@ public unsafe static class UI
                         var array = Svc.Objects.Where(x => x is PlayerCharacter pc && pc.IsTargetable).Cast<PlayerCharacter>().ToArray();
                         Utils.GetMyStatusManager(array[Random.Shared.Next(array.Length)]).AddOrUpdate(Status.JSONClone().PrepareToApply());
                     }
+                }
+                ImGui.SameLine();
+                if (ImGui.Button("Save bin"))
+                {
+                    File.WriteAllBytes(Path.Combine(Svc.PluginInterface.ConfigDirectory.FullName, "status.bin"), manager.BinarySerialize());
                 }
                 ImGui.Separator();
             }

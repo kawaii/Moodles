@@ -1,5 +1,6 @@
 ﻿using Dalamud.Game.Text.SeStringHandling;
 using ECommons.ChatMethods;
+using MessagePack;
 using Moodles.OtterGuiHandlers;
 using System;
 using System.Collections.Generic;
@@ -9,32 +10,33 @@ using System.Threading.Tasks;
 
 namespace Moodles.Data;
 [Serializable]
+[MessagePackObject]
 public class MyStatus
 {
     internal string ID => GUID.ToString();
-    public Guid GUID = Guid.NewGuid();
-    public int IconID;
-    public string Title = "";
-    public string Description = "";
-    public long ExpiresAt;
-    public StatusType Type;
-    public string Applier = "";
-    public string TextOverride = null;
-    public uint? TextColorOverride = null;
-    public uint? EdgeColorOverride = null;
-    public bool Dispelable = false;
-    public int Stacks = 1;
+    [Key(0)] public Guid GUID = Guid.NewGuid();
+    [Key(1)] public int IconID;
+    [Key(2)] public string Title = "";
+    [Key(3)] public string Description = "";
+    [Key(4)] public long ExpiresAt;
+    [Key(5)] public StatusType Type;
+    [Key(6)] public string Applier = "";
+    [Key(7)] public bool Dispelable = false;
+    [Key(8)] public int Stacks = 1;
+    //public string TextOverride = null;
+    //public uint? TextColorOverride = null;
+    //public uint? EdgeColorOverride = null;
 
-    public bool Persistent = false;
+    [IgnoreMember] public bool Persistent = false;
 
     [NonSerialized] internal int TooltipShown = -1;
 
-    public int Days = 0;
-    public int Hours = 0;
-    public int Minutes = 0;
-    public int Seconds = 0;
-    public bool NoExpire = false;
-    public bool AsPermanent = false;
+    [IgnoreMember] public int Days = 0;
+    [IgnoreMember] public int Hours = 0;
+    [IgnoreMember] public int Minutes = 0;
+    [IgnoreMember] public int Seconds = 0;
+    [IgnoreMember] public bool NoExpire = false;
+    [IgnoreMember] public bool AsPermanent = false;
 
     public bool ShouldSerializeGUID() => GUID != Guid.Empty;
     public bool ShouldSerializePersistent() => ShouldSerializeGUID();

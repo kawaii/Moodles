@@ -20,6 +20,7 @@ public unsafe class CommonProcessor : IDisposable
     public StatusCustomProcessor StatusCustomProcessor;
     public TargetInfoProcessor TargetInfoProcessor;
     public FocusTargetInfoProcessor FocusTargetInfoProcessor;
+    public StatusProcessor StatusProcessor;
     public FlyPopupTextProcessor FlyPopupTextProcessor;
     public readonly HashSet<uint> NegativeStatuses = [];
     public readonly HashSet<uint> PositiveStatuses = [];
@@ -73,6 +74,7 @@ public unsafe class CommonProcessor : IDisposable
         StatusCustomProcessor = new();
         TargetInfoProcessor = new();
         FocusTargetInfoProcessor = new();
+        StatusProcessor = new();
         TooltipMemory = Marshal.AllocHGlobal(2*1024);
         FlyPopupTextProcessor = new();
     }
@@ -83,6 +85,7 @@ public unsafe class CommonProcessor : IDisposable
         StatusCustomProcessor.Dispose();
         TargetInfoProcessor.Dispose();
         FocusTargetInfoProcessor.Dispose();
+        StatusProcessor.Dispose();
         FlyPopupTextProcessor.Dispose();
         Marshal.FreeHGlobal(TooltipMemory);
     }
@@ -93,6 +96,7 @@ public unsafe class CommonProcessor : IDisposable
         this.TargetInfoProcessor.HideAll();
         this.FocusTargetInfoProcessor.HideAll();
         this.StatusCustomProcessor.HideAll();
+        this.StatusProcessor.HideAll();
     }
 
     private void Tick()
@@ -261,7 +265,7 @@ public unsafe class CommonProcessor : IDisposable
         {
             CancelRequests.Remove(addr);
             var name = MemoryHelper.ReadStringNullTerminated((nint)addon->Name);
-            if (name.StartsWith("_StatusCustom"))
+            if (name.StartsWith("_StatusCustom") || name == "_Status")
             {
                 status.ExpiresAt = 0;
             }

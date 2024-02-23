@@ -46,15 +46,19 @@ public unsafe class PartyListProcessor : IDisposable
             int storeIndex = 0;
             foreach (var player in GetVisibleParty())
             {
+                //InternalLog.Verbose($"  Now checking {index} for {player}");
                 if (player != null)
                 {
+                    //InternalLog.Verbose($"  Player is not null");
                     for (int i = 5; i <= 14; i++)
                     {
                         var c = addon->UldManager.NodeList[index]->GetAsAtkComponentNode()->Component->UldManager.NodeList[i];
+                        //InternalLog.Verbose($"  Checking {i}: visible={c->IsVisible}");
                         if (c->IsVisible) NumStatuses[storeIndex]++;
                     }
                 }
                 storeIndex++;
+                index--;
             }
         }
         InternalLog.Verbose($"PartyList Requested update: {NumStatuses.Print()}");
@@ -112,7 +116,7 @@ public unsafe class PartyListProcessor : IDisposable
         }
     }
 
-    List<PlayerCharacter> GetVisibleParty()
+    public List<PlayerCharacter> GetVisibleParty()
     {
         if (Svc.Party.Length < 2)
         {

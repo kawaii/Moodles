@@ -81,8 +81,13 @@ public static class TabMoodles
                 var selinfo = Utils.GetIconInfo((uint)Selected.IconID);
                 if (ImGui.BeginCombo("##sel", $"Icon: #{Selected.IconID} {selinfo?.Name}", ImGuiComboFlags.HeightLargest))
                 {
-                    P.StatusSelector.Open(Selected);
-                    ImGui.CloseCurrentPopup();
+                    var cursor = ImGui.GetCursorPos();
+                    ImGui.Dummy(new Vector2(100, ImGuiHelpers.MainViewport.Size.Y / 3));
+                    ImGui.SetCursorPos(cursor);
+                    P.StatusSelector.Delegate = Selected;
+                    P.StatusSelector.Draw();
+                    //P.StatusSelector.Open(Selected);
+                    //ImGui.CloseCurrentPopup();
                     ImGui.EndCombo();
                 }
                 ImGui.TableNextRow(); 

@@ -14,7 +14,7 @@ using static System.ComponentModel.Design.ObjectSelectorEditor;
 namespace Moodles.Gui;
 public class StatusSelector : Window
 {
-    MyStatus Delegate;
+    public MyStatus Delegate;
 
     bool? IsFCStatus = null;
     bool? IsStackable = null;
