@@ -1,11 +1,8 @@
 ﻿using Dalamud.Game.ClientState.Objects.SubKinds;
-using ECommons;
 using ECommons.GameHelpers;
 using Moodles.Data;
-using Moodles.GameGuiProcessors;
 using Moodles.OtterGuiHandlers;
 using OtterGui.Raii;
-using System.Data;
 
 namespace Moodles.Gui;
 public static class TabPresets

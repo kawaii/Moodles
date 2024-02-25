@@ -2,7 +2,7 @@
 <Project Sdk="Microsoft.NET.Sdk">
     <PropertyGroup>
         <Authors>kawaii</Authors>
-        <Version>1.0.0.3</Version>
+        <Version>1.0.0.4</Version>
     </PropertyGroup>
 
     <PropertyGroup>
@@ -34,9 +34,9 @@
 
     <ItemGroup>
         <PackageReference Include="DalamudPackager" Version="2.1.12" />
-        <PackageReference Include="MessagePack" Version="2.5.140" />
-        <PackageReference Include="MessagePack.Annotations" Version="2.5.140" />
-        <PackageReference Include="MessagePackAnalyzer" Version="2.5.140">
+        <PackageReference Include="MemoryPack" Version="1.10.0" />
+        <PackageReference Include="MemoryPack.Core" Version="1.10.0" />
+        <PackageReference Include="MemoryPack.Generator" Version="1.10.0">
             <PrivateAssets>all</PrivateAssets>
             <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
         </PackageReference>

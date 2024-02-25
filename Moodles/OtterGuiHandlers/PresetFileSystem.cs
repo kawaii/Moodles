@@ -1,11 +1,9 @@
 ﻿using ECommons.Configuration;
-using Lumina.Excel.GeneratedSheets;
 using Moodles.Data;
 using OtterGui;
 using OtterGui.Classes;
 using OtterGui.Filesystem;
 using OtterGui.FileSystem.Selector;
-using System.Drawing;
 using System.IO;
 
 namespace Moodles.OtterGuiHandlers;

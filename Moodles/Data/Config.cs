@@ -1,10 +1,4 @@
-﻿using ECommons.ChatMethods;
-using ECommons.Configuration;
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
+﻿using ECommons.Configuration;
 
 namespace Moodles.Data;
 public class Config : IEzConfig
@@ -19,4 +13,8 @@ public class Config : IEzConfig
     public HashSet<string> SeenCharacters = [];
     public bool Censor = false;
     public bool AutoOther = false;
+
+    public bool EnableVFX = true;
+    public bool EnableFlyPopupText = true;
+    public int FlyPopupTextLimit = 10;
 }

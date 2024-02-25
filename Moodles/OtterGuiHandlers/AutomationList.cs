@@ -1,14 +1,7 @@
 ﻿using Dalamud.Game.ClientState.Objects.SubKinds;
-using Dalamud.Game.ClientState.Objects.Types;
 using ECommons.ExcelServices;
-using ECommons.GameHelpers;
 using Moodles.Data;
 using OtterGui;
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 
 namespace Moodles.OtterGuiHandlers;
 public class AutomationList : ItemSelector<AutomationProfile>

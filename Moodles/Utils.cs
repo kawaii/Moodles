@@ -1,19 +1,8 @@
 ﻿using Dalamud.Game.ClientState.Objects.SubKinds;
-using Dalamud.Game.ClientState.Statuses;
 using Dalamud.Game.Text.SeStringHandling;
-using ECommons.ChatMethods;
-using ECommons.DalamudServices;
-using ECommons.ExcelServices;
 using ECommons.GameHelpers;
-using Lumina.Excel.GeneratedSheets;
 using Moodles.Data;
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Runtime.CompilerServices;
-using System.Text;
 using System.Text.RegularExpressions;
-using System.Threading.Tasks;
 using Status = Lumina.Excel.GeneratedSheets.Status;
 using UIColor = ECommons.ChatMethods.UIColor;
 

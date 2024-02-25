@@ -5,18 +5,36 @@ using Dalamud.Memory;
 using Dalamud.Plugin.Services;
 using ECommons.GameHelpers;
 using FFXIVClientStructs.FFXIV.Component.GUI;
+using Lumina.Excel.GeneratedSheets;
 using Moodles.Data;
-using static Lumina.Data.Parsing.Uld.NodeData;
 
 namespace Moodles.GameGuiProcessors;
 public sealed unsafe class FlyPopupTextProcessor : IDisposable
 {
-    public Queue<FlyPopupTextData> Queue = [];
+    private List<FlyPopupTextData> Queue = [];
     public FlyPopupTextData CurrentElement = null;
+    public Dictionary<uint, IconStatusData> StatusData = [];
 
     public FlyPopupTextProcessor()
     {
+        foreach(var x in Svc.Data.GetExcelSheet<Status>())
+        {
+            var baseData = new IconStatusData(x.RowId, x.Name.ExtractText(), 0);
+            StatusData[x.Icon] = baseData;
+            for (int i = 2; i <= x.MaxStacks; i++)
+            {
+                StatusData[(uint)(x.Icon + i - 1)] = baseData with { StackCount = (uint)i };
+            }
+        }
         Svc.Framework.Update += this.Framework_Update;
+    }
+
+    public void Enqueue(FlyPopupTextData data)
+    {
+        if (C.EnableFlyPopupText)
+        {
+            Queue.Add(data);
+        }
     }
 
     private void Framework_Update(IFramework framework)
@@ -24,6 +42,13 @@ public sealed unsafe class FlyPopupTextProcessor : IDisposable
         ProcessPopupText();
         ProcessFlyText();
         if (CurrentElement != null) CurrentElement = null;
+        if(Queue.Count > C.FlyPopupTextLimit)
+        {
+            PluginLog.Warning($"FlyPopupTextProcessor Queue is too large! Trimming to {C.FlyPopupTextLimit} closest entities.");
+            var n = Queue.RemoveAll(x => Svc.Objects.FirstOrDefault(z => z.ObjectId == x.Owner) is not PlayerCharacter);
+            if(n > 0) PluginLog.Information($"  Removed {n} non-player entities");
+            Queue = Queue.OrderBy(x => Vector3.DistanceSquared(Player.Object.Position, Svc.Objects.First(z => z.ObjectId == x.Owner).Position)).Take(C.FlyPopupTextLimit).ToList();
+        }
         while (Queue.TryDequeue(out var e))
         {
             var target = Svc.Objects.FirstOrDefault(x => x.ObjectId == e.Owner);
@@ -41,7 +66,14 @@ public sealed unsafe class FlyPopupTextProcessor : IDisposable
                 {
                     kind = e.IsAddition ? FlyTextKind.Buff : FlyTextKind.BuffFading;
                 }
-                P.Memory.BattleLog_AddToScreenLogWithScreenLogKindHook.Original(target.Address, isMine ? Player.Object.Address : target.Address, kind, 5, 0, 0, 0, 0, 0);
+                if (StatusData.TryGetValue((uint)e.Status.AdjustedIconID, out var data))
+                {
+                    P.Memory.BattleLog_AddToScreenLogWithScreenLogKindHook.Original(target.Address, isMine ? Player.Object.Address : target.Address, kind, 5, 0, 0, (int)data.StatusId, (int)data.StackCount, 0);
+                }
+                else
+                {
+                    PluginLog.Error($"[FlyPopupTextProcessor] Error retrieving data for icon {e.Status.IconID}, please report to developer.");
+                }
                 break;
             }
             else
@@ -91,7 +123,7 @@ public sealed unsafe class FlyPopupTextProcessor : IDisposable
                             var c = candidate->GetAsAtkComponentNode()->Component;
                             var sestr = new SeStringBuilder().AddText(CurrentElement.IsAddition ? "+ " : "- ").Append(Utils.ParseBBSeString(CurrentElement.Status.Title));
                             c->UldManager.NodeList[1]->GetAsAtkTextNode()->SetText(sestr.Encode());
-                            c->UldManager.NodeList[2]->GetAsAtkImageNode()->LoadTexture(Svc.Texture.GetIconPath(CurrentElement.Status.AdjustedIconID), 1);
+                            //c->UldManager.NodeList[2]->GetAsAtkImageNode()->LoadTexture(Svc.Texture.GetIconPath(CurrentElement.Status.AdjustedIconID), 1);
                             CurrentElement = null;
                             return;
                         }
@@ -110,8 +142,22 @@ public sealed unsafe class FlyPopupTextProcessor : IDisposable
         if (!c->UldManager.NodeList[1]->IsVisible) return false;
         if (c->UldManager.NodeList[2]->Type != NodeType.Image) return false;
         if (!c->UldManager.NodeList[2]->IsVisible) return false;
-        var text = MemoryHelper.ReadSeString(&c->UldManager.NodeList[1]->GetAsAtkTextNode()->NodeText)?.ToString();
-        if (text != "+ " && text != "- ") return false;
+        var text = MemoryHelper.ReadSeString(&c->UldManager.NodeList[1]->GetAsAtkTextNode()->NodeText)?.ExtractText();
+        if (StatusData.TryGetValue((uint)CurrentElement.Status.AdjustedIconID, out var data))
+        {
+            if (CurrentElement.IsAddition)
+            {
+                if (text != $"+ {data.Name}") return false;
+            }
+            else
+            {
+                if (text != $"- {data.Name}") return false;
+            }
+        }
+        else
+        {
+            return false;
+        }
         return true;
     }
 

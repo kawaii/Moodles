@@ -1,15 +1,5 @@
-﻿using Dalamud.Hooking;
-using Dalamud.Memory;
-using Dalamud.Utility.Signatures;
-using ECommons.EzHookManager;
-using ECommons.Interop;
-using FFXIVClientStructs.FFXIV.Component.GUI;
+﻿using ECommons.EzHookManager;
 using Moodles.Gui;
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 
 namespace Moodles;
 public unsafe partial class Memory : IDisposable

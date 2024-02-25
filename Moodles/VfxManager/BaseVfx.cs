@@ -1,6 +1,4 @@
 ﻿using Dalamud.Game.ClientState.Objects.Types;
-using System.Numerics;
-using System.Runtime.InteropServices;
 
 namespace Moodles.VfxManager;
 

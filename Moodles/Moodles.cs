@@ -1,6 +1,4 @@
 ﻿using Dalamud.Game.ClientState.Objects.SubKinds;
-using Dalamud.Game.Gui.FlyText;
-using Dalamud.Game.Text.SeStringHandling;
 using ECommons.Configuration;
 using ECommons.Events;
 using ECommons.ExcelServices;
@@ -12,7 +10,6 @@ using Moodles.Gui;
 using Moodles.OtterGuiHandlers;
 using Moodles.Processors;
 using Moodles.VfxManager;
-using System.Runtime.CompilerServices;
 
 namespace Moodles;
 
@@ -28,6 +25,8 @@ public class Moodles : IDalamudPlugin
     public Job? LastJob = null;
     bool LastUIModState = false;
     public StatusSelector StatusSelector;
+    public IPCProcessor IPCProcessor;
+    public IPCTester IPCTester;
 
     public Moodles(DalamudPluginInterface pi)
     {
@@ -48,6 +47,8 @@ public class Moodles : IDalamudPlugin
             EzConfigGui.Window.SetMinSize(200, 200);
             CleanupStatusManagers();
             new EzTerritoryChanged((x) => CleanupStatusManagers());
+            IPCProcessor = new();
+            IPCTester = new();
         });
     }
 
@@ -180,6 +181,8 @@ public class Moodles : IDalamudPlugin
         Safe(() => Memory?.Dispose());
         Safe(() => CommonProcessor?.Dispose());
         Safe(() => VfxSpawn.Remove());
+        Safe(() => IPCProcessor?.Dispose());
+        Safe(() => IPCTester?.Dispose());
         P = null;
         ECommonsMain.Dispose();
     }

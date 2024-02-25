@@ -1,42 +1,34 @@
-﻿using Dalamud.Game.Text.SeStringHandling;
-using ECommons.ChatMethods;
-using MessagePack;
-using Moodles.OtterGuiHandlers;
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
+﻿using MemoryPack;
 
 namespace Moodles.Data;
 [Serializable]
-[MessagePackObject]
-public class MyStatus
+[MemoryPackable]
+public partial class MyStatus
 {
     internal string ID => GUID.ToString();
-    [Key(0)] public Guid GUID = Guid.NewGuid();
-    [Key(1)] public int IconID;
-    [Key(2)] public string Title = "";
-    [Key(3)] public string Description = "";
-    [Key(4)] public long ExpiresAt;
-    [Key(5)] public StatusType Type;
-    [Key(6)] public string Applier = "";
-    [Key(7)] public bool Dispelable = false;
-    [Key(8)] public int Stacks = 1;
+    public Guid GUID = Guid.NewGuid();
+    public int IconID;
+    public string Title = "";
+    public string Description = "";
+    public long ExpiresAt;
+    public StatusType Type;
+    public string Applier = "";
+    public bool Dispelable = false;
+    public int Stacks = 1;
     //public string TextOverride = null;
     //public uint? TextColorOverride = null;
     //public uint? EdgeColorOverride = null;
 
-    [IgnoreMember] public bool Persistent = false;
+    [MemoryPackIgnore] public bool Persistent = false;
 
     [NonSerialized] internal int TooltipShown = -1;
 
-    [IgnoreMember] public int Days = 0;
-    [IgnoreMember] public int Hours = 0;
-    [IgnoreMember] public int Minutes = 0;
-    [IgnoreMember] public int Seconds = 0;
-    [IgnoreMember] public bool NoExpire = false;
-    [IgnoreMember] public bool AsPermanent = false;
+    [MemoryPackIgnore] public int Days = 0;
+    [MemoryPackIgnore] public int Hours = 0;
+    [MemoryPackIgnore] public int Minutes = 0;
+    [MemoryPackIgnore] public int Seconds = 0;
+    [MemoryPackIgnore] public bool NoExpire = false;
+    [MemoryPackIgnore] public bool AsPermanent = false;
 
     public bool ShouldSerializeGUID() => GUID != Guid.Empty;
     public bool ShouldSerializePersistent() => ShouldSerializeGUID();

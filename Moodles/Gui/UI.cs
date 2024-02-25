@@ -5,7 +5,6 @@ using FFXIVClientStructs.FFXIV.Client.Game.Object;
 using Lumina.Excel.GeneratedSheets;
 using Moodles.Data;
 using System.IO;
-using System.Security.Cryptography;
 
 namespace Moodles.Gui;
 public unsafe static class UI
@@ -19,8 +18,11 @@ public unsafe static class UI
     static FlyTextKind MessageID = FlyTextKind.Debuff;
     static uint a4 = 0;
     static uint a5 = 0;
+    static uint a7 = 0;
+    static uint a8 = 0;
     static uint StatusID = 0;
     static bool My = false;
+    static int Cnt = 10;
 
     public static void Draw()
     {
@@ -36,6 +38,10 @@ public unsafe static class UI
 
     public static void DrawDebugger()
     {
+        if (ImGui.CollapsingHeader("IPC"))
+        {
+            P.IPCTester.Draw();
+        }
         if(ImGui.CollapsingHeader("Visible party"))
         {
             ImGuiEx.Text(P.CommonProcessor.PartyListProcessor.GetVisibleParty().Print("\n"));
@@ -84,13 +90,15 @@ public unsafe static class UI
             ImGuiEx.InputUint("status id", ref StatusID);
             ImGuiEx.InputUint("a4", ref a4);
             ImGuiEx.InputUint("a5", ref a5);
+            ImGuiEx.InputUint("a7", ref a7);
+            ImGuiEx.InputUint("a8", ref a8);
             ImGui.Checkbox("From me", ref My);
             ImGui.Button("Execute");
             if (ImGui.IsItemHovered() && (ImGui.IsMouseClicked(ImGuiMouseButton.Left) || ImGui.IsMouseDown(ImGuiMouseButton.Right)))
             {
                 if(Svc.Objects.TryGetFirst(x => x.ObjectId == OID, out var obj))
                 {
-                    P.Memory.BattleLog_AddToScreenLogWithScreenLogKindHook.Original(obj.Address, My ? Player.Object.Address : obj.Address, MessageID, 5, 0, 0, (int)StatusID, 0, 0);
+                    P.Memory.BattleLog_AddToScreenLogWithScreenLogKindHook.Original(obj.Address, My ? Player.Object.Address : obj.Address, MessageID, 5, (byte)a4, (int)a5, (int)StatusID, (int)a7, (int)a8);
                     Notify.Info($"Success");
                 }
             }
@@ -242,15 +250,21 @@ public unsafe static class UI
                     manager.AddOrUpdate(Status.JSONClone().PrepareToApply());
                 }
                 ImGui.SameLine();
-                if (ImGui.Button("Random buffs to 10 people"))
+                ImGuiEx.SetNextItemWidthScaled(100f);
+                ImGui.InputInt($"Random buffs", ref Cnt);
+                ImGui.SameLine();
+                if (ImGui.Button("add"))
                 {
-                    for (int i = 0; i < 10; i++)
+                    for (int i = 0; i < Cnt; i++)
                     {
                         Status.GUID = Guid.NewGuid();
                         Status.Title = $"Random status {Random.Shared.Next()}";
+                        Status.Description = $"Random status description {Random.Shared.Next()}\n {Random.Shared.Next()}\n {Random.Shared.Next()}";
                         Status.IconID = (int)iconArray[Random.Shared.Next(iconArray.Count)];
                         Status.Type = (StatusType)Random.Shared.Next(3);
                         Status.Applier = Random.Shared.Next(2) == 0 ? Player.NameWithWorld : "";
+                        Status.Minutes = 0;
+                        Status.Hours = 0;
                         Status.Seconds = Random.Shared.Next(5, 60);
                         if (Random.Shared.Next(20) == 0) Status.Minutes = Random.Shared.Next(5, 60);
                         if (Random.Shared.Next(100) == 0) Status.Hours = Random.Shared.Next(5, 60);
@@ -259,9 +273,14 @@ public unsafe static class UI
                     }
                 }
                 ImGui.SameLine();
-                if (ImGui.Button("Save bin"))
+                if (ImGui.Button("Copy bin"))
                 {
-                    File.WriteAllBytes(Path.Combine(Svc.PluginInterface.ConfigDirectory.FullName, "status.bin"), manager.BinarySerialize());
+                    Copy(manager.BinarySerialize().ToHexString());
+                }
+                ImGui.SameLine();
+                if (ImGui.Button("Apply bin") && TryParseByteArray(Paste(), out var a))
+                {
+                    manager.DeserializeAndApply(a);
                 }
                 ImGui.Separator();
             }

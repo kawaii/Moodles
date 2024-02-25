@@ -1,11 +1,11 @@
 ﻿using Dalamud.Game.ClientState.Objects.SubKinds;
-using Dalamud.Game.Gui.FlyText;
 using Dalamud.Game.Text.SeStringHandling;
 using Dalamud.Memory;
 using ECommons.EzEventManager;
 using ECommons.GameHelpers;
 using ECommons.Interop;
 using ECommons.MathHelpers;
+using ECommons.Throttlers;
 using FFXIVClientStructs.FFXIV.Client.Graphics;
 using FFXIVClientStructs.FFXIV.Component.GUI;
 using Lumina.Excel.GeneratedSheets;
@@ -132,7 +132,7 @@ public unsafe class CommonProcessor : IDisposable
                                 var type = x.Type == StatusType.Negative ? FlyTextKind.Debuff : FlyTextKind.Buff;
                                 if (index != -1) Svc.FlyText.AddFlyText(type, (uint)index, 0, 0, new SeStringBuilder().AddText($"+ ").Append(Utils.ParseBBSeString(x.Title)).Build(), "", col, (uint)x.AdjustedIconID, 0);
                             }*/
-                            FlyPopupTextProcessor.Queue.Enqueue(new(x, true, pc.ObjectId));
+                            FlyPopupTextProcessor.Enqueue(new(x, true, pc.ObjectId));
                             if (x.Type == StatusType.Negative)
                             {
                                 VFXCandidates.Add((pc, "vfx/common/eff/dk05th_stdn0t.avfx"));
@@ -157,7 +157,7 @@ public unsafe class CommonProcessor : IDisposable
                                 var type = x.Type == StatusType.Negative ? FlyTextKind.DebuffFading : FlyTextKind.BuffFading;
                                 if (index != -1) Svc.FlyText.AddFlyText(type, (uint)index, 0, 0, new SeStringBuilder().AddText($"- ").Append(Utils.ParseBBSeString(x.Title)).Build(), "", col, (uint)x.AdjustedIconID, 0);
                             }*/
-                            FlyPopupTextProcessor.Queue.Enqueue(new(x, false, pc.ObjectId));
+                            FlyPopupTextProcessor.Enqueue(new(x, false, pc.ObjectId));
                             VFXCandidates.Add((pc, "vfx/common/eff/dk04ht_canc0h.avfx"));
                         }
                         statusManager.Value.RemTextShown.Add(x.GUID);
@@ -165,9 +165,17 @@ public unsafe class CommonProcessor : IDisposable
                     CleanupQueue.Add((statusManager.Value, x));
                 }
             }
+            if (statusManager.Value.NeedFireEvent)
+            {
+                statusManager.Value.NeedFireEvent = false;
+                if (Svc.Objects.TryGetFirst(x => x is PlayerCharacter pc && pc.GetNameWithWorld() == statusManager.Key, out var pc))
+                {
+                    P.IPCProcessor.FireStatusManagerChange((PlayerCharacter)pc);
+                }
+            }
         }
         CancelRequests.Clear();
-        if (VFXCandidates.Count > 0)
+        if (VFXCandidates.Count > 0 && C.EnableVFX && EzThrottler.Throttle("SpawnVFX", 100))
         {
             var bestCandidate = VFXCandidates.OrderBy(x => Vector3.DistanceSquared(Player.Object.Position, x.Player.Position)).First();
             PluginLog.Debug($"Spawning {bestCandidate.VFX} on {bestCandidate.Player}");
@@ -268,6 +276,7 @@ public unsafe class CommonProcessor : IDisposable
             if (name.StartsWith("_StatusCustom") || name == "_Status")
             {
                 status.ExpiresAt = 0;
+                P.IPCProcessor.FireStatusManagerChange(Player.Object);
             }
         }
     }

@@ -1,13 +1,10 @@
 ﻿using Dalamud.Game.ClientState.Objects.SubKinds;
 using ECommons.GameHelpers;
+using FFXIVClientStructs.FFXIV.Client.UI.Misc;
+using FFXIVClientStructs.FFXIV.Client.UI.Shell;
 using Moodles.Data;
 using Moodles.OtterGuiHandlers;
 using OtterGui.Raii;
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 
 namespace Moodles.Gui;
 public static class TabMoodles
@@ -52,6 +49,7 @@ public static class TabMoodles
                 ImGui.TableSetupColumn("Field", ImGuiTableColumnFlags.WidthStretch);
 
                 ImGui.TableNextColumn();
+                ImGuiEx.RightFloat("TitleCharLimit", () => ImGuiEx.TextV(ImGuiColors.DalamudGrey2, $"{Selected.Title.Length}/150"), out _, ImGui.GetContentRegionAvail().X + ImGui.GetCursorPosX() + ImGui.GetStyle().CellPadding.X);
                 ImGuiEx.TextV($"Title:");
                 Formatting();
                 {
@@ -117,6 +115,8 @@ public static class TabMoodles
                 ImGui.TableNextRow();
 
                 ImGui.TableNextColumn();
+                var cpx = ImGui.GetCursorPosX();
+                ImGuiEx.RightFloat("DescCharLimit", () => ImGuiEx.TextV(ImGuiColors.DalamudGrey2, $"{Selected.Description.Length}/500"), out _, ImGui.GetContentRegionAvail().X + ImGui.GetCursorPosX() + ImGui.GetStyle().CellPadding.X);
                 ImGuiEx.TextV($"Description:");
                 Formatting();
                 {

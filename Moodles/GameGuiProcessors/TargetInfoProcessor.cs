@@ -2,13 +2,6 @@
 using Dalamud.Game.Addon.Lifecycle;
 using ECommons.GameHelpers;
 using FFXIVClientStructs.FFXIV.Component.GUI;
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-using Lumina.Data;
-using Lumina.Excel.GeneratedSheets;
 using Dalamud.Game.ClientState.Objects.SubKinds;
 using Moodles.Data;
 

@@ -3,10 +3,8 @@ using ECommons.ExcelServices;
 using ECommons.GameHelpers;
 using Moodles.Data;
 using Moodles.OtterGuiHandlers;
-using OtterGui;
 using OtterGui.Raii;
 using System.Data;
-using static System.ComponentModel.Design.ObjectSelectorEditor;
 
 namespace Moodles.Gui;
 public static class TabAutomation

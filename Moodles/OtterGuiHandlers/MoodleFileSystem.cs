@@ -4,10 +4,7 @@ using OtterGui;
 using OtterGui.Filesystem;
 using OtterGui.FileSystem.Selector;
 using System.IO;
-using Lumina.Excel.GeneratedSheets;
 using Moodles.Data;
-using Dalamud.Interface.Internal.Notifications;
-using OtterGui.Raii;
 
 namespace Moodles.OtterGuiHandlers;
 public sealed class MoodleFileSystem : FileSystem<MyStatus> , IDisposable

@@ -1,8 +1,4 @@
 ﻿using Dalamud.Game.ClientState.Objects.Types;
-using Dalamud.Interface.Utility.Raii;
-using ImGuiNET;
-using Moodles;
-using System;
 
 namespace Moodles.VfxManager
 {

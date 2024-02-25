@@ -1,15 +1,7 @@
-﻿using ECommons.Configuration;
-using ECommons.ExcelServices;
-using ECommons.ExcelServices.TerritoryEnumeration;
+﻿using ECommons.ExcelServices;
 using ECommons.SimpleGui;
 using Lumina.Excel.GeneratedSheets;
 using Moodles.Data;
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-using static System.ComponentModel.Design.ObjectSelectorEditor;
 
 namespace Moodles.Gui;
 public class StatusSelector : Window
