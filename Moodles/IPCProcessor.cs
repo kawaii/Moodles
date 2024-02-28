@@ -14,13 +14,13 @@ public class IPCProcessor : IDisposable
     {
         Svc.PluginInterface.GetIpcProvider<int>("Moodles.Version").RegisterFunc(() => 1);
 
-        Svc.PluginInterface.GetIpcProvider<PlayerCharacter, byte[]>("Moodles.GetStatusManagerByPC").RegisterFunc(GetStatusManager);
-        Svc.PluginInterface.GetIpcProvider<nint, byte[]>("Moodles.GetStatusManagerByPtr").RegisterFunc(GetStatusManager);
-        Svc.PluginInterface.GetIpcProvider<string, byte[]>("Moodles.GetStatusManagerByName").RegisterFunc(GetStatusManager);
+        Svc.PluginInterface.GetIpcProvider<PlayerCharacter, string>("Moodles.GetStatusManagerByPC").RegisterFunc(GetStatusManager);
+        Svc.PluginInterface.GetIpcProvider<nint, string>("Moodles.GetStatusManagerByPtr").RegisterFunc(GetStatusManager);
+        Svc.PluginInterface.GetIpcProvider<string, string>("Moodles.GetStatusManagerByName").RegisterFunc(GetStatusManager);
 
-        Svc.PluginInterface.GetIpcProvider<PlayerCharacter, byte[], object>("Moodles.SetStatusManagerByPC").RegisterAction(SetStatusManager);
-        Svc.PluginInterface.GetIpcProvider<nint, byte[], object>("Moodles.SetStatusManagerByPtr").RegisterAction(SetStatusManager);
-        Svc.PluginInterface.GetIpcProvider<string, byte[], object>("Moodles.SetStatusManagerByName").RegisterAction(SetStatusManager);
+        Svc.PluginInterface.GetIpcProvider<PlayerCharacter, string, object>("Moodles.SetStatusManagerByPC").RegisterAction(SetStatusManager);
+        Svc.PluginInterface.GetIpcProvider<nint, string, object>("Moodles.SetStatusManagerByPtr").RegisterAction(SetStatusManager);
+        Svc.PluginInterface.GetIpcProvider<string, string, object>("Moodles.SetStatusManagerByName").RegisterAction(SetStatusManager);
 
         Svc.PluginInterface.GetIpcProvider<PlayerCharacter, object>("Moodles.ClearStatusManagerByPC").RegisterAction(ClearStatusManager);
         Svc.PluginInterface.GetIpcProvider<nint, object>("Moodles.ClearStatusManagerByPtr").RegisterAction(ClearStatusManager);
@@ -31,15 +31,17 @@ public class IPCProcessor : IDisposable
 
     public void Dispose()
     {
+        Svc.PluginInterface.GetIpcProvider<object>("Moodles.Unloading").SendMessage();
+
         Svc.PluginInterface.GetIpcProvider<int>("Moodles.Version").UnregisterFunc();
 
-        Svc.PluginInterface.GetIpcProvider<PlayerCharacter, byte[]>("Moodles.GetStatusManagerByPC").UnregisterFunc();
-        Svc.PluginInterface.GetIpcProvider<nint, byte[]>("Moodles.GetStatusManagerByPtr").UnregisterFunc();
-        Svc.PluginInterface.GetIpcProvider<string, byte[]>("Moodles.GetStatusManagerByName").UnregisterFunc();
+        Svc.PluginInterface.GetIpcProvider<PlayerCharacter, string>("Moodles.GetStatusManagerByPC").UnregisterFunc();
+        Svc.PluginInterface.GetIpcProvider<nint, string>("Moodles.GetStatusManagerByPtr").UnregisterFunc();
+        Svc.PluginInterface.GetIpcProvider<string, string>("Moodles.GetStatusManagerByName").UnregisterFunc();
 
-        Svc.PluginInterface.GetIpcProvider<PlayerCharacter, byte[], object>("Moodles.SetStatusManagerByPC").UnregisterAction();
-        Svc.PluginInterface.GetIpcProvider<nint, byte[], object>("Moodles.SetStatusManagerByPtr").UnregisterAction();
-        Svc.PluginInterface.GetIpcProvider<string, byte[], object>("Moodles.SetStatusManagerByName").UnregisterAction();
+        Svc.PluginInterface.GetIpcProvider<PlayerCharacter, string, object>("Moodles.SetStatusManagerByPC").UnregisterAction();
+        Svc.PluginInterface.GetIpcProvider<nint, string, object>("Moodles.SetStatusManagerByPtr").UnregisterAction();
+        Svc.PluginInterface.GetIpcProvider<string, string, object>("Moodles.SetStatusManagerByName").UnregisterAction();
 
         Svc.PluginInterface.GetIpcProvider<PlayerCharacter, object>("Moodles.ClearStatusManagerByPC").UnregisterAction();
         Svc.PluginInterface.GetIpcProvider<nint, object>("Moodles.ClearStatusManagerByPtr").UnregisterAction();
@@ -66,30 +68,30 @@ public class IPCProcessor : IDisposable
         }
     }
 
-    void SetStatusManager(string name, byte[] data)
+    void SetStatusManager(string name, string data)
     {
         var obj = Svc.Objects.FirstOrDefault(x => x is PlayerCharacter pc && pc.GetNameWithWorld() == name);
         obj ??= Svc.Objects.FirstOrDefault(x => x is PlayerCharacter pc && pc.Name.ToString() == name);
         if (obj == null) return;
         SetStatusManager((PlayerCharacter)obj, data);
     }
-    void SetStatusManager(nint ptr, byte[] data) => SetStatusManager((PlayerCharacter)Svc.Objects.CreateObjectReference(ptr), data);
-    void SetStatusManager(PlayerCharacter pc, byte[] data)
+    void SetStatusManager(nint ptr, string data) => SetStatusManager((PlayerCharacter)Svc.Objects.CreateObjectReference(ptr), data);
+    void SetStatusManager(PlayerCharacter pc, string data)
     {
-        pc.GetMyStatusManager().DeserializeAndApply(data);
+        pc.GetMyStatusManager().DeserializeAndApply(Convert.FromBase64String(data));
     }
 
-    byte[] GetStatusManager(string name)
+    string GetStatusManager(string name)
     {
         var obj = Svc.Objects.FirstOrDefault(x => x is PlayerCharacter pc && pc.GetNameWithWorld() == name);
         obj ??= Svc.Objects.FirstOrDefault(x => x is PlayerCharacter pc && pc.Name.ToString() == name);
         if (obj == null) return null;
         return GetStatusManager((PlayerCharacter)obj);
     }
-    byte[] GetStatusManager(nint ptr) => GetStatusManager((PlayerCharacter)Svc.Objects.CreateObjectReference(ptr));
-    byte[] GetStatusManager(PlayerCharacter pc)
+    string GetStatusManager(nint ptr) => GetStatusManager((PlayerCharacter)Svc.Objects.CreateObjectReference(ptr));
+    string GetStatusManager(PlayerCharacter pc)
     {
-        return pc.GetMyStatusManager().BinarySerialize();
+        return Convert.ToBase64String(pc.GetMyStatusManager().BinarySerialize());
     }
 
     public void FireStatusManagerChange(PlayerCharacter pc)

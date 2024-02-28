@@ -26,30 +26,27 @@ public class IPCTester : IDisposable
         {
             if (ImGui.Button("Copy (PC)"))
             {
-                Copy(Svc.PluginInterface.GetIpcSubscriber<PlayerCharacter, byte[]>("Moodles.GetStatusManagerByPC").InvokeFunc(pc).ToHexString());
+                Copy(Svc.PluginInterface.GetIpcSubscriber<PlayerCharacter, string>("Moodles.GetStatusManagerByPC").InvokeFunc(pc));
             }
             if (ImGui.Button("Copy (ptr)"))
             {
-                Copy(Svc.PluginInterface.GetIpcSubscriber<nint, byte[]>("Moodles.GetStatusManagerByPtr").InvokeFunc(pc.Address).ToHexString());
+                Copy(Svc.PluginInterface.GetIpcSubscriber<nint, string>("Moodles.GetStatusManagerByPtr").InvokeFunc(pc.Address));
             }
             if (ImGui.Button("Copy (name)"))
             {
-                Copy(Svc.PluginInterface.GetIpcSubscriber<string, byte[]>("Moodles.GetStatusManagerByName").InvokeFunc(pc.Name.ToString()).ToHexString());
+                Copy(Svc.PluginInterface.GetIpcSubscriber<string, string>("Moodles.GetStatusManagerByName").InvokeFunc(pc.Name.ToString()));
             }
             if (ImGui.Button("Apply (PC)"))
             {
-                TryParseByteArray(Paste(), out var array);
-                Svc.PluginInterface.GetIpcSubscriber<PlayerCharacter, byte[], object>("Moodles.SetStatusManagerByPC").InvokeAction(pc, array);
+                Svc.PluginInterface.GetIpcSubscriber<PlayerCharacter, string, object>("Moodles.SetStatusManagerByPC").InvokeAction(pc, Paste());
             }
             if (ImGui.Button("Apply (ptr)"))
             {
-                TryParseByteArray(Paste(), out var array);
-                Svc.PluginInterface.GetIpcSubscriber<nint, byte[], object>("Moodles.SetStatusManagerByPtr").InvokeAction(pc.Address, array);
+                Svc.PluginInterface.GetIpcSubscriber<nint, string, object>("Moodles.SetStatusManagerByPtr").InvokeAction(pc.Address, Paste());
             }
             if (ImGui.Button("Apply (name)"))
             {
-                TryParseByteArray(Paste(), out var array);
-                Svc.PluginInterface.GetIpcSubscriber<string, byte[], object>("Moodles.SetStatusManagerByName").InvokeAction(pc.Name.ToString(), array);
+                Svc.PluginInterface.GetIpcSubscriber<string, string, object>("Moodles.SetStatusManagerByName").InvokeAction(pc.Name.ToString(), Paste());
             }
             if (ImGui.Button("Clear (PC)"))
             {
