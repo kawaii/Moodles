@@ -280,7 +280,7 @@ public unsafe static class UI
                 ImGui.SameLine();
                 if (ImGui.Button("Apply bin") && TryParseByteArray(Paste(), out var a))
                 {
-                    manager.DeserializeAndApply(a);
+                    manager.Apply(a);
                 }
                 ImGui.Separator();
             }

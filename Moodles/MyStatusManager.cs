@@ -103,11 +103,29 @@ public class MyStatusManager
         return MemoryPackSerializer.Serialize(this.Statuses, SerializerOptions);
     }
 
-    public void DeserializeAndApply(byte[] data)
+    public string SerializeToBase64()
+    {
+        if (this.Statuses.Count == 0) return string.Empty;
+        return Convert.ToBase64String(BinarySerialize());
+    }
+
+    public void Apply(byte[] data) => SetStatuses(MemoryPackSerializer.Deserialize<List<MyStatus>>(data));
+    public void Apply(string base64string)
+    {
+        if (base64string.IsNullOrEmpty())
+        {
+            SetStatuses(Array.Empty<MyStatus>());
+        }
+        else
+        {
+            Apply(Convert.FromBase64String(base64string));
+        }
+    }
+
+    public void SetStatuses(IEnumerable<MyStatus> newStatusList)
     {
         try
         {
-            var newStatusList = MemoryPackSerializer.Deserialize<List<MyStatus>>(data);
             foreach(var x in this.Statuses)
             {
                 if(!newStatusList.Any(n => n.GUID == x.GUID))

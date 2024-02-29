@@ -78,7 +78,7 @@ public class IPCProcessor : IDisposable
     void SetStatusManager(nint ptr, string data) => SetStatusManager((PlayerCharacter)Svc.Objects.CreateObjectReference(ptr), data);
     void SetStatusManager(PlayerCharacter pc, string data)
     {
-        pc.GetMyStatusManager().DeserializeAndApply(Convert.FromBase64String(data));
+        pc.GetMyStatusManager().Apply(data);
     }
 
     string GetStatusManager(string name)
@@ -91,7 +91,7 @@ public class IPCProcessor : IDisposable
     string GetStatusManager(nint ptr) => GetStatusManager((PlayerCharacter)Svc.Objects.CreateObjectReference(ptr));
     string GetStatusManager(PlayerCharacter pc)
     {
-        return Convert.ToBase64String(pc.GetMyStatusManager().BinarySerialize());
+        return pc.GetMyStatusManager().SerializeToBase64();
     }
 
     public void FireStatusManagerChange(PlayerCharacter pc)
