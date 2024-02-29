@@ -45,11 +45,11 @@ public static class TabMoodles
             }
             if (ImGui.BeginTable("##moodles", 2, ImGuiTableFlags.Borders | ImGuiTableFlags.RowBg | ImGuiTableFlags.SizingStretchSame))
             {
-                ImGui.TableSetupColumn("Name", ImGuiTableColumnFlags.WidthFixed, 150f.Scale());
+                ImGui.TableSetupColumn("Name", ImGuiTableColumnFlags.WidthFixed, 175f.Scale());
                 ImGui.TableSetupColumn("Field", ImGuiTableColumnFlags.WidthStretch);
 
                 ImGui.TableNextColumn();
-                ImGuiEx.RightFloat("TitleCharLimit", () => ImGuiEx.TextV(ImGuiColors.DalamudGrey2, $"{Selected.Title.Length}/150"), out _, ImGui.GetContentRegionAvail().X + ImGui.GetCursorPosX() + ImGui.GetStyle().CellPadding.X);
+                ImGuiEx.RightFloat("TitleCharLimit", () => ImGuiEx.TextV(ImGuiColors.DalamudGrey2, $"{Selected.Title.Length}/150"), out _, ImGui.GetContentRegionAvail().X + ImGui.GetCursorPosX() + ImGui.GetStyle().CellPadding.X + 5);
                 ImGuiEx.TextV($"Title:");
                 Formatting();
                 {
@@ -80,7 +80,7 @@ public static class TabMoodles
                 if (ImGui.BeginCombo("##sel", $"Icon: #{Selected.IconID} {selinfo?.Name}", ImGuiComboFlags.HeightLargest))
                 {
                     var cursor = ImGui.GetCursorPos();
-                    ImGui.Dummy(new Vector2(100, ImGuiHelpers.MainViewport.Size.Y / 3));
+                    ImGui.Dummy(new Vector2(100, ImGuiHelpers.MainViewport.Size.Y * C.SelectorHeight / 100));
                     ImGui.SetCursorPos(cursor);
                     P.StatusSelector.Delegate = Selected;
                     P.StatusSelector.Draw();

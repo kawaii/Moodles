@@ -44,7 +44,7 @@ public class Moodles : IDalamudPlugin
             new EzFrameworkUpdate(Tick);
             new EzLogout(Logout);
             StatusSelector = new();
-            EzConfigGui.Window.SetMinSize(200, 200);
+            EzConfigGui.Window.SetMinSize(800, 500);
             CleanupStatusManagers();
             new EzTerritoryChanged((x) => CleanupStatusManagers());
             IPCProcessor = new();

@@ -219,6 +219,7 @@ public static unsafe partial class Utils
                 ClassJobCategory = data.ClassJobCategory.Value,
                 IsFCBuff = data.IsFcBuff,
                 IsStackable = data.MaxStacks > 1,
+                Description = data.Description.ExtractText(),
 
             };
             IconInfoCache[iconID] = info;

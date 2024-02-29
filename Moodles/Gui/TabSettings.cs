@@ -17,5 +17,7 @@ public static class TabSettings
         ImGuiEx.HelpMarker("Hides all active Moodles from players while you are in combat, regardless of Duty state.");
         ImGui.Checkbox($"Allow application of Automation Profiles on other player characters", ref C.AutoOther);
         ImGuiEx.HelpMarker("Automation Profiles are computationally expensive and therefore only apply to the local player (you) by default.");
+        ImGuiEx.SetNextItemWidthScaled(150f);
+        ImGuiEx.SliderInt($"Icon Selector Scale", ref C.SelectorHeight.ValidateRange(10, 100), 20, 80);
     }
 }

@@ -13,10 +13,11 @@ public class StatusSelector : Window
     List<Job> Jobs = [];
     string Filter = "";
     public List<uint> IconArray = [];
+    bool Fullscreen = false;
 
     bool Valid => Delegate != null && C.SavedStatuses.Contains(Delegate);
 
-    public StatusSelector() : base("Select icon")
+    public StatusSelector() : base("Select Icon")
     {
         this.SetMinSize();
         foreach (var x in Svc.Data.GetExcelSheet<Status>())
@@ -33,7 +34,7 @@ public class StatusSelector : Window
     {
         if (!Valid)
         {
-            ImGuiEx.Text(EColor.RedBright, "Edited status does not exists anymore. ");
+            ImGuiEx.Text(EColor.RedBright, "Edited status no longer seems to exist.");
         }
 
         var statusInfos = IconArray.Select(Utils.GetIconInfo).Where(x => x.HasValue).Cast<IconInfo>();
@@ -41,9 +42,11 @@ public class StatusSelector : Window
         ImGuiEx.SetNextItemWidthScaled(150f);
         ImGui.InputTextWithHint("##search", "Filter...", ref Filter, 50);
         ImGui.SameLine();
-        ImGuiEx.Checkbox("FC buffs", ref this.IsFCStatus);
+        ImGui.Checkbox("Prefill Data", ref C.AutoFill);
+        ImGuiEx.HelpMarker("Prefills the Title and Description inputs with data from the game itself regarding the icon. Requires those fields to be empty or unchanged from previous prefill data.");
         ImGui.SameLine();
         ImGuiEx.Checkbox("Stackable", ref this.IsStackable);
+        ImGuiEx.HelpMarker("Toggles the filter between all status effecs, those with stacks only, and those without any stacks at all.");
         ImGui.SameLine();
         ImGuiEx.Text("Class/Job:");
         ImGui.SameLine();
@@ -66,15 +69,22 @@ public class StatusSelector : Window
 
         if (ImGui.BeginChild("child"))
         {
-            if (ImGui.CollapsingHeader("Positive statuses"))
+            if(C.FavIcons.Count > 0)
+            {
+                if (ImGui.CollapsingHeader("Favourites"))
+                {
+                    DrawIconTable(statusInfos.Where(x => C.FavIcons.Contains(x.IconID)).OrderBy(x => x.IconID));
+                }
+            }
+            if (ImGui.CollapsingHeader("Positive Status Effects"))
             {
                 DrawIconTable(statusInfos.Where(x => x.Type == StatusType.Positive).OrderBy(x => x.IconID));
             }
-            if (ImGui.CollapsingHeader("Negative statuses"))
+            if (ImGui.CollapsingHeader("Negative Status Effects"))
             {
                 DrawIconTable(statusInfos.Where(x => x.Type == StatusType.Negative).OrderBy(x => x.IconID));
             }
-            if (ImGui.CollapsingHeader("Special statuses"))
+            if (ImGui.CollapsingHeader("Special Status Effects"))
             {
                 DrawIconTable(statusInfos.Where(x => x.Type == StatusType.Special).OrderBy(x => x.IconID));
             }
@@ -113,8 +123,23 @@ public class StatusSelector : Window
                     ImGuiEx.Tooltip($"{info.IconID}");
                     if (ImGui.RadioButton($"{info.Name}##{info.IconID}", Delegate.IconID == info.IconID))
                     {
+                        var oldInfo = Utils.GetIconInfo((uint)Delegate.IconID);
+                        if (C.AutoFill)
+                        {
+                            if (Delegate.Title.Length == 0 || Delegate.Title == oldInfo?.Name) Delegate.Title = info.Name;
+                            if (Delegate.Description.Length == 0 || Delegate.Description == oldInfo?.Description) Delegate.Description = info.Description;
+                        }
                         Delegate.IconID = (int)info.IconID;
                     }
+                    ImGui.SameLine();
+                    ImGui.PushFont(UiBuilder.IconFont);
+                    var col = C.FavIcons.Contains(info.IconID);
+                    ImGuiEx.Text(col ? ImGuiColors.ParsedGold : ImGuiColors.DalamudGrey3, "\uf005");
+                    if (ImGuiEx.HoveredAndClicked())
+                    {
+                        C.FavIcons.Toggle(info.IconID);
+                    }
+                    ImGui.PopFont();
                 }
             }
             ImGui.EndTable();

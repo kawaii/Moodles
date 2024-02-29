@@ -9,4 +9,5 @@ public struct IconInfo
     public bool IsStackable;
     public ClassJobCategory ClassJobCategory;
     public bool IsFCBuff;
+    public string Description;
 }
