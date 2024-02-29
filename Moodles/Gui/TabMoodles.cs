@@ -172,16 +172,16 @@ public static class TabMoodles
                 {
                     ImGui.SameLine();
                     ImGuiEx.SetNextItemWidthScaled(30);
-                    ImGui.DragInt("d,", ref Selected.Days, 0.1f, 0, 999);
+                    ImGui.DragInt("D", ref Selected.Days, 0.1f, 0, 999);
                     ImGui.SameLine();
                     ImGuiEx.SetNextItemWidthScaled(30);
-                    ImGui.DragInt(":##h", ref Selected.Hours, 0.1f, 0, 23);
+                    ImGui.DragInt("H##h", ref Selected.Hours, 0.1f, 0, 23);
                     ImGui.SameLine();
                     ImGuiEx.SetNextItemWidthScaled(30);
-                    ImGui.DragInt(":##m", ref Selected.Minutes, 0.1f, 0, 59);
+                    ImGui.DragInt("M##m", ref Selected.Minutes, 0.1f, 0, 59);
                     ImGui.SameLine();
                     ImGuiEx.SetNextItemWidthScaled(30);
-                    ImGui.DragInt("##s", ref Selected.Seconds, 0.1f, 0, 59);
+                    ImGui.DragInt("S##s", ref Selected.Seconds, 0.1f, 0, 59);
                 }
 
                 ImGui.TableNextRow();
