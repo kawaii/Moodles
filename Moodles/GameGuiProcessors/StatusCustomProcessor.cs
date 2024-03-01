@@ -20,6 +20,27 @@ public unsafe class StatusCustomProcessor : IDisposable
         Svc.AddonLifecycle.RegisterListener(AddonEvent.PostRequestedUpdate, "_StatusCustom0", OnStatusCustom0RequestedUpdate);
         Svc.AddonLifecycle.RegisterListener(AddonEvent.PostRequestedUpdate, "_StatusCustom1", OnStatusCustom1RequestedUpdate);
         Svc.AddonLifecycle.RegisterListener(AddonEvent.PostRequestedUpdate, "_StatusCustom2", OnStatusCustom2RequestedUpdate);
+        if (Player.Available)
+        {
+            {
+                if (TryGetAddonByName<AtkUnitBase>("_StatusCustom0", out var addon) && IsAddonReady(addon))
+                {
+                    this.OnStatusCustom0RequestedUpdate(AddonEvent.PostRequestedUpdate, new ArtificialAddonArgs(addon));
+                }
+            }
+            {
+                if (TryGetAddonByName<AtkUnitBase>("_StatusCustom1", out var addon) && IsAddonReady(addon))
+                {
+                    this.OnStatusCustom1RequestedUpdate(AddonEvent.PostRequestedUpdate, new ArtificialAddonArgs(addon));
+                }
+            }
+            {
+                if (TryGetAddonByName<AtkUnitBase>("_StatusCustom2", out var addon) && IsAddonReady(addon))
+                {
+                    this.OnStatusCustom2RequestedUpdate(AddonEvent.PostRequestedUpdate, new ArtificialAddonArgs(addon));
+                }
+            }
+        }
     }
 
     public void Dispose()

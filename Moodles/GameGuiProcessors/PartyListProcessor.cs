@@ -5,6 +5,7 @@ using ECommons.GameFunctions;
 using ECommons.GameHelpers;
 using FFXIVClientStructs.FFXIV.Component.GUI;
 using Moodles.Data;
+using Moodles.GameGuiProcessors;
 
 namespace Moodles.Processors;
 public unsafe class PartyListProcessor : IDisposable
@@ -14,6 +15,10 @@ public unsafe class PartyListProcessor : IDisposable
     {
         Svc.AddonLifecycle.RegisterListener(AddonEvent.PostUpdate, "_PartyList", OnPartyListUpdate);
         Svc.AddonLifecycle.RegisterListener(AddonEvent.PostRequestedUpdate, "_PartyList", OnPartyListRequestedUpdate);
+        if (Player.Available && TryGetAddonByName<AtkUnitBase>("_PartyList", out var addon) && IsAddonReady(addon))
+        {
+            this.OnPartyListRequestedUpdate(AddonEvent.PostRequestedUpdate, new ArtificialAddonArgs(addon));
+        }
     }
 
     public void Dispose()

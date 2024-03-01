@@ -81,6 +81,7 @@ public unsafe class CommonProcessor : IDisposable
 
     public void Dispose()
     {
+        this.HideAll();
         PartyListProcessor.Dispose();
         StatusCustomProcessor.Dispose();
         TargetInfoProcessor.Dispose();

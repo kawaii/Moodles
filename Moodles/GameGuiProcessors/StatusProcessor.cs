@@ -13,6 +13,10 @@ public unsafe class StatusProcessor : IDisposable
     {
         Svc.AddonLifecycle.RegisterListener(AddonEvent.PostUpdate, "_Status", OnStatusUpdate);
         Svc.AddonLifecycle.RegisterListener(AddonEvent.PostRequestedUpdate, "_Status", OnStatusRequestedUpdate);
+        if (Player.Available && TryGetAddonByName<AtkUnitBase>("_Status", out var addon) && IsAddonReady(addon))
+        {
+            this.OnStatusRequestedUpdate(AddonEvent.PostRequestedUpdate, new ArtificialAddonArgs(addon));
+        }
     }
 
     public void Dispose()

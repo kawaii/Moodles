@@ -39,10 +39,17 @@ public static class TabMoodles
                 Utils.GetMyStatusManager(Player.NameWithWorld).AddOrUpdate(Selected.PrepareToApply(AsPermanent ? PrepareOptions.Persistent : PrepareOptions.NoOption));
             }
             ImGui.SameLine();
-            if (ImGui.Button("Apply to Target") && Svc.Targets.Target is PlayerCharacter pc)
+            var dis = true;
+            if (Svc.Targets.Target is PlayerCharacter pc)
             {
-                Utils.GetMyStatusManager(pc.GetNameWithWorld()).AddOrUpdate(Selected.PrepareToApply(AsPermanent ? PrepareOptions.Persistent : PrepareOptions.NoOption));
+                dis = Utils.GetMyStatusManager(pc).Ephemeral;
             }
+            if (dis) ImGui.BeginDisabled();
+            if (ImGui.Button("Apply to Target"))
+            {
+                Utils.GetMyStatusManager(((PlayerCharacter)Svc.Targets.Target).GetNameWithWorld()).AddOrUpdate(Selected.PrepareToApply(AsPermanent ? PrepareOptions.Persistent : PrepareOptions.NoOption));
+            }
+            if (dis) ImGui.EndDisabled();
             if (ImGui.BeginTable("##moodles", 2, ImGuiTableFlags.Borders | ImGuiTableFlags.RowBg | ImGuiTableFlags.SizingStretchSame))
             {
                 ImGui.TableSetupColumn("Name", ImGuiTableColumnFlags.WidthFixed, 175f.Scale());
