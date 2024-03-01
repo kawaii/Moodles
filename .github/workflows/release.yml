@@ -80,7 +80,7 @@ jobs:
         run: |
           ver='${{ env.tag }}'
           path='./repo.json'
-          json=$(jq --arg ver "$ver" '(.AssemblyVersion, .TestingAssemblyVersion) = $ver | .[0].DownloadLinkInstall |= gsub("[^/]+/Moodles.zip"; $ver+"/Moodles.zip") | .[0].DownloadLinkTesting |= gsub("[^/]+/Moodles.zip"; $ver+"/Moodles.zip") | .[0].DownloadLinkUpdate |= gsub("[^/]+/Moodles.zip"; $ver+"/Moodles.zip")' "$path")
+          json=$(jq --arg ver "$ver" '.AssemblyVersion = $ver | .TestingAssemblyVersion = $ver | .DownloadLinks.Install = ($ver + "/Moodles.zip") | .DownloadLinks.Testing = ($ver + "/Moodles.zip") | .DownloadLinks.Update = ($ver + "/Moodles.zip")' "$path")
           echo "$json" > "$path"
 
       - name: Commit repo.json
