@@ -13,9 +13,9 @@ jobs:
         DALAMUD_HOME: /tmp/dalamud
     steps:
       - name: Checkout Repository
-        uses: actions/checkout@v2
+        uses: actions/checkout@v4
         with:
-          submodules: true
+          submodules: recursive
 
       - name: Get Tag Name
         run: echo "tag=$(echo ${{ github.ref }} | sed 's/refs\/tags\/v//')" >> $GITHUB_ENV
@@ -24,7 +24,7 @@ jobs:
         uses: actions/setup-dotnet@v3
         with:
           dotnet-version: 7.0.x
-          
+
       - name: Download Dalamud Latest
         run: |
           wget https://goatcorp.github.io/dalamud-distrib/latest.zip -O ${{ env.DALAMUD_HOME }}.zip
@@ -37,7 +37,7 @@ jobs:
         run: |
           ver='${{ env.tag }}'
           dotnet build --no-restore --configuration Release --nologo -p:Version=$ver -p:FileVersion=$ver -p:AssemblyVersion=$ver
-          
+
       - name: write version into jsons
         run: |
           ver='${{ env.tag }}'
@@ -47,13 +47,13 @@ jobs:
 
       - name: Archive
         run: zip -r Moodles.zip Moodles/bin/Release/*
-        
+
       - name: Upload a Build Artifact
         uses: actions/upload-artifact@v2.2.1
         with:
           path: |
             ./Moodles/bin/Release/*
-            
+
       - name: Create Release
         id: create_release
         uses: actions/create-release@v1
@@ -64,7 +64,7 @@ jobs:
           release_name: Moodles ${{ github.ref }}
           draft: false
           prerelease: false
-          
+
       - name: Upload Release Asset
         id: upload-release-asset
         uses: actions/upload-release-asset@v1
