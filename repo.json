@@ -13,6 +13,6 @@
     "DownloadLinks": {
         "DownloadLinkInstall": "https://github.com/kawaii/Moodles/releases/download/0.0.0.0/Moodles.zip",
         "DownloadLinkUpdate": "https://github.com/kawaii/Moodles/releases/download/0.0.0.0/Moodles.zip",
-        "DownloadLinkTesting": "https://github.com/kawaii/Moodles/releases/download/testing_0.0.0.0/Moodles.zip",
+        "DownloadLinkTesting": "https://github.com/kawaii/Moodles/releases/download/testing_0.0.0.0/Moodles.zip"
     }
 }
