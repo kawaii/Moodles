@@ -45,14 +45,11 @@ jobs:
           json=$(jq --arg ver "$ver" '.AssemblyVersion = $ver' "$path")
           echo "$json" > "$path"
 
-      - name: Archive
-        run: zip -r Moodles.zip Moodles/bin/Release/*
-
       - name: Upload a Build Artifact
         uses: actions/upload-artifact@v2.2.1
         with:
           path: |
-            ./Moodles/bin/Release/*
+            ./Moodles/bin/Release/Moodles/latest.zip
 
       - name: Create Release
         id: create_release
