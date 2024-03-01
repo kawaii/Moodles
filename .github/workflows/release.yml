@@ -41,9 +41,9 @@ jobs:
       - name: write version into jsons
         run: |
           ver='${{ env.tag }}'
-          path='./Moodles/bin/Release/Moodles.json'
-          json=$(jq --arg ver "$ver" '.AssemblyVersion = $ver' "$path")
-          echo "$json" > "$path"
+          manifest='./Moodles/bin/Release/Moodles.json'
+          json=$(jq --arg ver "$ver" '.AssemblyVersion = $ver' "$manifest")
+          echo "$json" > "$manifest"
 
       - name: Upload a Build Artifact
         uses: actions/upload-artifact@v2.2.1
@@ -76,9 +76,9 @@ jobs:
       - name: Write out repo.json
         run: |
           ver='${{ env.tag }}'
-          path='./repo.json'
-          jq --arg ver "$ver" '.[0].AssemblyVersion = $ver | .[0].TestingAssemblyVersion = $ver' $path > temp.json && mv temp.json $path
-          sed -i "s|[^/]\+/Moodles.zip|$ver/Moodles.zip|g" $path
+          repo='./repo.json'
+          jq --arg ver "$ver" '.[0].AssemblyVersion = $ver | .[0].TestingAssemblyVersion = $ver' $repo > temp.json && mv temp.json $repo
+          sed -i "s|[^/]\+/Moodles.zip|$ver/Moodles.zip|g" $repo
         shell: bash
 
       - name: Commit repo.json
