@@ -80,8 +80,9 @@ jobs:
         run: |
           ver='${{ env.tag }}'
           path='./repo.json'
-          json=$(jq --arg ver "$ver" '.AssemblyVersion = $ver | .TestingAssemblyVersion = $ver | .DownloadLinks.Install = ($ver + "/Moodles.zip") | .DownloadLinks.Testing = ($ver + "/Moodles.zip") | .DownloadLinks.Update = ($ver + "/Moodles.zip")' "$path")
-          echo "$json" > "$path"
+          json=$(jq '.[0].AssemblyVersion = "'$ver'" | .[0].TestingAssemblyVersion = "'$ver'" | .[0].DownloadLinkInstall |= sub("[^/]+/Moodles.zip"; "'$ver'/Moodles.zip") | .[0].DownloadLinkTesting |= sub("[^/]+/Moodles.zip"; "'$ver'/Moodles.zip") | .[0].DownloadLinkUpdate |= sub("[^/]+/Moodles.zip"; "'$ver'/Moodles.zip")' $path)
+          echo "$json" | jq '.' > $path
+        shell: bash
 
       - name: Commit repo.json
         run: |
@@ -91,5 +92,5 @@ jobs:
           git reset --hard ${{ github.sha }}
           git checkout main
           git add repo.json
-          git commit -m "[CI] Updating repo.json for ${{ github.ref_name }}" || true
+          git commit -m "[CI] Updating repo.json for ${{ env.tag }}" || true
           git push origin main
