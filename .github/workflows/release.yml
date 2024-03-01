@@ -78,9 +78,13 @@ jobs:
 
       - name: Write out repo.json
         run: |
-          ver='${{ env.tag }}'
+          ver='1.0.0.7'
           path='./repo.json'
-          json=$(jq '.[0].AssemblyVersion = "'$ver'" | .[0].TestingAssemblyVersion = "'$ver'" | .[0].DownloadLinkInstall |= sub("[^/]+/Moodles.zip"; "'$ver'/Moodles.zip") | .[0].DownloadLinkTesting |= sub("[^/]+/Moodles.zip"; "'$ver'/Moodles.zip") | .[0].DownloadLinkUpdate |= sub("[^/]+/Moodles.zip"; "'$ver'/Moodles.zip")' $path)
+          json=$(jq '.[0].AssemblyVersion = "'$ver'" | 
+            .[0].TestingAssemblyVersion = "'$ver'" | 
+            .[0].DownloadLinks.DownloadLinkInstall |= sub("[^/]+/Moodles.zip"; "'$ver'/Moodles.zip") | 
+            .[0].DownloadLinks.DownloadLinkTesting |= sub("[^/]+/Moodles.zip"; "'$ver'/Moodles.zip") | 
+            .[0].DownloadLinks.DownloadLinkUpdate |= sub("[^/]+/Moodles.zip"; "'$ver'/Moodles.zip")' $path)
           echo "$json" | jq '.' > $path
         shell: bash
 
