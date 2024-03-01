@@ -3,7 +3,7 @@ name: Create Release
 on:
   push:
     tags:
-      - "v*.*.*.*"
+      - "*.*.*.*"
   workflow_dispatch:
 
 jobs:
@@ -78,12 +78,12 @@ jobs:
 
       - name: Write out repo.json
         run: |
-          ver='1.0.0.7'
+          ver='${{ env.tag }}'
           path='./repo.json'
-          json=$(jq '.[0].AssemblyVersion = "'$ver'" | 
-            .[0].TestingAssemblyVersion = "'$ver'" | 
-            .[0].DownloadLinks.DownloadLinkInstall |= sub("[^/]+/Moodles.zip"; "'$ver'/Moodles.zip") | 
-            .[0].DownloadLinks.DownloadLinkTesting |= sub("[^/]+/Moodles.zip"; "'$ver'/Moodles.zip") | 
+          json=$(jq '.[0].AssemblyVersion = "'$ver'" |
+            .[0].TestingAssemblyVersion = "'$ver'" |
+            .[0].DownloadLinks.DownloadLinkInstall |= sub("[^/]+/Moodles.zip"; "'$ver'/Moodles.zip") |
+            .[0].DownloadLinks.DownloadLinkTesting |= sub("[^/]+/Moodles.zip"; "'$ver'/Moodles.zip") |
             .[0].DownloadLinks.DownloadLinkUpdate |= sub("[^/]+/Moodles.zip"; "'$ver'/Moodles.zip")' $path)
           echo "$json" | jq '.' > $path
         shell: bash
