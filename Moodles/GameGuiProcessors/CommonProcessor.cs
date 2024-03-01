@@ -6,6 +6,7 @@ using ECommons.GameHelpers;
 using ECommons.Interop;
 using ECommons.MathHelpers;
 using ECommons.Throttlers;
+using ECommons.UIHelpers;
 using FFXIVClientStructs.FFXIV.Client.Graphics;
 using FFXIVClientStructs.FFXIV.Component.GUI;
 using Lumina.Excel.GeneratedSheets;

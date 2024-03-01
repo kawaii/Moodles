@@ -52,12 +52,10 @@ public unsafe class PartyListProcessor : IDisposable
                 //InternalLog.Verbose($"  Now checking {index} for {player}");
                 if (player != null)
                 {
-                    //InternalLog.Verbose($"  Player is not null");
-                    for (int i = 5; i <= 14; i++)
+                    var iconArray = Utils.GetNodeIconArray(addon->UldManager.NodeList[index]);
+                    foreach(var x in iconArray)
                     {
-                        var c = addon->UldManager.NodeList[index]->GetAsAtkComponentNode()->Component->UldManager.NodeList[i];
-                        //InternalLog.Verbose($"  Checking {i}: visible={c->IsVisible}");
-                        if (c->IsVisible) NumStatuses[storeIndex]++;
+                        if(x->IsVisible) NumStatuses[storeIndex]++;
                     }
                 }
                 storeIndex++;
@@ -78,42 +76,36 @@ public unsafe class PartyListProcessor : IDisposable
         if (!P.CanModifyUI()) return;
         if (addon != null && IsAddonReady(addon))
         {
-            var index = 22;
+            var partyMemberNodeIndex = 22;
             var party = GetVisibleParty();
             for (int n = 0; n < party.Count; n++)
             {
                 var player = party[n];
                 if (player != null)
                 {
-                    int baseCnt;
-                    if (P.CommonProcessor.NewMethod)
+                    var iconArray = Utils.GetNodeIconArray(addon->UldManager.NodeList[partyMemberNodeIndex]);
+                    //InternalLog.Information($"Icon array length for {player} is {iconArray.Length}");
+                    for (int i = this.NumStatuses[n]; i < iconArray.Length; i++)
                     {
-                        baseCnt = NumStatuses[n] + 5;
-                    }
-                    else
-                    {
-                        baseCnt = player.StatusList.Count(x => x.StatusId != 0 && !P.CommonProcessor.SpecialStatuses.Contains(x.StatusId)) + 5;
-                    }
-                    for (int i = baseCnt; i <= 14; i++)
-                    {
-                        var c = addon->UldManager.NodeList[index]->GetAsAtkComponentNode()->Component->UldManager.NodeList[i];
+                        var c = iconArray[i];
                         if (c->IsVisible) c->NodeFlags ^= NodeFlags.Visible;
                     }
                     if (!hideAll)
                     {
-                        foreach (var x in player.GetMyStatusManager().Statuses)
+                        int curIndex = this.NumStatuses[n];
+                        foreach (var status in player.GetMyStatusManager().Statuses)
                         {
-                            if (x.Type == StatusType.Special) continue;
-                            if (baseCnt > 14) break;
-                            var rem = x.ExpiresAt - Utils.Time;
+                            if (status.Type == StatusType.Special) continue;
+                            if (curIndex >= iconArray.Length) break;
+                            var rem = status.ExpiresAt - Utils.Time;
                             if (rem > 0)
                             {
-                                SetIcon(addon, baseCnt, x, index);
-                                baseCnt++;
+                                SetIcon(addon, iconArray[curIndex], status);
+                                curIndex++;
                             }
                         }
                     }
-                    index--;
+                    partyMemberNodeIndex--;
                 }
             }
         }
@@ -144,9 +136,8 @@ public unsafe class PartyListProcessor : IDisposable
         }
     }
 
-    void SetIcon(AtkUnitBase* addon, int index, MyStatus status, int partyIndex)
+    void SetIcon(AtkUnitBase* addon, AtkResNode* container, MyStatus status)
     {
-        var container = addon->UldManager.NodeList[partyIndex]->GetAsAtkComponentNode()->Component->UldManager.NodeList[index];
         P.CommonProcessor.SetIcon(addon, container, status);
     }
 }

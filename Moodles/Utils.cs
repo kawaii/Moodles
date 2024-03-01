@@ -1,6 +1,7 @@
 ﻿using Dalamud.Game.ClientState.Objects.SubKinds;
 using Dalamud.Game.Text.SeStringHandling;
 using ECommons.GameHelpers;
+using FFXIVClientStructs.FFXIV.Component.GUI;
 using Moodles.Data;
 using System.Text.RegularExpressions;
 using Status = Lumina.Excel.GeneratedSheets.Status;
@@ -9,6 +10,28 @@ using UIColor = ECommons.ChatMethods.UIColor;
 namespace Moodles;
 public static unsafe partial class Utils
 {
+    public static AtkResNode*[] GetNodeIconArray(AtkResNode* node, bool reverse = false)
+    {
+        var lst = new List<nint>();
+        var uldm = node->GetAsAtkComponentNode()->Component->UldManager;
+        for (int i = 0; i < uldm.NodeListCount; i++)
+        {
+            var next = uldm.NodeList[i];
+            if (next == null) continue;
+            if ((int)next->Type < 1000) continue;
+            if (((AtkUldComponentInfo*)next->GetAsAtkComponentNode()->Component->UldManager.Objects)->ComponentType == ComponentType.IconText)
+            {
+                lst.Add((nint)next);
+            }
+        }
+        var ret = new AtkResNode*[lst.Count];
+        for (int i = 0; i < lst.Count; i++)
+        {
+            ret[i] = (AtkResNode*)lst[reverse ? lst.Count - 1 - i : i];
+        }
+        return ret;
+    }
+
     public static string PrintRange(this IEnumerable<string> s, out string FullList, string noneStr = "Any")
     {
         FullList = null;
