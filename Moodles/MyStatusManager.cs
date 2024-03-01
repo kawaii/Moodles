@@ -7,32 +7,23 @@ namespace Moodles;
 [Serializable]
 public class MyStatusManager
 {
-    static MemoryPackSerializerOptions SerializerOptions = new()
+    static readonly MemoryPackSerializerOptions SerializerOptions = new()
     {
         StringEncoding = StringEncoding.Utf16,
     };
     public HashSet<Guid> AddTextShown = [];
     public HashSet<Guid> RemTextShown = [];
     public List<MyStatus> Statuses = [];
+    public bool Ephemeral = false;
     [NonSerialized] internal bool NeedFireEvent = false;
 
     public void AddOrUpdate(MyStatus newStatus, bool Unchecked = false, bool triggerEvent = true)
     {
         if (!Unchecked)
         {
-            if (newStatus.IconID == 0)
+            if (!newStatus.IsValid(out var error))
             {
-                Notify.Error("Could not add status without icon");
-                return;
-            }
-            if (newStatus.Title.Length == 0)
-            {
-                Notify.Error("Could not add status without title");
-                return;
-            }
-            if (newStatus.TotalDurationSeconds < 1 && !newStatus.NoExpire)
-            {
-                Notify.Error("Could not add status without duration");
+                Notify.Error(error);
                 return;
             }
         }
@@ -109,12 +100,13 @@ public class MyStatusManager
         return Convert.ToBase64String(BinarySerialize());
     }
 
-    public void Apply(byte[] data) => SetStatuses(MemoryPackSerializer.Deserialize<List<MyStatus>>(data));
+    public void Apply(byte[] data) => SetStatusesAsEphemeral(MemoryPackSerializer.Deserialize<List<MyStatus>>(data));
+
     public void Apply(string base64string)
     {
         if (base64string.IsNullOrEmpty())
         {
-            SetStatuses(Array.Empty<MyStatus>());
+            SetStatusesAsEphemeral(Array.Empty<MyStatus>());
         }
         else
         {
@@ -122,7 +114,7 @@ public class MyStatusManager
         }
     }
 
-    public void SetStatuses(IEnumerable<MyStatus> newStatusList)
+    public void SetStatusesAsEphemeral(IEnumerable<MyStatus> newStatusList)
     {
         try
         {
@@ -140,6 +132,7 @@ public class MyStatusManager
                     this.AddOrUpdate(x, true, false);
                 }
             }
+            this.Ephemeral = true;
         }
         catch(Exception e)
         {

@@ -36,4 +36,41 @@ public partial class MyStatus
 
     internal uint AdjustedIconID => (uint)(this.IconID + this.Stacks - 1);
     internal long TotalDurationSeconds => this.Seconds * 1000 + this.Minutes * 1000 * 60 + this.Hours * 1000 * 60 * 60 + this.Days * 1000 * 60 * 60 * 24;
+
+    public bool IsValid(out string error)
+    {
+        if (this.IconID == 0)
+        {
+            error = ("Icon is not set");
+            return false;
+        }
+        if (this.Title.Length == 0)
+        {
+            error = ("Title is not set");
+            return false;
+        }
+        if (this.TotalDurationSeconds < 1 && !this.NoExpire)
+        {
+            error = ("Duration is not set");
+            return false;
+        }
+        {
+            Utils.ParseBBSeString(this.Title, out var parseError);
+            if (parseError != null)
+            {
+                error = $"Syntax error in title: {parseError}";
+                return false;
+            }
+        }
+        {
+            Utils.ParseBBSeString(this.Description, out var parseError);
+            if (parseError != null)
+            {
+                error = $"Syntax error in description: {parseError}";
+                return false;
+            }
+        }
+        error = null;
+        return true;
+    }
 }

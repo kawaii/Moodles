@@ -50,10 +50,17 @@ public static class TabPresets
                 Utils.GetMyStatusManager(Player.NameWithWorld).ApplyPreset(Selected);
             }
             ImGui.SameLine();
-            if (ImGui.Button("Apply to Target") && Svc.Targets.Target is PlayerCharacter pc)
+            var dis = true;
+            if(Svc.Targets.Target is PlayerCharacter pc)
             {
-                Utils.GetMyStatusManager(pc.GetNameWithWorld()).ApplyPreset(Selected);
+                dis = Utils.GetMyStatusManager(pc).Ephemeral;
             }
+            if (dis) ImGui.BeginDisabled();
+            if (ImGui.Button("Apply to Target"))
+            {
+                Utils.GetMyStatusManager(((PlayerCharacter)Svc.Targets.Target).GetNameWithWorld()).ApplyPreset(Selected);
+            }
+            if (dis) ImGui.EndDisabled();
 
             ImGuiEx.TextV("On application:");
             ImGui.SameLine();
@@ -66,6 +73,7 @@ public static class TabPresets
                 ImGui.InputTextWithHint("##search", "Filter", ref Filter, 50);
                 foreach (var x in C.SavedStatuses)
                 {
+                    if (!x.IsValid(out _)) continue;
                     if (!Selected.Statuses.Contains(x.GUID) && P.OtterGuiHandler.MoodleFileSystem.TryGetPathByID(x.GUID, out var path))
                     {
                         if (Filter == "" || path.Contains(Filter, StringComparison.OrdinalIgnoreCase))

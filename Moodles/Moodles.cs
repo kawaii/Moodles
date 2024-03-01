@@ -36,7 +36,7 @@ public class Moodles : IDalamudPlugin
         {
             Config = EzConfig.Init<Config>();
             EzConfigGui.Init(UI.Draw);
-            EzCmd.Add("/moodles", EzConfigGui.Open);
+            EzCmd.Add("/moodles", EzConfigGui.Open, "Open plugin interface");
             Memory = new();
             CommonProcessor = new();
             OtterGuiHandler = new();
@@ -123,6 +123,23 @@ public class Moodles : IDalamudPlugin
             }
         }
         if(C.AutoOther) TickOtherPlayerAutomation();
+        var toRem = new List<string>();
+        foreach(var m in C.StatusManagers)
+        {
+            if (m.Value.Ephemeral)
+            {
+                if(!Svc.Objects.Any(x => x is PlayerCharacter pc && pc.GetNameWithWorld() == m.Key))
+                {
+                    toRem.Add(m.Key);
+                }
+            }
+        }
+        foreach(var m in toRem)
+        {
+            PluginLog.Debug($"Removing ephemeral status manager for {m}");
+            C.StatusManagers.Remove(m);
+            SeenPlayers.RemoveAll(x => x.Name == m);
+        }
     }
 
     private void OnLogin()
@@ -146,12 +163,19 @@ public class Moodles : IDalamudPlugin
                 {
                     PluginLog.Debug($"Begin apply automation for {identifier}");
                     var mgr = Utils.GetMyStatusManager(name);
-                    foreach (var x in Utils.GetSuitableAutomation(pc))
+                    if (mgr.Ephemeral)
                     {
-                        if (C.SavedPresets.TryGetFirst(a => a.GUID == x.Preset, out var p))
+                        PluginLog.Debug($"Skipping automation for {identifier} because status manager is ephemeral");
+                    }
+                    else
+                    {
+                        foreach (var x in Utils.GetSuitableAutomation(pc))
                         {
-                            PluginLog.Debug($"  Applied preset {p.ID} / {p.Statuses.Select(z => C.SavedStatuses.FirstOrDefault(s => s.GUID == z)?.Title)}");
-                            mgr.ApplyPreset(p);
+                            if (C.SavedPresets.TryGetFirst(a => a.GUID == x.Preset, out var p))
+                            {
+                                PluginLog.Debug($"  Applied preset {p.ID} / {p.Statuses.Select(z => C.SavedStatuses.FirstOrDefault(s => s.GUID == z)?.Title)}");
+                                mgr.ApplyPreset(p);
+                            }
                         }
                     }
                 }

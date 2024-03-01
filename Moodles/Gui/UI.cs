@@ -31,8 +31,8 @@ public unsafe static class UI
             ("Presets", TabPresets.Draw, null, true),
             ("Automation", TabAutomation.Draw, null, true),
             ("Settings", TabSettings.Draw, null, true),
-            ("Debugger", DrawDebugger, ImGuiColors.DalamudGrey, true),
-            InternalLog.ImGuiTab(),
+            (C.Debug?"Debugger":null, DrawDebugger, ImGuiColors.DalamudGrey, true),
+            InternalLog.ImGuiTab(C.Debug),
             ]);
     }
 

@@ -4,6 +4,7 @@ using OtterGui;
 using OtterGui.Classes;
 using OtterGui.Filesystem;
 using OtterGui.FileSystem.Selector;
+using OtterGui.Raii;
 using System.IO;
 
 namespace Moodles.OtterGuiHandlers;
@@ -114,6 +115,12 @@ public sealed class PresetFileSystem : FileSystem<Preset>, IDisposable
 
         protected override uint CollapsedFolderColor => ImGuiColors.DalamudViolet.ToUint();
         protected override uint ExpandedFolderColor => CollapsedFolderColor;
+
+        protected override void DrawLeafName(Leaf leaf, in State state, bool selected)
+        {
+            var flag = selected ? ImGuiTreeNodeFlags.Selected | LeafFlags : LeafFlags;
+            using var _ = ImRaii.TreeNode(leaf.Name + $"                                                       ", flag);
+        }
 
         private void CopyToClipboardButton(Vector2 vector)
         {

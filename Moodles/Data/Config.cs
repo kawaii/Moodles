@@ -21,4 +21,6 @@ public class Config : IEzConfig
     public HashSet<uint> FavIcons = [];
     public bool AutoFill = false;
     public int SelectorHeight = 33;
+    public bool Debug = false;
+    public SortOption IconSortOption = SortOption.Numerical;
 }

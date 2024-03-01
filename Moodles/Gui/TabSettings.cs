@@ -19,5 +19,6 @@ public static class TabSettings
         ImGuiEx.HelpMarker("Automation Profiles are computationally expensive and therefore only apply to the local player (you) by default.");
         ImGuiEx.SetNextItemWidthScaled(150f);
         ImGuiEx.SliderInt($"Icon Selector Scale", ref C.SelectorHeight.ValidateRange(10, 100), 20, 80);
+        ImGui.Checkbox($"Debug Mode", ref C.Debug);
     }
 }

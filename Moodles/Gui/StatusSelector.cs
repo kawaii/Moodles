@@ -50,7 +50,7 @@ public class StatusSelector : Window
         ImGui.SameLine();
         ImGuiEx.Text("Class/Job:");
         ImGui.SameLine();
-        ImGuiEx.SetNextItemWidthScaled(150f);
+        ImGuiEx.SetNextItemWidthScaled(120f);
         if (ImGui.BeginCombo("##job", Jobs.Select(x => x.ToString().Replace("_", " ")).PrintRange(out var fullList)))
         {
             foreach (var cond in Enum.GetValues<Job>().Where(x => !x.IsUpgradeable()).OrderByDescending(x => Svc.Data.GetExcelSheet<ClassJob>().GetRow((uint)x).Role))
@@ -66,6 +66,11 @@ public class StatusSelector : Window
             }
             ImGui.EndCombo();
         }
+        ImGui.SameLine();
+        ImGuiEx.Text("Sorting:");
+        ImGui.SameLine();
+        ImGuiEx.SetNextItemWidthScaled(100f);
+        ImGuiEx.EnumCombo("##order", ref C.IconSortOption);
 
         if (ImGui.BeginChild("child"))
         {
@@ -99,6 +104,8 @@ public class StatusSelector : Window
             .Where(x => IsFCStatus == null || IsFCStatus == x.IsFCBuff)
             .Where(x => IsStackable == null || IsStackable == x.IsStackable)
             .Where(x => Jobs.Count == 0 || (Jobs.Any(j => x.ClassJobCategory.IsJobInCategory(j.GetUpgradedJob()) || x.ClassJobCategory.IsJobInCategory(j.GetDowngradedJob())) && x.ClassJobCategory.RowId > 1));
+        if (C.IconSortOption == SortOption.Alphabetical) infos = infos.OrderBy(x => x.Name);
+        if (C.IconSortOption == SortOption.Numerical) infos = infos.OrderBy(x => x.IconID);
         if (!infos.Any())
         {
             ImGuiEx.Text(EColor.RedBright, $"There are no elements that match filter conditions.");
