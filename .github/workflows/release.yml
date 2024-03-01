@@ -8,40 +8,49 @@ on:
 
 jobs:
   build:
-    runs-on: windows-latest
+    runs-on: ubuntu-latest
+    env:
+        DALAMUD_HOME: /tmp/dalamud
     steps:
-      - uses: actions/checkout@v2
+      - name: Checkout Repository
+        uses: actions/checkout@v4
         with:
-          submodules: recursive
-      - name: Setup .NET
-        uses: actions/setup-dotnet@v1
+          submodules: true
+
+      - name: Set up .NET
+        uses: actions/setup-dotnet@v3
         with:
-          dotnet-version: '7.x.x'
+          dotnet-version: 7.0.x
+          
+      - name: Download Dalamud Latest
+        run: |
+          wget https://goatcorp.github.io/dalamud-distrib/latest.zip -O ${{ env.DALAMUD_HOME }}.zip
+          unzip ${{ env.DALAMUD_HOME }}.zip -d ${{ env.DALAMUD_HOME }}
+
       - name: Restore dependencies
         run: dotnet restore
-      - name: Download Dalamud
-        run: |
-          Invoke-WebRequest -Uri https://goatcorp.github.io/dalamud-distrib/stg/latest.zip -OutFile latest.zip
-          Expand-Archive -Force latest.zip "$env:AppData\XIVLauncher\addon\Hooks\dev"
+
       - name: Build
         run: |
           $ver = '${{ github.ref_name }}'
           invoke-expression 'dotnet build --no-restore --configuration Release --nologo -p:Version=$ver -p:FileVersion=$ver -p:AssemblyVersion=$ver'
+          
       - name: write version into jsons
         run: |
-          $ver = '${{ github.ref_name }}'
-          $path = './Moodles/bin/Release/Moodles.json'
-          $json = Get-Content -Raw $path | ConvertFrom-Json
-          $json.AssemblyVersion = $ver
-          $content = $json | ConvertTo-Json
-          set-content -Path $path -Value $content
+          ver='${{ github.ref_name }}'
+          path='./Moodles/bin/Release/Moodles.json'
+          json=$(jq --arg ver "$ver" '.AssemblyVersion = $ver' "$path")
+          echo "$json" > "$path"
+
       - name: Archive
-        run: Compress-Archive -Path Moodles/bin/Release/* -DestinationPath Moodles.zip
+        run: zip -r Moodles.zip Moodles/bin/Release/*
+        
       - name: Upload a Build Artifact
         uses: actions/upload-artifact@v2.2.1
         with:
           path: |
             ./Moodles/bin/Release/*
+            
       - name: Create Release
         id: create_release
         uses: actions/create-release@v1
@@ -52,6 +61,7 @@ jobs:
           release_name: Moodles ${{ github.ref }}
           draft: false
           prerelease: false
+          
       - name: Upload Release Asset
         id: upload-release-asset
         uses: actions/upload-release-asset@v1
@@ -65,23 +75,17 @@ jobs:
 
       - name: Write out repo.json
         run: |
-          $ver = '${{ github.ref_name }}'
-          $path = './repo.json'
-          $json = Get-Content -Raw $path | ConvertFrom-Json
-          $json[0].AssemblyVersion = $ver
-          $json[0].TestingAssemblyVersion = $ver
-          $json[0].DownloadLinkInstall = $json.DownloadLinkInstall -replace '[^/]+/Moodles.zip',"$ver/Moodles.zip"
-          $json[0].DownloadLinkTesting = $json.DownloadLinkTesting -replace '[^/]+/Moodles.zip',"$ver/Moodles.zip"
-          $json[0].DownloadLinkUpdate = $json.DownloadLinkUpdate -replace '[^/]+/Moodles.zip',"$ver/Moodles.zip"
-          $content = $json | ConvertTo-Json -AsArray
-          set-content -Path $path -Value $content
+          ver='${{ github.ref_name }}'
+          path='./repo.json'
+          json=$(jq --arg ver "$ver" '(.AssemblyVersion, .TestingAssemblyVersion) = $ver | .[0].DownloadLinkInstall |= gsub("[^/]+/Moodles.zip"; $ver+"/Moodles.zip") | .[0].DownloadLinkTesting |= gsub("[^/]+/Moodles.zip"; $ver+"/Moodles.zip") | .[0].DownloadLinkUpdate |= gsub("[^/]+/Moodles.zip"; $ver+"/Moodles.zip")' "$path")
+          echo "$json" > "$path"
 
       - name: Commit repo.json
         run: |
           git config --global user.name "Actions User"
           git config --global user.email "actions@github.com"
           git fetch origin main
-          git branch -f main ${{ github.sha }}
+          git reset --hard ${{ github.sha }}
           git checkout main
           git add repo.json
           git commit -m "[CI] Updating repo.json for ${{ github.ref_name }}" || true
