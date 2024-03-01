@@ -8,4 +8,11 @@
     "RepoUrl": "https://github.com/kawaii/Moodles",
     "AcceptsFeedback": false,
     "DalamudApiLevel": 9
+    "AssemblyVersion": "your_version_here",
+    "TestingAssemblyVersion": "your_version_here",
+    "DownloadLinks": {
+        "Install": "your_version_here/Moodles.zip",
+        "Testing": "your_version_here/Moodles.zip",
+        "Update": "your_version_here/Moodles.zip"
+    }
 }
