@@ -1,18 +1,20 @@
-{
-    "Author": "kawaii",
-    "Name": "Moodles",
-    "InternalName": "Moodles",
-    "Description": "Design and apply your own status effects with custom formatting, durations, and other accoutrements.",
-    "ApplicableVersion": "any",
-    "Punchline": "Crippling depression now in the form of a debuff, kupo!",
-    "RepoUrl": "https://github.com/kawaii/Moodles",
-    "AcceptsFeedback": false,
-    "DalamudApiLevel": 9,
-    "AssemblyVersion": "0.0.0.0",
-    "TestingAssemblyVersion": "0.0.0.0",
-    "DownloadLinks": {
-        "DownloadLinkInstall": "https://github.com/kawaii/Moodles/releases/download/0.0.0.0/Moodles.zip",
-        "DownloadLinkUpdate": "https://github.com/kawaii/Moodles/releases/download/0.0.0.0/Moodles.zip",
-        "DownloadLinkTesting": "https://github.com/kawaii/Moodles/releases/download/testing_0.0.0.0/Moodles.zip"
+[
+    {
+        "Author": "kawaii",
+        "Name": "Moodles",
+        "InternalName": "Moodles",
+        "Description": "Design and apply your own status effects with custom formatting, durations, and other accoutrements.",
+        "ApplicableVersion": "any",
+        "Punchline": "Crippling depression now in the form of a debuff, kupo!",
+        "RepoUrl": "https://github.com/kawaii/Moodles",
+        "AcceptsFeedback": false,
+        "DalamudApiLevel": 9,
+        "AssemblyVersion": "0.0.0.0",
+        "TestingAssemblyVersion": "0.0.0.0",
+        "DownloadLinks": {
+            "DownloadLinkInstall": "https://github.com/kawaii/Moodles/releases/download/0.0.0.0/Moodles.zip",
+            "DownloadLinkUpdate": "https://github.com/kawaii/Moodles/releases/download/0.0.0.0/Moodles.zip",
+            "DownloadLinkTesting": "https://github.com/kawaii/Moodles/releases/download/testing_0.0.0.0/Moodles.zip"
+        }
     }
-}
+]
