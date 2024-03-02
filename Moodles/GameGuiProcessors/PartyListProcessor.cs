@@ -105,8 +105,8 @@ public unsafe class PartyListProcessor : IDisposable
                             }
                         }
                     }
-                    partyMemberNodeIndex--;
                 }
+                partyMemberNodeIndex--;
             }
         }
     }
