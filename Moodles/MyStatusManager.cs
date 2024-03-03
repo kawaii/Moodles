@@ -19,6 +19,11 @@ public class MyStatusManager
 
     public void AddOrUpdate(MyStatus newStatus, bool Unchecked = false, bool triggerEvent = true)
     {
+        if (!newStatus.IsNotNull())
+        {
+            PluginLog.Error($"Status {newStatus} was not added because it is null");
+            return;
+        }
         if (!Unchecked)
         {
             if (!newStatus.IsValid(out var error))

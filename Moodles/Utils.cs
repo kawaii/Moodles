@@ -10,6 +10,15 @@ using UIColor = ECommons.ChatMethods.UIColor;
 namespace Moodles;
 public static unsafe partial class Utils
 {
+    public static bool IsNotNull(this MyStatus status)
+    {
+        if (status == null) return false;
+        if (status.Applier == null) return false;
+        if (status.Description == null) return false;
+        if (status.Title == null) return false;
+        return true;
+    }
+
     public static AtkResNode*[] GetNodeIconArray(AtkResNode* node, bool reverse = false)
     {
         var lst = new List<nint>();
