@@ -22,6 +22,7 @@ public unsafe class CommonProcessor : IDisposable
     public TargetInfoProcessor TargetInfoProcessor;
     public FocusTargetInfoProcessor FocusTargetInfoProcessor;
     public StatusProcessor StatusProcessor;
+    public TargetInfoBuffDebuffProcessor TargetInfoBuffDebuffProcessor;
     public FlyPopupTextProcessor FlyPopupTextProcessor;
     public readonly HashSet<uint> NegativeStatuses = [];
     public readonly HashSet<uint> PositiveStatuses = [];
@@ -76,6 +77,7 @@ public unsafe class CommonProcessor : IDisposable
         TargetInfoProcessor = new();
         FocusTargetInfoProcessor = new();
         StatusProcessor = new();
+        TargetInfoBuffDebuffProcessor = new();
         TooltipMemory = Marshal.AllocHGlobal(2*1024);
         FlyPopupTextProcessor = new();
     }
@@ -88,6 +90,7 @@ public unsafe class CommonProcessor : IDisposable
         TargetInfoProcessor.Dispose();
         FocusTargetInfoProcessor.Dispose();
         StatusProcessor.Dispose();
+        TargetInfoBuffDebuffProcessor.Dispose();
         FlyPopupTextProcessor.Dispose();
         Marshal.FreeHGlobal(TooltipMemory);
     }
@@ -99,6 +102,7 @@ public unsafe class CommonProcessor : IDisposable
         this.FocusTargetInfoProcessor.HideAll();
         this.StatusCustomProcessor.HideAll();
         this.StatusProcessor.HideAll();
+        this.TargetInfoBuffDebuffProcessor.HideAll();
     }
 
     private void Tick()

@@ -183,8 +183,15 @@ public sealed class MoodleFileSystem : FileSystem<MyStatus> , IDisposable
                 try
                 {
                     var newStatus = EzConfig.DefaultSerializationFactory.Deserialize<MyStatus>(ClipboardText);
-                    FS.CreateLeaf(FS.Root, NewName, newStatus);
-                    C.SavedStatuses.Add(newStatus);
+                    if (newStatus.IsNotNull())
+                    {
+                        FS.CreateLeaf(FS.Root, NewName, newStatus);
+                        C.SavedStatuses.Add(newStatus);
+                    }
+                    else
+                    {
+                        Notify.Error($"Invalid clipboard data");
+                    }
                 }
                 catch (Exception e)
                 {
