@@ -4,6 +4,7 @@ using ECommons.GameHelpers;
 using FFXIVClientStructs.FFXIV.Component.GUI;
 using Dalamud.Game.ClientState.Objects.SubKinds;
 using Moodles.Data;
+using Dalamud.Game.ClientState.Objects.Types;
 
 namespace Moodles.GameGuiProcessors;
 public unsafe class TargetInfoProcessor
@@ -60,7 +61,8 @@ public unsafe class TargetInfoProcessor
 
     public void UpdateAddon(AtkUnitBase* addon, bool hideAll = false)
     {
-        if (Svc.Targets.Target is PlayerCharacter pc)
+        GameObject target = Svc.Targets.SoftTarget! ?? Svc.Targets.Target!;
+        if (target is PlayerCharacter pc)
         {
             if (addon != null && IsAddonReady(addon))
             {
