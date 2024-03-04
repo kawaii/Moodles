@@ -163,9 +163,9 @@ public class Moodles : IDalamudPlugin
                 {
                     PluginLog.Debug($"Begin apply automation for {identifier}");
                     var mgr = Utils.GetMyStatusManager(name);
-                    if (mgr.Ephemeral)
+                    if (mgr.Ephemeral || Utils.GetMarePlayers().Contains(pc.Address))
                     {
-                        PluginLog.Debug($"Skipping automation for {identifier} because status manager is ephemeral");
+                        PluginLog.Debug($"Skipping automation for {identifier} because status manager is controlled by an external plugin");
                     }
                     else
                     {

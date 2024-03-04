@@ -153,7 +153,7 @@ public sealed class MoodleFileSystem : FileSystem<MyStatus> , IDisposable
 
         private void DeleteButton(Vector2 vector)
         {
-            DeleteSelectionButton(vector, DoubleModifier.NoKey, "moodle", "moodles", FS.DoDelete);
+            DeleteSelectionButton(vector, new DoubleModifier(ModifierHotkey.Control), "moodle", "moodles", FS.DoDelete);
         }
 
         private void NewMoodleButton(Vector2 size)

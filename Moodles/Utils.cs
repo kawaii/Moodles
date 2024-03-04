@@ -10,6 +10,19 @@ using UIColor = ECommons.ChatMethods.UIColor;
 namespace Moodles;
 public static unsafe partial class Utils
 {
+    public static List<nint> GetMarePlayers()
+    {
+        try
+        {
+            return Svc.PluginInterface.GetIpcSubscriber<List<nint>>("MareSynchronos.GetHandledAddresses").InvokeFunc();
+        }
+        catch(Exception ex)
+        {
+            //
+        }
+        return [];
+    }
+
     public static bool IsNotNull(this MyStatus status)
     {
         if (status == null) return false;

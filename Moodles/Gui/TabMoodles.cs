@@ -21,7 +21,6 @@ public static class TabMoodles
         DrawSelected();
     }
 
-
     private static void DrawHeader()
     {
         HeaderDrawer.Draw(P.OtterGuiHandler.MoodleFileSystem.FindLeaf(Selected, out var l) ? l.FullName() : "", 0, ImGui.GetColorU32(ImGuiCol.FrameBg), 0, HeaderDrawer.Button.IncognitoButton(C.Censor, v => C.Censor = v));
@@ -47,7 +46,15 @@ public static class TabMoodles
             if (dis) ImGui.BeginDisabled();
             if (ImGui.Button("Apply to Target"))
             {
-                Utils.GetMyStatusManager(((PlayerCharacter)Svc.Targets.Target).GetNameWithWorld()).AddOrUpdate(Selected.PrepareToApply(AsPermanent ? PrepareOptions.Persistent : PrepareOptions.NoOption));
+                var target = (PlayerCharacter)Svc.Targets.Target;
+                if (!Utils.GetMarePlayers().Contains(target.Address))
+                {
+                    Utils.GetMyStatusManager(target.GetNameWithWorld()).AddOrUpdate(Selected.PrepareToApply(AsPermanent ? PrepareOptions.Persistent : PrepareOptions.NoOption));
+                }
+                else
+                {
+                    Notify.Error($"Application target is controlled by an external plugin, can not apply.");
+                }
             }
             if (dis) ImGui.EndDisabled();
             if (ImGui.BeginTable("##moodles", 2, ImGuiTableFlags.Borders | ImGuiTableFlags.RowBg | ImGuiTableFlags.SizingStretchSame))

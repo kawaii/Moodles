@@ -58,7 +58,15 @@ public static class TabPresets
             if (dis) ImGui.BeginDisabled();
             if (ImGui.Button("Apply to Target"))
             {
-                Utils.GetMyStatusManager(((PlayerCharacter)Svc.Targets.Target).GetNameWithWorld()).ApplyPreset(Selected);
+                var target = (PlayerCharacter)Svc.Targets.Target;
+                if (!Utils.GetMarePlayers().Contains(target.Address))
+                {
+                    Utils.GetMyStatusManager(target.GetNameWithWorld()).ApplyPreset(Selected);
+                }
+                else
+                {
+                    Notify.Error($"Application target is controlled by an external plugin, can not apply.");
+                }
             }
             if (dis) ImGui.EndDisabled();
 

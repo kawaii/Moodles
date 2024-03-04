@@ -153,7 +153,7 @@ public sealed class PresetFileSystem : FileSystem<Preset>, IDisposable
 
         private void DeleteButton(Vector2 vector)
         {
-            DeleteSelectionButton(vector, DoubleModifier.NoKey, "preset", "presets", FS.DoDelete);
+            DeleteSelectionButton(vector, new DoubleModifier(ModifierHotkey.Control), "preset", "presets", FS.DoDelete);
         }
 
         private void NewItem(Vector2 size)

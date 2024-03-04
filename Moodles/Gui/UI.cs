@@ -1,9 +1,13 @@
 ﻿using Dalamud.Game.ClientState.Objects.SubKinds;
 using Dalamud.Game.Gui.FlyText;
+using ECommons.Configuration;
+using ECommons.GameFunctions;
 using ECommons.GameHelpers;
+using ECommons.Throttlers;
 using FFXIVClientStructs.FFXIV.Client.Game.Object;
 using Lumina.Excel.GeneratedSheets;
 using Moodles.Data;
+using Moodles.VfxManager;
 using System.IO;
 
 namespace Moodles.Gui;
@@ -26,6 +30,7 @@ public unsafe static class UI
 
     public static void Draw()
     {
+        if (EzThrottler.Throttle("PeriodicConfigSave", 30 * 1000)) EzConfig.Save();
         ImGuiEx.EzTabBar("##main", [
             ("Moodles", TabMoodles.Draw, null, true),
             ("Presets", TabPresets.Draw, null, true),
@@ -38,6 +43,18 @@ public unsafe static class UI
 
     public static void DrawDebugger()
     {
+        if (ImGui.CollapsingHeader("VFX"))
+        {
+            if (Svc.Targets.Target is PlayerCharacter pc)
+            {
+                if (ImGui.Button("Spawn"))
+                {
+                    VfxSpawn.SpawnOn(pc, "vfx/common/eff/dk04ht_canc0h.avfx");
+                }
+                if (ImGui.Button("Disable draw")) pc.Struct()->Character.GameObject.DisableDraw();
+                if (ImGui.Button("Enable draw")) pc.Struct()->Character.GameObject.EnableDraw();
+            }
+        }
         if (ImGui.CollapsingHeader("IPC"))
         {
             P.IPCTester.Draw();
