@@ -176,7 +176,7 @@ public unsafe class CommonProcessor : IDisposable
                 statusManager.Value.NeedFireEvent = false;
                 if (Svc.Objects.TryGetFirst(x => x is PlayerCharacter pc && pc.GetNameWithWorld() == statusManager.Key, out var pc))
                 {
-                    P.IPCProcessor.FireStatusManagerChange((PlayerCharacter)pc);
+                    P.IPCProcessor.StatusManagerModified((PlayerCharacter)pc);
                 }
             }
         }
@@ -282,7 +282,7 @@ public unsafe class CommonProcessor : IDisposable
             if (name.StartsWith("_StatusCustom") || name == "_Status")
             {
                 status.ExpiresAt = 0;
-                P.IPCProcessor.FireStatusManagerChange(Player.Object);
+                P.IPCProcessor.StatusManagerModified(Player.Object);
             }
         }
     }

@@ -1,4 +1,5 @@
 ﻿using Dalamud.Game.ClientState.Objects.SubKinds;
+using ECommons.EzIpcManager;
 using ECommons.GameHelpers;
 using FFXIVClientStructs.FFXIV.Client.UI.Misc;
 using FFXIVClientStructs.FFXIV.Client.UI.Shell;
@@ -38,22 +39,42 @@ public static class TabMoodles
                 Utils.GetMyStatusManager(Player.NameWithWorld).AddOrUpdate(Selected.PrepareToApply(AsPermanent ? PrepareOptions.Persistent : PrepareOptions.NoOption));
             }
             ImGui.SameLine();
-            var dis = true;
-            if (Svc.Targets.Target is PlayerCharacter pc)
-            {
-                dis = Utils.GetMyStatusManager(pc).Ephemeral;
-            }
+            var dis = Svc.Targets.Target is not PlayerCharacter;
             if (dis) ImGui.BeginDisabled();
-            if (ImGui.Button("Apply to Target"))
+            var isMare = Utils.GetMarePlayers().Contains(Svc.Targets.Target?.Address ?? -1);
+            if (ImGui.Button($"Apply to Target ({(isMare?"via Mare Synchronos":"Locally")})"))
             {
-                var target = (PlayerCharacter)Svc.Targets.Target;
-                if (!Utils.GetMarePlayers().Contains(target.Address))
+                try
                 {
-                    Utils.GetMyStatusManager(target.GetNameWithWorld()).AddOrUpdate(Selected.PrepareToApply(AsPermanent ? PrepareOptions.Persistent : PrepareOptions.NoOption));
+                    var target = (PlayerCharacter)Svc.Targets.Target;
+                    if (!isMare)
+                    {
+                        Utils.GetMyStatusManager(target.GetNameWithWorld()).AddOrUpdate(Selected.PrepareToApply(AsPermanent ? PrepareOptions.Persistent : PrepareOptions.NoOption));
+                    }
+                    else
+                    {
+                        var preparedStatus = Selected.PrepareToApply(AsPermanent ? PrepareOptions.Persistent : PrepareOptions.NoOption);
+                        if (!preparedStatus.IsValid(out var error))
+                        {
+                            Notify.Error($"Could not apply status: {error}");
+                        }
+                        else
+                        {
+                            var message = new IncomingMessage(Player.NameWithWorld, target.GetNameWithWorld(), [preparedStatus]);
+                            if (P.IPCProcessor.BroadcastMareMessage.TryInvoke(Convert.ToBase64String(message.Serialize())))
+                            {
+                                Notify.Info($"Broadcast success");
+                            }
+                            else
+                            {
+                                Notify.Error("Broadcast failed");
+                            }
+                        }
+                    }
                 }
-                else
+                catch(Exception e)
                 {
-                    Notify.Error($"Application target is controlled by an external plugin, can not apply.");
+                    e.Log();
                 }
             }
             if (dis) ImGui.EndDisabled();

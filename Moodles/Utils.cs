@@ -1,5 +1,6 @@
 ﻿using Dalamud.Game.ClientState.Objects.SubKinds;
 using Dalamud.Game.Text.SeStringHandling;
+using ECommons.EzIpcManager;
 using ECommons.GameHelpers;
 using FFXIVClientStructs.FFXIV.Component.GUI;
 using Moodles.Data;
@@ -12,13 +13,9 @@ public static unsafe partial class Utils
 {
     public static List<nint> GetMarePlayers()
     {
-        try
+        if(P.IPCProcessor.GetMarePlayers.TryInvoke(out var ret))
         {
-            return Svc.PluginInterface.GetIpcSubscriber<List<nint>>("MareSynchronos.GetHandledAddresses").InvokeFunc();
-        }
-        catch(Exception ex)
-        {
-            //
+            return ret;
         }
         return [];
     }

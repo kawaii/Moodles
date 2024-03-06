@@ -5,70 +5,79 @@ using System.Linq;
 using System.Text;
 using ECommons;
 using System.Threading.Tasks;
+using ECommons.EzIpcManager;
+using ECommons.GameHelpers;
 
 namespace Moodles;
-public class IPCTester : IDisposable
+public class IPCTester
 {
+    [EzIPC] readonly Func<int> Version;
+    [EzIPC] readonly Func<PlayerCharacter, string> GetStatusManagerByPC;
+    [EzIPC] readonly Func<nint, string> GetStatusManagerByPtr;
+    [EzIPC] readonly Func<string, string> GetStatusManagerByName;
+    [EzIPC] readonly Action<PlayerCharacter, string> SetStatusManagerByPC;
+    [EzIPC] readonly Action<nint, string> SetStatusManagerByPtr;
+    [EzIPC] readonly Action<string, string> SetStatusManagerByName;
+    [EzIPC] readonly Action<PlayerCharacter> ClearStatusManagerByPC;
+    [EzIPC] readonly Action<nint> ClearStatusManagerByPtr;
+    [EzIPC] readonly Action<string> ClearStatusManagerByName;
+
     public IPCTester()
     {
-        Svc.PluginInterface.GetIpcSubscriber<PlayerCharacter, object>("Moodles.StatusManagerModified").Subscribe(OnStatusManagerModified);
+        EzIPC.Init(this, "Moodles");
     }
 
-    private void OnStatusManagerModified(PlayerCharacter character)
+    [EzIPCEvent]
+    private void StatusManagerModified(PlayerCharacter character)
     {
         PluginLog.Debug($"IPC test: status manager modified {character}");
     }
 
     public void Draw()
     {
-        ImGuiEx.Text($"Version: {Svc.PluginInterface.GetIpcSubscriber<int>("Moodles.Version").InvokeFunc()}");
+        ImGuiEx.Text($"Version: {Version()}");
         if (Svc.Targets.Target is PlayerCharacter pc)
         {
             if (ImGui.Button("Copy (PC)"))
             {
-                Copy(Svc.PluginInterface.GetIpcSubscriber<PlayerCharacter, string>("Moodles.GetStatusManagerByPC").InvokeFunc(pc));
+                Copy(GetStatusManagerByPC(pc));
             }
             if (ImGui.Button("Copy (ptr)"))
             {
-                Copy(Svc.PluginInterface.GetIpcSubscriber<nint, string>("Moodles.GetStatusManagerByPtr").InvokeFunc(pc.Address));
+                Copy(GetStatusManagerByPtr(pc.Address));
             }
             if (ImGui.Button("Copy (name)"))
             {
-                Copy(Svc.PluginInterface.GetIpcSubscriber<string, string>("Moodles.GetStatusManagerByName").InvokeFunc(pc.Name.ToString()));
+                Copy(GetStatusManagerByName(pc.Name.ToString()));
             }
             if (ImGui.Button("Apply (PC)"))
             {
-                Svc.PluginInterface.GetIpcSubscriber<PlayerCharacter, string, object>("Moodles.SetStatusManagerByPC").InvokeAction(pc, Paste());
+                SetStatusManagerByPC(pc, Paste());
             }
             if (ImGui.Button("Apply (ptr)"))
             {
-                Svc.PluginInterface.GetIpcSubscriber<nint, string, object>("Moodles.SetStatusManagerByPtr").InvokeAction(pc.Address, Paste());
+                SetStatusManagerByPtr(pc.Address, Paste());
             }
             if (ImGui.Button("Apply (name)"))
             {
-                Svc.PluginInterface.GetIpcSubscriber<string, string, object>("Moodles.SetStatusManagerByName").InvokeAction(pc.Name.ToString(), Paste());
+                SetStatusManagerByName(pc.Name.ToString(), Paste());
             }
             if (ImGui.Button("Clear (PC)"))
             {
-                Svc.PluginInterface.GetIpcSubscriber<PlayerCharacter, object>("Moodles.ClearStatusManagerByPC").InvokeAction(pc);
+                ClearStatusManagerByPC(pc);
             }
             if (ImGui.Button("Clear (ptr)"))
             {
-                Svc.PluginInterface.GetIpcSubscriber<nint, object>("Moodles.ClearStatusManagerByPtr").InvokeAction(pc.Address);
+                ClearStatusManagerByPtr(pc.Address);
             }
             if (ImGui.Button("Clear (name)"))
             {
-                Svc.PluginInterface.GetIpcSubscriber<string, object>("Moodles.ClearStatusManagerByName").InvokeAction(pc.Name.ToString());
+                ClearStatusManagerByName(pc.Name.ToString());
             }
         }
         else
         {
             ImGuiEx.Text($"Target a player");
         }
-    }
-
-    public void Dispose()
-    {
-        Svc.PluginInterface.GetIpcSubscriber<PlayerCharacter, object>("Moodles.StatusManagerModified").Unsubscribe(OnStatusManagerModified);
     }
 }

@@ -206,7 +206,6 @@ public class Moodles : IDalamudPlugin
         Safe(() => CommonProcessor?.Dispose());
         Safe(() => VfxSpawn.Remove());
         Safe(() => IPCProcessor?.Dispose());
-        Safe(() => IPCTester?.Dispose());
         P = null;
         ECommonsMain.Dispose();
     }

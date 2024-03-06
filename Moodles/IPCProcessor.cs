@@ -1,6 +1,9 @@
 ﻿using Dalamud.Game.ClientState.Objects.SubKinds;
 using Dalamud.Game.ClientState.Objects.Types;
+using ECommons.EzIpcManager;
 using ECommons.GameHelpers;
+using FFXIVClientStructs.FFXIV.Client.UI.Misc;
+using Moodles.Data;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -10,46 +13,46 @@ using System.Threading.Tasks;
 namespace Moodles;
 public class IPCProcessor : IDisposable
 {
+    [EzIPCEvent] readonly Action Ready;
+    [EzIPCEvent] readonly Action Unloading;
+    [EzIPCEvent] public readonly Action<PlayerCharacter> StatusManagerModified;
+    [EzIPC("MareSynchronos.GetHandledAddresses", false)] public readonly Func<List<nint>> GetMarePlayers;
+    [EzIPC("MareSynchronos.BroadcastMessage", false)] public readonly Action<string> BroadcastMareMessage;
+
     public IPCProcessor()
     {
-        Svc.PluginInterface.GetIpcProvider<int>("Moodles.Version").RegisterFunc(() => 1);
-
-        Svc.PluginInterface.GetIpcProvider<PlayerCharacter, string>("Moodles.GetStatusManagerByPC").RegisterFunc(GetStatusManager);
-        Svc.PluginInterface.GetIpcProvider<nint, string>("Moodles.GetStatusManagerByPtr").RegisterFunc(GetStatusManager);
-        Svc.PluginInterface.GetIpcProvider<string, string>("Moodles.GetStatusManagerByName").RegisterFunc(GetStatusManager);
-
-        Svc.PluginInterface.GetIpcProvider<string>("Moodles.GetStatusManagerLP").RegisterFunc(() => GetStatusManager(Player.Object));
-        Svc.PluginInterface.GetIpcProvider<PlayerCharacter, string, object>("Moodles.SetStatusManagerByPC").RegisterAction(SetStatusManager);
-        Svc.PluginInterface.GetIpcProvider<nint, string, object>("Moodles.SetStatusManagerByPtr").RegisterAction(SetStatusManager);
-        Svc.PluginInterface.GetIpcProvider<string, string, object>("Moodles.SetStatusManagerByName").RegisterAction(SetStatusManager);
-
-        Svc.PluginInterface.GetIpcProvider<PlayerCharacter, object>("Moodles.ClearStatusManagerByPC").RegisterAction(ClearStatusManager);
-        Svc.PluginInterface.GetIpcProvider<nint, object>("Moodles.ClearStatusManagerByPtr").RegisterAction(ClearStatusManager);
-        Svc.PluginInterface.GetIpcProvider<string, object>("Moodles.ClearStatusManagerByName").RegisterAction(ClearStatusManager);
-
-        Svc.PluginInterface.GetIpcProvider<object>("Moodles.Ready").SendMessage();
+        EzIPC.Init(this);
+        Ready();
     }
 
     public void Dispose()
     {
-        Svc.PluginInterface.GetIpcProvider<object>("Moodles.Unloading").SendMessage();
-
-        Svc.PluginInterface.GetIpcProvider<int>("Moodles.Version").UnregisterFunc();
-
-        Svc.PluginInterface.GetIpcProvider<string>("Moodles.GetStatusManagerLP").UnregisterFunc();
-        Svc.PluginInterface.GetIpcProvider<PlayerCharacter, string>("Moodles.GetStatusManagerByPC").UnregisterFunc();
-        Svc.PluginInterface.GetIpcProvider<nint, string>("Moodles.GetStatusManagerByPtr").UnregisterFunc();
-        Svc.PluginInterface.GetIpcProvider<string, string>("Moodles.GetStatusManagerByName").UnregisterFunc();
-
-        Svc.PluginInterface.GetIpcProvider<PlayerCharacter, string, object>("Moodles.SetStatusManagerByPC").UnregisterAction();
-        Svc.PluginInterface.GetIpcProvider<nint, string, object>("Moodles.SetStatusManagerByPtr").UnregisterAction();
-        Svc.PluginInterface.GetIpcProvider<string, string, object>("Moodles.SetStatusManagerByName").UnregisterAction();
-
-        Svc.PluginInterface.GetIpcProvider<PlayerCharacter, object>("Moodles.ClearStatusManagerByPC").UnregisterAction();
-        Svc.PluginInterface.GetIpcProvider<nint, object>("Moodles.ClearStatusManagerByPtr").UnregisterAction();
-        Svc.PluginInterface.GetIpcProvider<string, object>("Moodles.ClearStatusManagerByName").UnregisterAction();
+        Unloading();
     }
 
+    [EzIPC]
+    void AcceptMessage(string serMessage)
+    {
+        if(IncomingMessage.TryDeserialize(Convert.FromBase64String(serMessage), out var message))
+        {
+            if(message.To == Player.NameWithWorld)
+            {
+                var sm = Utils.GetMyStatusManager(Player.Object);
+                foreach(var x in message.ApplyStatuses)
+                {
+                    sm.AddOrUpdate(x, false, true);
+                }
+            }
+        }
+    }
+
+    [EzIPC]
+    int Version()
+    {
+        return 1;
+    }
+
+    [EzIPC("ClearStatusManagerByName")]
     void ClearStatusManager(string name)
     {
         var obj = Svc.Objects.FirstOrDefault(x => x is PlayerCharacter pc && pc.GetNameWithWorld() == name);
@@ -57,7 +60,11 @@ public class IPCProcessor : IDisposable
         if (obj == null) return;
         ClearStatusManager((PlayerCharacter)obj);
     }
+
+    [EzIPC("ClearStatusManagerByPtr")]
     void ClearStatusManager(nint ptr) => ClearStatusManager((PlayerCharacter)Svc.Objects.CreateObjectReference(ptr));
+
+    [EzIPC("ClearStatusManagerByPC")]
     void ClearStatusManager(PlayerCharacter pc)
     {
         var m = pc.GetMyStatusManager();
@@ -71,6 +78,7 @@ public class IPCProcessor : IDisposable
         m.Ephemeral = false;
     }
 
+    [EzIPC("SetStatusManagerByName")]
     void SetStatusManager(string name, string data)
     {
         var obj = Svc.Objects.FirstOrDefault(x => x is PlayerCharacter pc && pc.GetNameWithWorld() == name);
@@ -78,12 +86,20 @@ public class IPCProcessor : IDisposable
         if (obj == null) return;
         SetStatusManager((PlayerCharacter)obj, data);
     }
+
+    [EzIPC("SetStatusManagerByPtr")]
     void SetStatusManager(nint ptr, string data) => SetStatusManager((PlayerCharacter)Svc.Objects.CreateObjectReference(ptr), data);
+
+    [EzIPC("SetStatusManagerByPC")]
     void SetStatusManager(PlayerCharacter pc, string data)
     {
         pc.GetMyStatusManager().Apply(data);
     }
 
+    [EzIPC("GetStatusManagerLP")]
+    string GetStatusManager() => GetStatusManager(Player.Object);
+
+    [EzIPC("GetStatusManagerByName")]
     string GetStatusManager(string name)
     {
         var obj = Svc.Objects.FirstOrDefault(x => x is PlayerCharacter pc && pc.GetNameWithWorld() == name);
@@ -91,15 +107,14 @@ public class IPCProcessor : IDisposable
         if (obj == null) return null;
         return GetStatusManager((PlayerCharacter)obj);
     }
+
+    [EzIPC("GetStatusManagerByPtr")]
     string GetStatusManager(nint ptr) => GetStatusManager((PlayerCharacter)Svc.Objects.CreateObjectReference(ptr));
+
+    [EzIPC("GetStatusManagerByPC")]
     string GetStatusManager(PlayerCharacter pc)
     {
         if (pc == null) return null;
         return pc.GetMyStatusManager().SerializeToBase64();
-    }
-
-    public void FireStatusManagerChange(PlayerCharacter pc)
-    {
-        Svc.PluginInterface.GetIpcProvider<PlayerCharacter, object>("Moodles.StatusManagerModified").SendMessage(pc);
     }
 }

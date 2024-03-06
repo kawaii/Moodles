@@ -1,6 +1,7 @@
 ﻿using Dalamud.Game.ClientState.Objects.SubKinds;
 using Dalamud.Game.Gui.FlyText;
 using ECommons.Configuration;
+using ECommons.EzIpcManager;
 using ECommons.GameFunctions;
 using ECommons.GameHelpers;
 using ECommons.Throttlers;
@@ -43,6 +44,13 @@ public unsafe static class UI
 
     public static void DrawDebugger()
     {
+        if (ImGui.CollapsingHeader("Mare players"))
+        {
+            if (P.IPCProcessor.GetMarePlayers.TryInvoke(out var list))
+            {
+                ImGuiEx.Text(list.Print("\n"));
+            }
+        }
         if (ImGui.CollapsingHeader("VFX"))
         {
             if (Svc.Targets.Target is PlayerCharacter pc)
