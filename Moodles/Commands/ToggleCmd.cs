@@ -45,6 +45,7 @@ namespace Moodles.Commands
             if (match == null)
             {
                 ApplyPreset(guid, cancel);
+                return;
             }
 
             if (cancel)
@@ -63,6 +64,7 @@ namespace Moodles.Commands
             if (match == null)
             {
                 Notify.Error("Could not find moodle");
+                return;
             }
 
             if (cancel)
