@@ -194,6 +194,13 @@ public static class TabPresets
                     }
                 }
 
+                ImGui.TableNextColumn();
+                ImGuiEx.TextV($"ID:");
+                ImGuiEx.HelpMarker("Used in commands to apply preset.");
+                ImGui.TableNextColumn();
+                ImGuiEx.SetNextItemFullWidth();
+                ImGui.InputText($"##id-text", Encoding.UTF8.GetBytes(Selected.ID), 36, ImGuiInputTextFlags.ReadOnly);
+
                 ImGui.EndTable();
                 foreach (var x in MoveCommands)
                 {
