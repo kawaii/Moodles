@@ -11,13 +11,19 @@ using UIColor = ECommons.ChatMethods.UIColor;
 namespace Moodles;
 public static unsafe partial class Utils
 {
+    static List<nint> MarePlayers = [];
+    static ulong MarePlayersUpdated = 0;
     public static List<nint> GetMarePlayers()
     {
-        if(P.IPCProcessor.GetMarePlayers.TryInvoke(out var ret))
+        if (Frame != MarePlayersUpdated)
         {
-            return ret;
+            MarePlayersUpdated = Frame;
+            if (P.IPCProcessor.GetMarePlayers.TryInvoke(out var ret))
+            {
+                MarePlayers = ret;
+            }
         }
-        return [];
+        return MarePlayers;
     }
 
     public static bool IsNotNull(this MyStatus status)
@@ -112,18 +118,21 @@ public static unsafe partial class Utils
 
     public static long Time => DateTimeOffset.Now.ToUnixTimeMilliseconds();
 
-    public static MyStatusManager GetMyStatusManager(string playerName)
+    public static MyStatusManager GetMyStatusManager(string playerName, bool create = true)
     {
         if (!C.StatusManagers.TryGetValue(playerName, out var manager))
         {
-            PluginLog.Verbose($"Creating new status manager for {playerName}");
-            manager = new();
-            C.StatusManagers[playerName] = manager;
+            if (create)
+            {
+                PluginLog.Verbose($"Creating new status manager for {playerName}");
+                manager = new();
+                C.StatusManagers[playerName] = manager;
+            }
         }
         return manager;
     }
 
-    public static MyStatusManager GetMyStatusManager(this PlayerCharacter pc) => GetMyStatusManager(pc.GetNameWithWorld());
+    public static MyStatusManager GetMyStatusManager(this PlayerCharacter pc, bool create = true) => GetMyStatusManager(pc.GetNameWithWorld(), create);
 
     public static ulong Frame => CSFramework.Instance()->FrameCounter;
 

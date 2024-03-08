@@ -7,6 +7,7 @@ public sealed class OtterGuiHandler : IDisposable
     public PresetFileSystem PresetFileSystem;
     public Logger Logger;
     public AutomationList AutomationList;
+    public Whitelist Whitelist;
     public OtterGuiHandler()
     {
         try
@@ -15,6 +16,7 @@ public sealed class OtterGuiHandler : IDisposable
             MoodleFileSystem = new(this);
             PresetFileSystem = new(this);
             AutomationList = new();
+            Whitelist = new();
         }
         catch(Exception ex)
         {

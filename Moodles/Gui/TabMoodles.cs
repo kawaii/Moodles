@@ -77,6 +77,7 @@ public static class TabMoodles
                     e.Log();
                 }
             }
+            if (isMare) { ImGuiEx.HelpMarker("This doesn't do anything yet, why are you clicking it? :)", color: ImGuiColors.DalamudRed); }
             if (dis) ImGui.EndDisabled();
             if (ImGui.BeginTable("##moodles", 2, ImGuiTableFlags.Borders | ImGuiTableFlags.RowBg | ImGuiTableFlags.SizingStretchSame))
             {

@@ -23,4 +23,5 @@ public class Config : IEzConfig
     public int SelectorHeight = 33;
     public bool Debug = false;
     public SortOption IconSortOption = SortOption.Numerical;
+    public List<WhitelistEntry> Whitelist = [];
 }

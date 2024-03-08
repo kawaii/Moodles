@@ -132,12 +132,6 @@ public unsafe class CommonProcessor : IDisposable
                     {
                         if (P.CanModifyUI() && TryFindIndex(statusManager.Key, out var index, out var pc) && Utils.CanSpawnVfxFlytext(pc))
                         {
-                            /*if (statusManager.Key == Player.NameWithWorld || x.Applier == Player.NameWithWorld)
-                            {
-                                var col = x.Type == StatusType.Negative ? 0xff00008A : 0xFF005D2A;
-                                var type = x.Type == StatusType.Negative ? FlyTextKind.Debuff : FlyTextKind.Buff;
-                                if (index != -1) Svc.FlyText.AddFlyText(type, (uint)index, 0, 0, new SeStringBuilder().AddText($"+ ").Append(Utils.ParseBBSeString(x.Title)).Build(), "", col, (uint)x.AdjustedIconID, 0);
-                            }*/
                             FlyPopupTextProcessor.Enqueue(new(x, true, pc.ObjectId));
                             if (x.Type == StatusType.Negative)
                             {
@@ -157,12 +151,6 @@ public unsafe class CommonProcessor : IDisposable
                     {
                         if (P.CanModifyUI() && TryFindIndex(statusManager.Key, out var index, out var pc) && Utils.CanSpawnVfxFlytext(pc))
                         {
-                            /*if (statusManager.Key == Player.NameWithWorld || x.Applier == Player.NameWithWorld)
-                            {
-                                var col = 0xFF454545;
-                                var type = x.Type == StatusType.Negative ? FlyTextKind.DebuffFading : FlyTextKind.BuffFading;
-                                if (index != -1) Svc.FlyText.AddFlyText(type, (uint)index, 0, 0, new SeStringBuilder().AddText($"- ").Append(Utils.ParseBBSeString(x.Title)).Build(), "", col, (uint)x.AdjustedIconID, 0);
-                            }*/
                             FlyPopupTextProcessor.Enqueue(new(x, false, pc.ObjectId));
                             VFXCandidates.Add((pc, "vfx/common/eff/dk04ht_canc0h.avfx"));
                         }

@@ -104,6 +104,34 @@ public class Moodles : IDalamudPlugin
                 //JobChange
                 ApplyAutomation();
             }
+            var marePlayers = Utils.GetMarePlayers();
+            foreach(var x in Svc.Objects)
+            {
+                if(x is PlayerCharacter pc)
+                {
+                    var m = pc.GetMyStatusManager(false);
+                    if(m != null)
+                    {
+                        if (marePlayers.Contains(pc.Address))
+                        {
+                            if (!m.Ephemeral)
+                            {
+                                PluginLog.Debug($"{pc.GetNameWithWorld()} is now Mare player. Status manager ephemeral, automation disabled.");
+                                m.Ephemeral = true;
+                                m.Statuses.Each(s => s.ExpiresAt = 0);
+                            }
+                        }
+                        else
+                        {
+                            if(m.Ephemeral)
+                            {
+                                PluginLog.Debug($"{pc.GetNameWithWorld()} is no longer Mare player. Status manager persistent, automation enabled.");
+                                m.Ephemeral = false;
+                            }
+                        }
+                    }
+                }
+            }
         }
         if (CanModifyUI())
         {
