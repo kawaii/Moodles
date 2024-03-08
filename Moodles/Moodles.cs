@@ -5,6 +5,7 @@ using ECommons.ExcelServices;
 using ECommons.EzEventManager;
 using ECommons.GameHelpers;
 using ECommons.SimpleGui;
+using Moodles.Commands;
 using Moodles.Data;
 using Moodles.Gui;
 using Moodles.OtterGuiHandlers;
@@ -37,6 +38,7 @@ public class Moodles : IDalamudPlugin
             Config = EzConfig.Init<Config>();
             EzConfigGui.Init(UI.Draw);
             EzCmd.Add("/moodles", EzConfigGui.Open, "Open plugin interface");
+            EzCmd.Add("/moodle", ToggleCmd.Process, "Add or remove moodles");
             Memory = new();
             CommonProcessor = new();
             OtterGuiHandler = new();
