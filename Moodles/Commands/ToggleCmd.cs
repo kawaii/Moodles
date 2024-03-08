@@ -5,8 +5,8 @@ namespace Moodles.Commands
 {
     internal static class ToggleCmd
     {
-        private static readonly IEnumerable<MyStatus> Statuses = C.SavedStatuses;
-        private static readonly IEnumerable<Preset> Presets = C.SavedPresets;
+        private static IEnumerable<MyStatus> Statuses => C.SavedStatuses;
+        private static IEnumerable<Preset> Presets => C.SavedPresets;
         public static void Process(string _, string arguments)
         {
             var args = arguments.ToLower().Split(' ');
