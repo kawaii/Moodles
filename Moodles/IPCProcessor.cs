@@ -1,5 +1,6 @@
 ﻿using Dalamud.Game.ClientState.Objects.SubKinds;
 using Dalamud.Game.ClientState.Objects.Types;
+using ECommons;
 using ECommons.EzIpcManager;
 using ECommons.GameHelpers;
 using FFXIVClientStructs.FFXIV.Client.UI.Misc;
@@ -116,5 +117,55 @@ public class IPCProcessor : IDisposable
     {
         if (pc == null) return null;
         return pc.GetMyStatusManager().SerializeToBase64();
+    }
+
+    [EzIPC]
+    List<MoodlesMoodleInfo> GetRegisteredMoodles()
+    {
+        var ret = new List<MoodlesMoodleInfo>();
+        foreach(var x in C.SavedStatuses)
+        {
+            P.OtterGuiHandler.MoodleFileSystem.FindLeaf(x, out var path);
+            ret.Add((x.GUID, (uint)x.IconID, path?.FullName(), x.Title));
+        }
+        return ret;
+    }
+
+    [EzIPC]
+    List<MoodlesProfileInfo> GetRegisteredProfiles()
+    {
+        var ret = new List<MoodlesProfileInfo>();
+        foreach(var x in C.SavedPresets)
+        {
+            P.OtterGuiHandler.PresetFileSystem.FindLeaf(x, out var path);
+            ret.Add((x.GUID, path?.FullName()));
+        }
+        return ret;
+    }
+
+    [EzIPC]
+    void AddOrUpdateByGUID(Guid guid, PlayerCharacter pc)
+    {
+        if(C.SavedStatuses.TryGetFirst(x => x.GUID == guid, out var status))
+        {
+            var sm = pc.GetMyStatusManager();
+            if (!sm.Ephemeral)
+            {
+                sm.AddOrUpdate(status.PrepareToApply(), false, true);
+            }
+        }
+    }
+
+    [EzIPC]
+    void ApplyPresetByGUID(Guid guid, PlayerCharacter pc)
+    {
+        if (C.SavedPresets.TryGetFirst(x => x.GUID == guid, out var preset))
+        {
+            var sm = pc.GetMyStatusManager();
+            if (!sm.Ephemeral)
+            {
+                sm.ApplyPreset(preset);
+            }
+        }
     }
 }
