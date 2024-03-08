@@ -229,6 +229,13 @@ public static class TabMoodles
                 ImGuiEx.SetNextItemFullWidth();
                 ImGui.Checkbox($"##sticky", ref Selected.AsPermanent);
 
+                ImGui.TableNextColumn();
+                ImGuiEx.TextV($"ID:");
+                ImGuiEx.HelpMarker("Used in commands to apply moodle.");
+                ImGui.TableNextColumn();
+                ImGuiEx.SetNextItemFullWidth();
+                ImGui.InputText($"##id-text", Encoding.UTF8.GetBytes(Selected.ID), 36, ImGuiInputTextFlags.ReadOnly);
+
                 ImGui.EndTable();
             }
 

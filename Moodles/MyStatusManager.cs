@@ -94,6 +94,18 @@ public class MyStatusManager
         }
     }
 
+
+    public void RemovePreset(Preset p)
+    {
+        foreach (var x in p.Statuses)
+        {
+            if (C.SavedStatuses.TryGetFirst(z => z.GUID == x, out var status))
+            {
+                this.Cancel(status);
+            }
+        }
+    }
+
     public byte[] BinarySerialize()
     {
         return MemoryPackSerializer.Serialize(this.Statuses, SerializerOptions);
