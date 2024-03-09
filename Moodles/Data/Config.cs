@@ -22,6 +22,7 @@ public class Config : IEzConfig
     public bool AutoFill = false;
     public int SelectorHeight = 33;
     public bool Debug = false;
+    public bool DisplayCommandFeedback = true;
     public SortOption IconSortOption = SortOption.Numerical;
     public List<WhitelistEntry> Whitelist = [];
 
