@@ -41,7 +41,14 @@ public class IPCProcessor : IDisposable
                 var sm = Utils.GetMyStatusManager(Player.Object);
                 foreach(var x in message.ApplyStatuses)
                 {
-                    sm.AddOrUpdate(x, false, true);
+                    if (Utils.CheckWhitelistGlobal(x) || C.Whitelist.Any(w => w.CheckStatus(x)))
+                    {
+                        sm.AddOrUpdate(x, false, true);
+                    }
+                    else
+                    {
+                        PluginLog.Warning($"Status {x.Title} is not allowed, skipping.");
+                    }
                 }
             }
         }

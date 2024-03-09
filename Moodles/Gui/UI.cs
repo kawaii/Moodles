@@ -45,6 +45,10 @@ public unsafe static class UI
 
     public static void DrawDebugger()
     {
+        if (ImGui.CollapsingHeader("Friendlist"))
+        {
+            ImGuiEx.Text(Utils.GetFriendlist().Print("\n"));
+        }
         if (ImGui.CollapsingHeader("Mare players"))
         {
             if (P.IPCProcessor.GetMarePlayers.TryInvoke(out var list))

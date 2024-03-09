@@ -1,16 +1,68 @@
 ﻿using Dalamud.Game.ClientState.Objects.SubKinds;
 using Dalamud.Game.Text.SeStringHandling;
+using Dalamud.Memory;
+using ECommons.ExcelServices;
 using ECommons.EzIpcManager;
 using ECommons.GameHelpers;
+using ECommons.PartyFunctions;
+using FFXIVClientStructs.FFXIV.Client.Network;
+using FFXIVClientStructs.FFXIV.Client.UI;
+using FFXIVClientStructs.FFXIV.Client.UI.Info;
 using FFXIVClientStructs.FFXIV.Component.GUI;
 using Moodles.Data;
 using System.Text.RegularExpressions;
+using static System.ComponentModel.Design.ObjectSelectorEditor;
 using Status = Lumina.Excel.GeneratedSheets.Status;
 using UIColor = ECommons.ChatMethods.UIColor;
 
 namespace Moodles;
 public static unsafe partial class Utils
 {
+    public static void DurationSelector(string PermanentTitle, ref bool NoExpire, ref int Days, ref int Hours, ref int Minutes, ref int Seconds)
+    {
+        ImGui.Checkbox(PermanentTitle, ref NoExpire);
+        if (!NoExpire)
+        {
+            ImGui.SameLine();
+            ImGuiEx.SetNextItemWidthScaled(30);
+            ImGui.DragInt("D", ref Days, 0.1f, 0, 999);
+            ImGui.SameLine();
+            ImGuiEx.SetNextItemWidthScaled(30);
+            ImGui.DragInt("H##h", ref Hours, 0.1f, 0, 23);
+            ImGui.SameLine();
+            ImGuiEx.SetNextItemWidthScaled(30);
+            ImGui.DragInt("M##m", ref Minutes, 0.1f, 0, 59);
+            ImGui.SameLine();
+            ImGuiEx.SetNextItemWidthScaled(30);
+            ImGui.DragInt("S##s", ref Seconds, 0.1f, 0, 59);
+        }
+    }
+
+    public static bool CheckWhitelistGlobal(MyStatus status)
+    {
+        if (status.ExpiresAt > C.BroadcastDefaultEntry.MaxExpirationUnixTimeSeconds) return false;
+        if (C.BroadcastAllowAll) return true;
+        if (C.BroadcastAllowParty) return UniversalParty.Members.Any(x => x.Name == status.Applier);
+        if (C.BroadcastAllowFriends) return GetFriendlist().Contains(status.Applier);
+        return false;
+    }
+
+    public static List<string> GetFriendlist()
+    {
+        var ret = new List<string>();
+        var friends = (InfoProxyFriendList*)InfoModule.Instance()->GetInfoProxyById(InfoProxyId.FriendList);
+        for (int i = 0; i < friends->InfoProxyCommonList.CharDataSpan.Length; i++)
+        {
+            var entry = friends->InfoProxyCommonList.CharDataSpan[i];
+            var name = MemoryHelper.ReadStringNullTerminated((nint)entry.Name);
+            if(name != "")
+            {
+                ret.Add($"{name}@{ExcelWorldHelper.GetName(entry.HomeWorld)}");
+            }
+        }
+        return ret;
+    }
+
     static List<nint> MarePlayers = [];
     static ulong MarePlayersUpdated = 0;
     public static List<nint> GetMarePlayers()

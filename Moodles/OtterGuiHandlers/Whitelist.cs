@@ -4,7 +4,7 @@ using Moodles.Data;
 using OtterGui;
 
 namespace Moodles.OtterGuiHandlers;
-public class Whitelist : ItemSelector<WhitelistEntry>
+public class Whitelist : WhitelistItemSelector<WhitelistEntry>
 {
     public Whitelist() : base(C.Whitelist, Flags.Add | Flags.Delete | Flags.Filter)
     {

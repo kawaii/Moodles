@@ -54,6 +54,7 @@ public static class TabMoodles
                     else
                     {
                         var preparedStatus = Selected.PrepareToApply(AsPermanent ? PrepareOptions.Persistent : PrepareOptions.NoOption);
+                        preparedStatus.Applier = Player.NameWithWorld ?? "";
                         if (!preparedStatus.IsValid(out var error))
                         {
                             Notify.Error($"Could not apply status: {error}");
@@ -203,22 +204,8 @@ public static class TabMoodles
                     ImGuiEx.HelpMarker("Duration must be at least 1 second", EColor.RedBright, FontAwesomeIcon.ExclamationTriangle.ToIconString());
                 }
                 ImGui.TableNextColumn();
-                ImGui.Checkbox("Permanent", ref Selected.NoExpire);
-                if (!Selected.NoExpire)
-                {
-                    ImGui.SameLine();
-                    ImGuiEx.SetNextItemWidthScaled(30);
-                    ImGui.DragInt("D", ref Selected.Days, 0.1f, 0, 999);
-                    ImGui.SameLine();
-                    ImGuiEx.SetNextItemWidthScaled(30);
-                    ImGui.DragInt("H##h", ref Selected.Hours, 0.1f, 0, 23);
-                    ImGui.SameLine();
-                    ImGuiEx.SetNextItemWidthScaled(30);
-                    ImGui.DragInt("M##m", ref Selected.Minutes, 0.1f, 0, 59);
-                    ImGui.SameLine();
-                    ImGuiEx.SetNextItemWidthScaled(30);
-                    ImGui.DragInt("S##s", ref Selected.Seconds, 0.1f, 0, 59);
-                }
+
+                Utils.DurationSelector("Permanent", ref Selected.NoExpire, ref Selected.Days, ref Selected.Hours, ref Selected.Minutes, ref Selected.Seconds);
 
                 ImGui.TableNextRow();
 
