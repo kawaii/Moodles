@@ -156,4 +156,39 @@ public class MyStatusManager
             e.Log();
         }
     }
+
+    public bool ContainsStatus(MyStatus status)
+    {
+        return ContainsStatus(status.GUID);
+    }
+
+    public bool ContainsStatus(Guid status)
+    {
+        var statusCount = this.Statuses.Count;
+        for (var i = 0; i < statusCount; i++)
+        {
+            var curStatus = this.Statuses[i];
+            if (curStatus.GUID == status)
+            {
+                return true;
+            }
+        }
+
+        return false;
+    }
+
+    public bool ContainsPreset(Preset preset)
+    {
+        var statusCount = preset.Statuses.Count;
+        for (var i = 0; i < statusCount; i++)
+        {
+            var statusGUID = preset.Statuses[i];
+            if (!ContainsStatus(statusGUID))
+            {
+                return false;
+            }
+        }
+
+        return true;
+    }
 }
