@@ -134,11 +134,27 @@ public static class MoodleCommandProcessor
 
         if (moodleState == MoodleState.Apply)
         {
-            statusManager.AddOrUpdate(myStatus.PrepareToApply(myStatus.Persistent ? PrepareOptions.Persistent : PrepareOptions.NoOption));
+            if(Utils.GetMarePlayers().Contains(statusManager.Owner?.Address ?? -1))
+            {
+                myStatus.SendMareMessage(statusManager.Owner);
+            }
+            else
+            {
+                statusManager.AddOrUpdate(myStatus.PrepareToApply(myStatus.Persistent ? PrepareOptions.Persistent : PrepareOptions.NoOption));
+            }
         }
         else if (moodleState == MoodleState.Remove)
         {
-            statusManager.Cancel(myStatus);
+            if (Utils.GetMarePlayers().Contains(statusManager.Owner?.Address ?? -1))
+            {
+                var newStatus = myStatus.JSONClone();
+                newStatus.ExpiresAt = 0;
+                newStatus.SendMareMessage(statusManager.Owner);
+            }
+            else
+            {
+                statusManager.Cancel(myStatus);
+            }
         }
     }
 

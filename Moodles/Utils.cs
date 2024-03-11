@@ -18,6 +18,58 @@ using UIColor = ECommons.ChatMethods.UIColor;
 namespace Moodles;
 public static unsafe partial class Utils
 {
+    public static void SendMareMessage(this Preset Preset, PlayerCharacter target)
+    {
+        foreach (var s in C.SavedStatuses.Where(x => Preset.Statuses.Contains(x.GUID)))
+        {
+            var list = new List<MyStatus>();
+            var preparedStatus = s.PrepareToApply();
+            preparedStatus.Applier = Player.NameWithWorld ?? "";
+            if (!preparedStatus.IsValid(out var error))
+            {
+                PluginLog.Error($"Could not apply status: {error}");
+            }
+            else
+            {
+                list.Add(preparedStatus);
+            }
+            if (list.Count > 0)
+            {
+                var message = new IncomingMessage(Player.NameWithWorld, target.GetNameWithWorld(), list);
+                if (P.IPCProcessor.BroadcastMareMessage.TryInvoke(Convert.ToBase64String(message.Serialize())))
+                {
+                    Notify.Info($"Broadcast success");
+                }
+                else
+                {
+                    Notify.Error("Broadcast failed");
+                }
+            }
+        }
+    }
+
+    public static void SendMareMessage(this MyStatus Status, PlayerCharacter target)
+    {
+        var preparedStatus = Status.PrepareToApply();
+        preparedStatus.Applier = Player.NameWithWorld ?? "";
+        if (!preparedStatus.IsValid(out var error))
+        {
+            Notify.Error($"Could not apply status: {error}");
+        }
+        else
+        {
+            var message = new IncomingMessage(Player.NameWithWorld, target.GetNameWithWorld(), [preparedStatus]);
+            if (P.IPCProcessor.BroadcastMareMessage.TryInvoke(Convert.ToBase64String(message.Serialize())))
+            {
+                Notify.Info($"Broadcast success");
+            }
+            else
+            {
+                Notify.Error("Broadcast failed");
+            }
+        }
+    }
+
     public static void DurationSelector(string PermanentTitle, ref bool NoExpire, ref int Days, ref int Hours, ref int Minutes, ref int Seconds)
     {
         ImGui.Checkbox(PermanentTitle, ref NoExpire);

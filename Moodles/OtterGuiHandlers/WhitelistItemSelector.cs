@@ -255,7 +255,6 @@ public class WhitelistItemSelector<T>
         }
     }
 
-
     private void DrawFilter(float width)
     {
         if (!_flags.HasFlag(Flags.Filter))
@@ -438,14 +437,14 @@ public class WhitelistItemSelector<T>
             ImGui.SameLine();
         }
 
+        DrawAddTargetButton(buttonWidth);
+        ImGui.SameLine();
+        
         if (_flags.HasFlag(Flags.Delete))
         {
             DrawDeleteButton(buttonWidth);
             ImGui.SameLine();
         }
-
-        DrawAddTargetButton(buttonWidth);
-        ImGui.SameLine();
 
         DrawSettingsButton(buttonWidth);
         ImGui.SameLine();

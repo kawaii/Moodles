@@ -50,24 +50,30 @@ public static class TabPresets
                 Utils.GetMyStatusManager(Player.NameWithWorld).ApplyPreset(Selected);
             }
             ImGui.SameLine();
-            var dis = true;
-            if(Svc.Targets.Target is PlayerCharacter pc)
-            {
-                dis = Utils.GetMyStatusManager(pc).Ephemeral;
-            }
+
+            var dis = Svc.Targets.Target is not PlayerCharacter;
             if (dis) ImGui.BeginDisabled();
-            if (ImGui.Button("Apply to Target"))
+            var isMare = Utils.GetMarePlayers().Contains(Svc.Targets.Target?.Address ?? -1);
+            if (ImGui.Button($"Apply to Target ({(isMare ? "via Mare Synchronos" : "Locally")})"))
             {
-                var target = (PlayerCharacter)Svc.Targets.Target;
-                if (!Utils.GetMarePlayers().Contains(target.Address))
+                try
                 {
-                    Utils.GetMyStatusManager(target.GetNameWithWorld()).ApplyPreset(Selected);
+                    var target = (PlayerCharacter)Svc.Targets.Target;
+                    if (!isMare)
+                    {
+                        Utils.GetMyStatusManager(target.GetNameWithWorld()).ApplyPreset(Selected);
+                    }
+                    else
+                    {
+                        Selected.SendMareMessage(target);
+                    }
                 }
-                else
+                catch (Exception e)
                 {
-                    Notify.Error($"Application target is controlled by an external plugin, can not apply.");
+                    e.Log();
                 }
             }
+            if (isMare) { ImGuiEx.HelpMarker("This doesn't do anything yet, why are you clicking it? :)", color: ImGuiColors.DalamudRed); }
             if (dis) ImGui.EndDisabled();
 
             ImGuiEx.TextV("On application:");

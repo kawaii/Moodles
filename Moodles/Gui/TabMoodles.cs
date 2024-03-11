@@ -39,6 +39,7 @@ public static class TabMoodles
                 Utils.GetMyStatusManager(Player.NameWithWorld).AddOrUpdate(Selected.PrepareToApply(AsPermanent ? PrepareOptions.Persistent : PrepareOptions.NoOption));
             }
             ImGui.SameLine();
+
             var dis = Svc.Targets.Target is not PlayerCharacter;
             if (dis) ImGui.BeginDisabled();
             var isMare = Utils.GetMarePlayers().Contains(Svc.Targets.Target?.Address ?? -1);
@@ -53,24 +54,7 @@ public static class TabMoodles
                     }
                     else
                     {
-                        var preparedStatus = Selected.PrepareToApply(AsPermanent ? PrepareOptions.Persistent : PrepareOptions.NoOption);
-                        preparedStatus.Applier = Player.NameWithWorld ?? "";
-                        if (!preparedStatus.IsValid(out var error))
-                        {
-                            Notify.Error($"Could not apply status: {error}");
-                        }
-                        else
-                        {
-                            var message = new IncomingMessage(Player.NameWithWorld, target.GetNameWithWorld(), [preparedStatus]);
-                            if (P.IPCProcessor.BroadcastMareMessage.TryInvoke(Convert.ToBase64String(message.Serialize())))
-                            {
-                                Notify.Info($"Broadcast success");
-                            }
-                            else
-                            {
-                                Notify.Error("Broadcast failed");
-                            }
-                        }
+                        Selected.SendMareMessage(target);
                     }
                 }
                 catch(Exception e)
@@ -80,6 +64,7 @@ public static class TabMoodles
             }
             if (isMare) { ImGuiEx.HelpMarker("This doesn't do anything yet, why are you clicking it? :)", color: ImGuiColors.DalamudRed); }
             if (dis) ImGui.EndDisabled();
+
             if (ImGui.BeginTable("##moodles", 2, ImGuiTableFlags.Borders | ImGuiTableFlags.RowBg | ImGuiTableFlags.SizingStretchSame))
             {
                 ImGui.TableSetupColumn("Name", ImGuiTableColumnFlags.WidthFixed, 175f.Scale());

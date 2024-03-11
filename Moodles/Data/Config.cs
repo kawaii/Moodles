@@ -26,9 +26,8 @@ public class Config : IEzConfig
     public SortOption IconSortOption = SortOption.Numerical;
     public List<WhitelistEntry> Whitelist = [];
 
-    public bool BroadcastAllowAll = true;
-    public bool BroadcastAllowFriends = true;
-    public bool BroadcastFC = true;
-    public bool BroadcastAllowParty = true;
+    public bool BroadcastAllowAll = false;
+    public bool BroadcastAllowFriends = false;
+    public bool BroadcastAllowParty = false;
     public WhitelistEntry BroadcastDefaultEntry = new();
 }

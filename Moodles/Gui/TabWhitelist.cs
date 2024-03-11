@@ -15,6 +15,15 @@ public static class TabWhitelist
     static bool Editing = true;
     public static void Draw()
     {
+        if (ImGui.BeginTable($"##Table", 1, ImGuiTableFlags.SizingStretchSame | ImGuiTableFlags.Borders))
+        {
+            ImGui.TableHeader($"#h");
+            ImGui.TableNextRow();
+            ImGui.TableNextColumn();
+            ImGui.TableSetBgColor(ImGuiTableBgTarget.CellBg, EColor.RedBright.ToUint());
+            ImGuiEx.LineCentered(() => ImGuiEx.Text(EColor.White, "None of this stuff works yet, oh well. :)"));
+            ImGui.EndTable();
+        }
         P.OtterGuiHandler.Whitelist.Draw(200f);
         ImGui.SameLine();
         using var group = ImRaii.Group();
@@ -72,6 +81,10 @@ public static class TabWhitelist
                 ImGui.TableNextRow();
                 ImGui.TableNextColumn();
                 ImGuiEx.TextV($"Allowed Status Types:");
+                if (!Selected.AllowedTypes.Any())
+                {
+                    ImGuiEx.HelpMarker("No status types selected. Please select at least one status type or no Moodles will be eligible.", EColor.RedBright, FontAwesomeIcon.ExclamationTriangle.ToIconString());
+                }
                 ImGui.TableNextColumn();
                 foreach (var x in Enum.GetValues<StatusType>())
                 {
@@ -83,7 +96,7 @@ public static class TabWhitelist
                 ImGuiEx.TextV($"Maximum Duration:");
                 if (Selected.TotalMaxDurationSeconds < 1 && !Selected.AnyDuration)
                 {
-                    ImGuiEx.HelpMarker("No incoming moodles will be allowed with current settings", EColor.RedBright, FontAwesomeIcon.ExclamationTriangle.ToIconString());
+                    ImGuiEx.HelpMarker("No maximum duration configured. Please set one or no Moodles will be eligible.", EColor.RedBright, FontAwesomeIcon.ExclamationTriangle.ToIconString());
                 }
                 ImGui.TableNextColumn();
 
