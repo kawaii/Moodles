@@ -14,7 +14,7 @@ public class Config : IEzConfig
     public bool Censor = false;
     public bool AutoOther = false;
 
-    public bool EnableVFX = true;
+    internal bool EnableVFX => false;
     public bool EnableFlyPopupText = true;
     public int FlyPopupTextLimit = 10;
 

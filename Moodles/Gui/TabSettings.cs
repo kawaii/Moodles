@@ -5,7 +5,12 @@ public static class TabSettings
     {
         ImGui.Checkbox($"Enable Moodles", ref C.Enabled);
         ImGuiEx.Spacing();
-        ImGui.Checkbox("Enable VFX", ref C.EnableVFX);
+        //ImGui.Checkbox("Enable VFX", ref C.EnableVFX);
+        ImGui.BeginDisabled();
+        var a = false;
+        ImGui.Checkbox("Enable VFX", ref a);
+        ImGui.EndDisabled();
+        ImGuiEx.HelpMarker("VFX features are currently force disabled until a solution to crashing on Mare pair connect/disconnect can be found.");
         ImGuiEx.Spacing();
         ImGui.Checkbox($"Enable Fly/Popup Text", ref C.EnableFlyPopupText);
         ImGuiEx.Spacing();
