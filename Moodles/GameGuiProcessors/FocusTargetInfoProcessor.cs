@@ -36,6 +36,7 @@ public unsafe class FocusTargetInfoProcessor
 
     private void OnFocusTargetInfoRequestedUpdate(AddonEvent type, AddonArgs args)
     {
+        if (P == null) return;
         var addon = (AtkUnitBase*)args.Addon;
         if (addon != null && IsAddonReady(addon))
         {
@@ -54,6 +55,7 @@ public unsafe class FocusTargetInfoProcessor
 
     private void OnFocusTargetInfoUpdate(AddonEvent type, AddonArgs args)
     {
+        if (P == null) return;
         if (!Player.Available) return;
         if (P.CanModifyUI())
         {

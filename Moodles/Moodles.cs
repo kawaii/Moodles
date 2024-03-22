@@ -10,7 +10,6 @@ using Moodles.Data;
 using Moodles.Gui;
 using Moodles.OtterGuiHandlers;
 using Moodles.Processors;
-using Moodles.VfxManager;
 
 namespace Moodles;
 
@@ -232,11 +231,10 @@ public class Moodles : IDalamudPlugin
     public void Dispose()
     {
         Safe(() => CleanupStatusManagers());
-        Safe(() => Memory?.Dispose());
-        Safe(() => CommonProcessor?.Dispose());
-        Safe(() => VfxSpawn.Remove());
         Safe(() => IPCProcessor?.Dispose());
-        P = null;
+        Safe(() => CommonProcessor?.Dispose());
+        Safe(() => Memory?.Dispose());
         ECommonsMain.Dispose();
+        P = null;
     }
 }

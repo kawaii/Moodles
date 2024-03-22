@@ -5,10 +5,10 @@ using ECommons.EzIpcManager;
 using ECommons.GameFunctions;
 using ECommons.GameHelpers;
 using ECommons.Throttlers;
+using FFXIVClientStructs.FFXIV.Client.Game.Event;
 using FFXIVClientStructs.FFXIV.Client.Game.Object;
 using Lumina.Excel.GeneratedSheets;
 using Moodles.Data;
-using Moodles.VfxManager;
 using System.IO;
 
 namespace Moodles.Gui;
@@ -43,8 +43,103 @@ public unsafe static class UI
             ]);
     }
 
+
+    internal static uint Opcode = 0;
+    internal static long Addr = 0;
+    internal static int ID = 0;
+    internal static float sa4 = -1;
+    internal static int sa5 = 0;
+    internal static int sa6 = 0;
+    internal static int sa7 = 0;
     public static void DrawDebugger()
     {
+        if(ImGui.CollapsingHeader("Apply SHE"))
+        {
+            ImGui.SetNextItemWidth(150f);
+            ImGui.InputInt("id", ref ID);
+            ImGui.SetNextItemWidth(150f);
+            ImGui.InputFloat("a4", ref sa4);
+            ImGui.SetNextItemWidth(150f);
+            ImGui.InputInt("a5", ref sa5);
+            ImGui.SetNextItemWidth(150f);
+            ImGui.InputInt("a6", ref sa6);
+            ImGui.SetNextItemWidth(150f);
+            ImGui.InputInt("a7", ref sa7);
+            if (ImGui.Button("Do"))
+            {
+                var addr = Svc.Targets.Target?.Address ?? Player.Object.Address;
+                P.Memory.ApplyStatusHitEffectHook.Original((StatusHitEffectKind)ID, addr, addr, sa4, (byte)sa5, (short)sa6, (byte)sa7);
+            }
+            if (ImGui.Button("Do (all players)"))
+            {
+                foreach (var x in Svc.Objects)
+                {
+                    if (x is PlayerCharacter pc)
+                    {
+                        var addr = pc.Address;
+                        P.Memory.ApplyStatusHitEffectHook.Original((StatusHitEffectKind)ID, addr, addr, sa4, (byte)sa5, (short)sa6, (byte)sa7);
+                    }
+                }
+            }
+            if (ImGui.BeginCombo("From StatusHitEffect", "From StatusHitEffect"))
+            {
+                foreach (var x in Svc.Data.GetExcelSheet<StatusHitEffect>())
+                {
+                    if (ImGui.Selectable($"{x.Location.Value.Location} / {(StatusHitEffectKind)x.Location.Row}", false, ImGuiSelectableFlags.DontClosePopups))
+                    {
+                        var addr = Svc.Targets.Target?.Address ?? Player.Object.Address;
+                        P.Memory.ApplyStatusHitEffectHook.Original((StatusHitEffectKind)x.Location.Row, addr, addr, sa4, (byte)sa5, (short)sa6, (byte)sa7);
+                    }
+                }
+                ImGui.EndCombo();
+            }
+            if (ImGui.BeginCombo("From ActionCastVFX", "From ActionCastVFX"))
+            {
+                foreach (var x in Svc.Data.GetExcelSheet<ActionCastVFX>())
+                {
+                    if (ImGui.Selectable($"{x.VFX.Value.Location} / {(StatusHitEffectKind)x.VFX.Row}", false, ImGuiSelectableFlags.DontClosePopups))
+                    {
+                        var addr = Svc.Targets.Target?.Address ?? Player.Object.Address;
+                        P.Memory.ApplyStatusHitEffectHook.Original((StatusHitEffectKind)x.VFX.Row, addr, addr, sa4, (byte)sa5, (short)sa6, (byte)sa7);
+                    }
+                }
+                ImGui.EndCombo();
+            }
+            if (ImGui.BeginCombo("From StatusLoopVFX", "From StatusLoopVFX"))
+            {
+                foreach (var x in Svc.Data.GetExcelSheet<StatusLoopVFX>())
+                {
+                    if (ImGui.Selectable($"{x.VFX.Value.Location} / {(StatusHitEffectKind)x.VFX.Row}", false, ImGuiSelectableFlags.DontClosePopups))
+                    {
+                        var addr = Svc.Targets.Target?.Address ?? Player.Object.Address;
+                        P.Memory.ApplyStatusHitEffectHook.Original((StatusHitEffectKind)x.VFX.Row, addr, addr, sa4, (byte)sa5, (short)sa6, (byte)sa7);
+                    }
+                }
+                ImGui.EndCombo();
+            }
+        }
+        if (ImGui.CollapsingHeader("Actor control hook"))
+        {
+            ImGui.Checkbox($"Suppress", ref Suppress);
+            ImGuiEx.InputUint($"dec", ref Opcode);
+            ImGuiEx.InputHex($"hex", ref Opcode);
+            if (ImGui.Button("Enable")) P.Memory.ProcessActorControlPacketHook.Enable();
+            if (ImGui.Button("Pause")) P.Memory.ProcessActorControlPacketHook.Pause();
+            if (ImGui.Button("Disable")) P.Memory.ProcessActorControlPacketHook.Disable();
+            ImGuiEx.Text($"Enabled: {P.Memory.ProcessActorControlPacketHook.IsEnabled}");
+            ImGuiEx.Text($"Created: {P.Memory.ProcessActorControlPacketHook.IsCreated}");
+        }
+        if (ImGui.CollapsingHeader("Packet hook"))
+        {
+            ImGui.Checkbox($"Suppress", ref Suppress);
+            ImGuiEx.InputUint($"dec", ref Opcode);
+            ImGuiEx.InputHex($"hex", ref Opcode);
+            if (ImGui.Button("Enable")) P.Memory.PacketDispatcher_OnReceivePacketHook.Enable();
+            if (ImGui.Button("Pause")) P.Memory.PacketDispatcher_OnReceivePacketHook.Pause();
+            if (ImGui.Button("Disable")) P.Memory.PacketDispatcher_OnReceivePacketHook.Disable();
+            ImGuiEx.Text($"Enabled: {P.Memory.PacketDispatcher_OnReceivePacketHook.IsEnabled}");
+            ImGuiEx.Text($"Created: {P.Memory.PacketDispatcher_OnReceivePacketHook.IsCreated}");
+        }
         if (ImGui.CollapsingHeader("Friendlist"))
         {
             ImGuiEx.Text(Utils.GetFriendlist().Print("\n"));
@@ -54,18 +149,6 @@ public unsafe static class UI
             if (P.IPCProcessor.GetMarePlayers.TryInvoke(out var list))
             {
                 ImGuiEx.Text(list.Print("\n"));
-            }
-        }
-        if (ImGui.CollapsingHeader("VFX"))
-        {
-            if (Svc.Targets.Target is PlayerCharacter pc)
-            {
-                if (ImGui.Button("Spawn"))
-                {
-                    VfxSpawn.SpawnOn(pc, "vfx/common/eff/dk04ht_canc0h.avfx");
-                }
-                if (ImGui.Button("Disable draw")) pc.Struct()->Character.GameObject.DisableDraw();
-                if (ImGui.Button("Enable draw")) pc.Struct()->Character.GameObject.EnableDraw();
             }
         }
         if (ImGui.CollapsingHeader("IPC"))
@@ -174,7 +257,7 @@ public unsafe static class UI
             Owner = pct.GetNameWithWorld();
         }
         ImGui.SameLine();
-        ImGuiEx.SetNextItemWidthScaled(200f);
+        ImGui.SetNextItemWidth(200f);
         if (ImGui.BeginCombo("##Players around", "Players around"))
         {
             foreach (var x in Svc.Objects)
@@ -187,7 +270,7 @@ public unsafe static class UI
             ImGui.EndCombo();
         }
         ImGui.SameLine();
-        ImGuiEx.SetNextItemWidthScaled(200f);
+        ImGui.SetNextItemWidth(200f);
         if (ImGui.BeginCombo("##party", "Party"))
         {
             foreach (var x in Svc.Party)
@@ -222,7 +305,7 @@ public unsafe static class UI
                         }
                     }
                 }
-                ImGuiEx.SetNextItemWidthScaled(100f);
+                ImGui.SetNextItemWidth(100f);
                 if (ImGui.BeginCombo("##sel", $"Icon: {Status.IconID}", ImGuiComboFlags.HeightLargest))
                 {
                     var cnt = 0;
@@ -244,16 +327,16 @@ public unsafe static class UI
                     ImGui.EndCombo();
                 }
                 ImGui.SameLine();
-                ImGuiEx.SetNextItemWidthScaled(100f);
+                ImGui.SetNextItemWidth(100f);
                 ImGui.SameLine();
-                ImGuiEx.SetNextItemWidthScaled(100f);
+                ImGui.SetNextItemWidth(100f);
                 ImGui.InputText("Name", ref Status.Title, 50);
                 ImGui.SameLine();
                 ImGuiEx.InputTextMultilineExpanding("Description", ref Status.Description, 500, 1, 10, 100);
                 ImGui.SameLine();
-                ImGuiEx.SetNextItemWidthScaled(100f);
+                ImGui.SetNextItemWidth(100f);
                 ImGui.InputInt("Duration, s", ref Duration);
-                ImGuiEx.SetNextItemWidthScaled(100f);
+                ImGui.SetNextItemWidth(100f);
                 ImGui.InputText("Applier", ref Status.Applier, 50);
                 ImGui.SameLine();
                 if (ImGui.Button("Me")) Status.Applier = Player.NameWithWorld;
@@ -280,7 +363,7 @@ public unsafe static class UI
                     manager.AddOrUpdate(Status.JSONClone().PrepareToApply());
                 }
                 ImGui.SameLine();
-                ImGuiEx.SetNextItemWidthScaled(100f);
+                ImGui.SetNextItemWidth(100f);
                 ImGui.InputInt($"Random buffs", ref Cnt);
                 ImGui.SameLine();
                 if (ImGui.Button("add"))

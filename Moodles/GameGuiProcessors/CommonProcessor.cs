@@ -5,6 +5,7 @@ using ECommons.EzEventManager;
 using ECommons.GameHelpers;
 using ECommons.Interop;
 using ECommons.MathHelpers;
+using ECommons.PartyFunctions;
 using ECommons.Throttlers;
 using ECommons.UIHelpers;
 using FFXIVClientStructs.FFXIV.Client.Graphics;
@@ -12,7 +13,7 @@ using FFXIVClientStructs.FFXIV.Component.GUI;
 using Lumina.Excel.GeneratedSheets;
 using Moodles.Data;
 using Moodles.GameGuiProcessors;
-using Moodles.VfxManager;
+using System.Linq;
 
 namespace Moodles.Processors;
 public unsafe class CommonProcessor : IDisposable
@@ -107,8 +108,7 @@ public unsafe class CommonProcessor : IDisposable
 
     private void Tick()
     {
-        VfxSpawn.Tick();
-        List<(PlayerCharacter Player, string VFX)> VFXCandidates = [];
+        List<(PlayerCharacter Player, StatusHitEffectKind Kind)> SHECandidates = [];
         if (HoveringOver != 0)
         {
             if (IsKeyPressed(LimitedKeys.LeftMouseButton)) WasRightMousePressed = false;
@@ -130,16 +130,22 @@ public unsafe class CommonProcessor : IDisposable
                 {
                     if (!statusManager.Value.AddTextShown.Contains(x.GUID))
                     {
-                        if (P.CanModifyUI() && TryFindIndex(statusManager.Key, out var index, out var pc) && Utils.CanSpawnVfxFlytext(pc))
+                        if (P.CanModifyUI() && Utils.TryFindPlayer(statusManager.Key, out var pc))
                         {
-                            FlyPopupTextProcessor.Enqueue(new(x, true, pc.ObjectId));
-                            if (x.Type == StatusType.Negative)
+                            if (Utils.CanSpawnFlytext(pc))
                             {
-                                VFXCandidates.Add((pc, "vfx/common/eff/dk05th_stdn0t.avfx"));
+                                FlyPopupTextProcessor.Enqueue(new(x, true, pc.ObjectId));
                             }
-                            else
+                            if (Utils.CanSpawnVFX(pc))
                             {
-                                VFXCandidates.Add((pc, "vfx/common/eff/dk05th_stup0t.avfx"));
+                                if (x.Type == StatusType.Negative && !SHECandidates.Any(s => s.Player.AddressEquals(pc) && s.Kind == StatusHitEffectKind.Enfeeblement))
+                                {   
+                                    SHECandidates.Add((pc, StatusHitEffectKind.Enfeeblement));
+                                }
+                                else if (!SHECandidates.Any(s => s.Player.AddressEquals(pc) && s.Kind == StatusHitEffectKind.Enhancement))
+                                {
+                                    SHECandidates.Add((pc, StatusHitEffectKind.Enhancement));
+                                }
                             }
                         }
                         statusManager.Value.AddTextShown.Add(x.GUID);
@@ -149,10 +155,19 @@ public unsafe class CommonProcessor : IDisposable
                 {
                     if (!statusManager.Value.RemTextShown.Contains(x.GUID))
                     {
-                        if (P.CanModifyUI() && TryFindIndex(statusManager.Key, out var index, out var pc) && Utils.CanSpawnVfxFlytext(pc))
+                        if (P.CanModifyUI() && Utils.TryFindPlayer(statusManager.Key, out var pc))
                         {
-                            FlyPopupTextProcessor.Enqueue(new(x, false, pc.ObjectId));
-                            VFXCandidates.Add((pc, "vfx/common/eff/dk04ht_canc0h.avfx"));
+                            if (Utils.CanSpawnFlytext(pc))
+                            {
+                                FlyPopupTextProcessor.Enqueue(new(x, false, pc.ObjectId));
+                            }
+                            if (Utils.CanSpawnVFX(pc))
+                            {
+                                if (!SHECandidates.Any(s => s.Player.AddressEquals(pc) && s.Kind == StatusHitEffectKind.FadeBuff))
+                                {
+                                    SHECandidates.Add((pc, StatusHitEffectKind.FadeBuff));
+                                }
+                            }
                         }
                         statusManager.Value.RemTextShown.Add(x.GUID);
                     }
@@ -169,37 +184,18 @@ public unsafe class CommonProcessor : IDisposable
             }
         }
         CancelRequests.Clear();
-        if (VFXCandidates.Count > 0 && C.EnableVFX && EzThrottler.Throttle("SpawnVFX", 100))
+        foreach(var x in SHECandidates)
         {
-            var bestCandidate = VFXCandidates.OrderBy(x => Vector3.DistanceSquared(Player.Object.Position, x.Player.Position)).First();
-            PluginLog.Debug($"Spawning {bestCandidate.VFX} on {bestCandidate.Player}");
-            VfxSpawn.SpawnOn(bestCandidate.Player, bestCandidate.VFX);
-        }
-    }
-
-    bool TryFindIndex(string name, out int index, out PlayerCharacter pcr)
-    {
-        if(name == Player.NameWithWorld)
-        {
-            index = 1;
-            pcr = Player.Object;
-            return true;
-        }
-        else
-        {
-            foreach (var x in Svc.Objects)
+            if (!C.RestrictSHE || x.Player.AddressEquals(Player.Object) || Utils.GetFriendlist().Contains(x.Player.GetNameWithWorld()) || UniversalParty.Members.Any(z => z.NameWithWorld == x.Player.GetNameWithWorld()) || Vector3.Distance(Player.Object.Position, x.Player.Position) < 15f)
             {
-                if(x is PlayerCharacter pc && pc.IsTargetable && pc.GetNameWithWorld() == name)
-                {
-                    index = -1;
-                    pcr = pc;
-                    return true;
-                }
+                PluginLog.Debug($"StatusHitEffect on: {x.Player} / {x.Kind}");
+                P.Memory.ApplyStatusHitEffectHook.Original(x.Kind, x.Player.Address, x.Player.Address, -1, 0, 0, 0);
+            }
+            else
+            {
+                PluginLog.Debug($"Skipping SHE on {x.Player} / {x.Kind}");
             }
         }
-        index = -1;
-        pcr = null;
-        return false;
     }
 
     public void SetIcon(AtkUnitBase* addon, AtkResNode* container, MyStatus status)

@@ -67,7 +67,7 @@ public static class TabMoodles
 
             if (ImGui.BeginTable("##moodles", 2, ImGuiTableFlags.Borders | ImGuiTableFlags.RowBg | ImGuiTableFlags.SizingStretchSame))
             {
-                ImGui.TableSetupColumn("Name", ImGuiTableColumnFlags.WidthFixed, 175f.Scale());
+                ImGui.TableSetupColumn("Name", ImGuiTableColumnFlags.WidthFixed, 175f);
                 ImGui.TableSetupColumn("Field", ImGuiTableColumnFlags.WidthStretch);
 
                 ImGui.TableNextColumn();
