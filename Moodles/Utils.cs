@@ -20,9 +20,9 @@ public static unsafe partial class Utils
 {
     public static void SendMareMessage(this Preset Preset, PlayerCharacter target)
     {
+        var list = new List<MyStatus>();
         foreach (var s in C.SavedStatuses.Where(x => Preset.Statuses.Contains(x.GUID)))
         {
-            var list = new List<MyStatus>();
             var preparedStatus = s.PrepareToApply();
             preparedStatus.Applier = Player.NameWithWorld ?? "";
             if (!preparedStatus.IsValid(out var error))
@@ -33,17 +33,17 @@ public static unsafe partial class Utils
             {
                 list.Add(preparedStatus);
             }
-            if (list.Count > 0)
+        }
+        if (list.Count > 0)
+        {
+            var message = new IncomingMessage(Player.NameWithWorld, target.GetNameWithWorld(), list);
+            if (P.IPCProcessor.BroadcastMareMessage.TryInvoke(Convert.ToBase64String(message.Serialize())))
             {
-                var message = new IncomingMessage(Player.NameWithWorld, target.GetNameWithWorld(), list);
-                if (P.IPCProcessor.BroadcastMareMessage.TryInvoke(Convert.ToBase64String(message.Serialize())))
-                {
-                    Notify.Info($"Broadcast success");
-                }
-                else
-                {
-                    Notify.Error("Broadcast failed");
-                }
+                Notify.Info($"Broadcast success");
+            }
+            else
+            {
+                Notify.Error("Broadcast failed");
             }
         }
     }
