@@ -16,7 +16,7 @@ public class Config : IEzConfig
 
     public bool EnableSHE = true;
     public bool EnableFlyPopupText = true;
-    public bool RestrictSHE = true;
+    public bool RestrictSHE = false;
     public int FlyPopupTextLimit = 10;
 
     public HashSet<uint> FavIcons = [];
