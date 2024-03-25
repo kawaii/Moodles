@@ -50,6 +50,7 @@ public class Moodles : IDalamudPlugin
             new EzTerritoryChanged((x) => CleanupStatusManagers());
             IPCProcessor = new();
             IPCTester = new();
+            Utils.CleanupNulls();
         });
     }
 

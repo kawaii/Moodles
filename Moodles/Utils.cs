@@ -408,4 +408,26 @@ public static unsafe partial class Utils
             return info;
         }
     }
+
+    public static void CleanupNulls()
+    {
+        for (int i = C.SavedStatuses.Count - 1; i >= 0; i--)
+        {
+            var item = C.SavedStatuses[i];
+            if (item == null)
+            {
+                PluginLog.Warning($"Cleaning up corrupted stats {i}");
+                C.SavedStatuses.RemoveAt(i);
+            }
+        }
+        for (int i = C.SavedPresets.Count - 1; i >= 0; i--)
+        {
+            var item = C.SavedPresets[i];
+            if (item == null)
+            {
+                PluginLog.Warning($"Cleaning up corrupted presets {i}");
+                C.SavedPresets.RemoveAt(i);
+            }
+        }
+    }
 }
