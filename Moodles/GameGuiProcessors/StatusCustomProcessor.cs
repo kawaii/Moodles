@@ -82,18 +82,21 @@ public unsafe class StatusCustomProcessor : IDisposable
 
     private void OnStatusCustom0RequestedUpdate(AddonEvent type, AddonArgs args)
     {
+        if (P == null) return;
         RequestedUpdateStatusCustom((AtkUnitBase*)args.Addon, ref NumStatuses0);
         InternalLog.Verbose($"StatusCustom0 Requested update: {NumStatuses0}");
     }
 
     private void OnStatusCustom1RequestedUpdate(AddonEvent type, AddonArgs args)
     {
+        if (P == null) return;
         RequestedUpdateStatusCustom((AtkUnitBase*)args.Addon, ref NumStatuses1);
         InternalLog.Verbose($"StatusCustom1 Requested update: {NumStatuses1}");
     }
 
     private void OnStatusCustom2RequestedUpdate(AddonEvent type, AddonArgs args)
     {
+        if (P == null) return;
         RequestedUpdateStatusCustom((AtkUnitBase*)args.Addon, ref NumStatuses2);
         InternalLog.Verbose($"StatusCustom2 Requested update: {NumStatuses2}");
     }
@@ -117,6 +120,7 @@ public unsafe class StatusCustomProcessor : IDisposable
     //permanent
     private void OnStatusCustom2Update(AddonEvent type, AddonArgs args)
     {
+        if (P == null) return;
         if (!Player.Available) return;
         if (!P.CanModifyUI()) return;
         //PluginLog.Verbose($"Post1 update {args.Addon:X16}");
@@ -127,6 +131,7 @@ public unsafe class StatusCustomProcessor : IDisposable
     //debuffs
     private void OnStatusCustom1Update(AddonEvent type, AddonArgs args)
     {
+        if (P == null) return;
         if (!Player.Available) return;
         if (!P.CanModifyUI()) return;
         //PluginLog.Verbose($"Post1 update {args.Addon:X16}");
@@ -137,6 +142,7 @@ public unsafe class StatusCustomProcessor : IDisposable
     //buffs
     private void OnStatusCustom0Update(AddonEvent type, AddonArgs args)
     {
+        if (P == null) return;
         if (!Player.Available) return;
         if (!P.CanModifyUI()) return;
         //PluginLog.Verbose($"Post0 update {args.Addon:X16}");

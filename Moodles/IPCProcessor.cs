@@ -151,7 +151,7 @@ public class IPCProcessor : IDisposable
     }
 
     [EzIPC]
-    void AddOrUpdateByGUID(Guid guid, PlayerCharacter pc)
+    void AddOrUpdateMoodleByGUID(Guid guid, PlayerCharacter pc)
     {
         if(C.SavedStatuses.TryGetFirst(x => x.GUID == guid, out var status))
         {
@@ -172,6 +172,47 @@ public class IPCProcessor : IDisposable
             if (!sm.Ephemeral)
             {
                 sm.ApplyPreset(preset);
+            }
+        }
+    }
+
+    [EzIPC]
+    void RemoveMoodleByGUID(Guid guid, PlayerCharacter pc)
+    {
+        if (C.SavedStatuses.TryGetFirst(x => x.GUID == guid, out var status))
+        {
+            var sm = pc.GetMyStatusManager();
+            if (!sm.Ephemeral)
+            {
+                foreach(var s in sm.Statuses)
+                {
+                    if(s.GUID == guid)
+                    {
+                        s.ExpiresAt = 0;
+                    }
+                }
+            }
+        }
+    }
+
+    [EzIPC]
+    void RemovePresetByGUID(Guid guid, PlayerCharacter pc)
+    {
+        if (C.SavedPresets.TryGetFirst(x => x.GUID == guid, out var preset))
+        {
+            var sm = pc.GetMyStatusManager();
+            if (!sm.Ephemeral)
+            {
+                foreach(var presetStatus in preset.Statuses)
+                {
+                    foreach (var s in sm.Statuses)
+                    {
+                        if (s.GUID == presetStatus)
+                        {
+                            s.ExpiresAt = 0;
+                        }
+                    }
+                }
             }
         }
     }

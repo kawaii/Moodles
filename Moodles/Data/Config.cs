@@ -14,8 +14,9 @@ public class Config : IEzConfig
     public bool Censor = false;
     public bool AutoOther = false;
 
-    internal bool EnableVFX => false;
+    public bool EnableSHE = true;
     public bool EnableFlyPopupText = true;
+    public bool RestrictSHE = false;
     public int FlyPopupTextLimit = 10;
 
     public HashSet<uint> FavIcons = [];

@@ -38,6 +38,7 @@ public unsafe class StatusProcessor : IDisposable
 
     private void OnStatusRequestedUpdate(AddonEvent type, AddonArgs args)
     {
+        if (P == null) return;
         var addon = (AtkUnitBase*)args.Addon;
         if (addon != null && IsAddonReady(addon) && P.CanModifyUI())
         {
@@ -55,6 +56,7 @@ public unsafe class StatusProcessor : IDisposable
 
     private void OnStatusUpdate(AddonEvent type, AddonArgs args)
     {
+        if (P == null) return;
         if (!Player.Available) return;
         if (!P.CanModifyUI()) return;
         var validStatuses = Utils.GetMyStatusManager(Player.NameWithWorld).Statuses;

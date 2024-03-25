@@ -76,16 +76,16 @@ public static unsafe partial class Utils
         if (!NoExpire)
         {
             ImGui.SameLine();
-            ImGuiEx.SetNextItemWidthScaled(30);
+            ImGui.SetNextItemWidth(30);
             ImGui.DragInt("D", ref Days, 0.1f, 0, 999);
             ImGui.SameLine();
-            ImGuiEx.SetNextItemWidthScaled(30);
+            ImGui.SetNextItemWidth(30);
             ImGui.DragInt("H##h", ref Hours, 0.1f, 0, 23);
             ImGui.SameLine();
-            ImGuiEx.SetNextItemWidthScaled(30);
+            ImGui.SetNextItemWidth(30);
             ImGui.DragInt("M##m", ref Minutes, 0.1f, 0, 59);
             ImGui.SameLine();
-            ImGuiEx.SetNextItemWidthScaled(30);
+            ImGui.SetNextItemWidth(30);
             ImGui.DragInt("S##s", ref Seconds, 0.1f, 0, 59);
         }
     }
@@ -199,7 +199,34 @@ public static unsafe partial class Utils
         }
     }
 
-    public static bool CanSpawnVfxFlytext(PlayerCharacter target)
+    public static bool TryFindPlayer(string name, out PlayerCharacter pcr)
+    {
+        if (name == Player.NameWithWorld)
+        {
+            pcr = Player.Object;
+            return true;
+        }
+        else
+        {
+            foreach (var x in Svc.Objects)
+            {
+                if (x is PlayerCharacter pc && pc.GetNameWithWorld() == name)
+                {
+                    pcr = pc;
+                    return true;
+                }
+            }
+        }
+        pcr = null;
+        return false;
+    }
+
+    public static bool CanSpawnVFX(PlayerCharacter target)
+    {
+        return true;
+    }
+
+    public static bool CanSpawnFlytext(PlayerCharacter target)
     {
         if (!target.IsTargetable) return false;
         if (!Player.Interactable) return false;
@@ -379,6 +406,28 @@ public static unsafe partial class Utils
             };
             IconInfoCache[iconID] = info;
             return info;
+        }
+    }
+
+    public static void CleanupNulls()
+    {
+        for (int i = C.SavedStatuses.Count - 1; i >= 0; i--)
+        {
+            var item = C.SavedStatuses[i];
+            if (item == null)
+            {
+                PluginLog.Warning($"Cleaning up corrupted stats {i}");
+                C.SavedStatuses.RemoveAt(i);
+            }
+        }
+        for (int i = C.SavedPresets.Count - 1; i >= 0; i--)
+        {
+            var item = C.SavedPresets[i];
+            if (item == null)
+            {
+                PluginLog.Warning($"Cleaning up corrupted presets {i}");
+                C.SavedPresets.RemoveAt(i);
+            }
         }
     }
 }
