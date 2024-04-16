@@ -54,7 +54,7 @@ public class Moodles : IDalamudPlugin
         });
     }
 
-    private void ToggleUi(string _, string _)
+    private void ToggleUi(string _, string __)
     {
         EzConfigGui.Window.IsOpen = !EzConfigGui.Window.IsOpen;
     }
