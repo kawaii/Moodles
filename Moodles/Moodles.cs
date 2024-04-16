@@ -36,7 +36,7 @@ public class Moodles : IDalamudPlugin
         {
             Config = EzConfig.Init<Config>();
             EzConfigGui.Init(UI.Draw);
-            EzCmd.Add("/moodles", EzConfigGui.Open, "Open plugin interface");
+            EzCmd.Add("/moodles", ToggleUi, "Open plugin interface");
             EzCmd.Add("/moodle", MoodleCommandProcessor.Process, "Add or remove moodles");
             Memory = new();
             CommonProcessor = new();
@@ -52,6 +52,11 @@ public class Moodles : IDalamudPlugin
             IPCTester = new();
             Utils.CleanupNulls();
         });
+    }
+
+    private void ToggleUi(string _, string __)
+    {
+        EzConfigGui.Window.IsOpen = !EzConfigGui.Window.IsOpen;
     }
 
     public void CleanupStatusManagers()
