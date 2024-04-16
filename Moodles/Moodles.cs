@@ -10,7 +10,6 @@ using Moodles.Data;
 using Moodles.Gui;
 using Moodles.OtterGuiHandlers;
 using Moodles.Processors;
-using Moodles.VfxManager;
 
 namespace Moodles;
 
@@ -38,7 +37,7 @@ public class Moodles : IDalamudPlugin
             Config = EzConfig.Init<Config>();
             EzConfigGui.Init(UI.Draw);
             EzCmd.Add("/moodles", EzConfigGui.Open, "Open plugin interface");
-            EzCmd.Add("/moodle", ToggleCmd.Process, "Add or remove moodles");
+            EzCmd.Add("/moodle", MoodleCommandProcessor.Process, "Add or remove moodles");
             Memory = new();
             CommonProcessor = new();
             OtterGuiHandler = new();
@@ -51,6 +50,7 @@ public class Moodles : IDalamudPlugin
             new EzTerritoryChanged((x) => CleanupStatusManagers());
             IPCProcessor = new();
             IPCTester = new();
+            Utils.CleanupNulls();
         });
     }
 
@@ -232,11 +232,10 @@ public class Moodles : IDalamudPlugin
     public void Dispose()
     {
         Safe(() => CleanupStatusManagers());
-        Safe(() => Memory?.Dispose());
-        Safe(() => CommonProcessor?.Dispose());
-        Safe(() => VfxSpawn.Remove());
         Safe(() => IPCProcessor?.Dispose());
-        P = null;
+        Safe(() => CommonProcessor?.Dispose());
+        Safe(() => Memory?.Dispose());
         ECommonsMain.Dispose();
+        P = null;
     }
 }

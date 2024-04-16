@@ -1,4 +1,6 @@
-﻿using MemoryPack;
+﻿using Dalamud.Game.ClientState.Objects.SubKinds;
+using ECommons.GameHelpers;
+using MemoryPack;
 using MemoryPack.Compression;
 using Moodles.Data;
 using System.IO.Compression;
@@ -15,6 +17,7 @@ public class MyStatusManager
     public HashSet<Guid> RemTextShown = [];
     public List<MyStatus> Statuses = [];
     public bool Ephemeral = false;
+    internal PlayerCharacter Owner => (PlayerCharacter)Svc.Objects.FirstOrDefault(x => x is PlayerCharacter pc && pc.GetNameWithWorld() == C.StatusManagers.FirstOrDefault(s => s.Value == this).Key);
     [NonSerialized] internal bool NeedFireEvent = false;
 
     public void AddOrUpdate(MyStatus newStatus, bool Unchecked = false, bool triggerEvent = true)
@@ -155,5 +158,40 @@ public class MyStatusManager
         {
             e.Log();
         }
+    }
+
+    public bool ContainsStatus(MyStatus status)
+    {
+        return ContainsStatus(status.GUID);
+    }
+
+    public bool ContainsStatus(Guid status)
+    {
+        var statusCount = this.Statuses.Count;
+        for (var i = 0; i < statusCount; i++)
+        {
+            var curStatus = this.Statuses[i];
+            if (curStatus.GUID == status)
+            {
+                return true;
+            }
+        }
+
+        return false;
+    }
+
+    public bool ContainsPreset(Preset preset)
+    {
+        var statusCount = preset.Statuses.Count;
+        for (var i = 0; i < statusCount; i++)
+        {
+            var statusGUID = preset.Statuses[i];
+            if (!ContainsStatus(statusGUID))
+            {
+                return false;
+            }
+        }
+
+        return true;
     }
 }

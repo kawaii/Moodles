@@ -15,6 +15,15 @@ public static class TabWhitelist
     static bool Editing = true;
     public static void Draw()
     {
+        if (ImGui.BeginTable($"##Table", 1, ImGuiTableFlags.SizingStretchSame | ImGuiTableFlags.Borders))
+        {
+            ImGui.TableHeader($"#h");
+            ImGui.TableNextRow();
+            ImGui.TableNextColumn();
+            ImGui.TableSetBgColor(ImGuiTableBgTarget.CellBg, EColor.RedBright.ToUint());
+            ImGuiEx.LineCentered(() => ImGuiEx.Text(EColor.White, "None of this stuff works yet, oh well. :)"));
+            ImGui.EndTable();
+        }
         P.OtterGuiHandler.Whitelist.Draw(200f);
         ImGui.SameLine();
         using var group = ImRaii.Group();
@@ -24,50 +33,77 @@ public static class TabWhitelist
 
     private static void DrawHeader()
     {
-        HeaderDrawer.Draw(Selected == null ? "" : (Selected.PlayerName.Censor($"Whitelist entry {C.Whitelist.IndexOf(Selected) + 1}")), 0, ImGui.GetColorU32(ImGuiCol.FrameBg), 0, HeaderDrawer.Button.IncognitoButton(C.Censor, v => C.Censor = v));
+        HeaderDrawer.Draw(Selected == null ? "Mare Synchronos Global Settings" : (Selected.PlayerName.Censor($"Whitelist entry {C.Whitelist.IndexOf(Selected) + 1}")), 0, ImGui.GetColorU32(ImGuiCol.FrameBg), 0, HeaderDrawer.Button.IncognitoButton(C.Censor, v => C.Censor = v));
     }
 
     private static void DrawSelected()
     {
         using var child = ImRaii.Child("##Panel", -Vector2.One, true);
-        if (!child || Selected == null)
+        if (!child)
             return;
 
-        if (ImGui.BeginTable("##wl", 2, ImGuiTableFlags.RowBg | ImGuiTableFlags.SizingFixedFit | ImGuiTableFlags.Borders))
+        if (Selected == null)
         {
-            ImGui.TableSetupColumn("##txt", ImGuiTableColumnFlags.WidthFixed, 150);
-            ImGui.TableSetupColumn("##inp", ImGuiTableColumnFlags.WidthStretch);
-
-            ImGui.TableNextRow();
-            ImGui.TableNextColumn();
-
-            ImGuiEx.TextV($"Player Name @ World:");
-            ImGui.TableNextColumn();
-
-            ImGuiEx.InputWithRightButtonsArea(() =>
+            ImGui.Checkbox("Allow Moodles From All Players", ref C.BroadcastAllowAll);
+            ImGui.Checkbox("Allow Moodles From Friends", ref C.BroadcastAllowFriends);
+            ImGui.Checkbox("Allow Moodles From Party Members", ref C.BroadcastAllowParty);
+            ImGuiEx.Text($"External Moodle Maximum Duration:");
+            ImGuiEx.Spacing();
+            Utils.DurationSelector("Any Duration", ref C.BroadcastDefaultEntry.AnyDuration, ref C.BroadcastDefaultEntry.Days, ref C.BroadcastDefaultEntry.Hours, ref C.BroadcastDefaultEntry.Minutes, ref C.BroadcastDefaultEntry.Seconds);
+        }
+        else
+        {
+            if (ImGui.BeginTable("##wl", 2, ImGuiTableFlags.RowBg | ImGuiTableFlags.SizingFixedFit | ImGuiTableFlags.Borders))
             {
-                ImGui.InputText($"##pname", ref Selected.PlayerName, 100, C.Censor?ImGuiInputTextFlags.Password:ImGuiInputTextFlags.None);
-            }, () =>
-            {
-                if (Svc.Targets.Target is PlayerCharacter pc)
+                ImGui.TableSetupColumn("##txt", ImGuiTableColumnFlags.WidthFixed, 150);
+                ImGui.TableSetupColumn("##inp", ImGuiTableColumnFlags.WidthStretch);
+
+                ImGui.TableNextRow();
+                ImGui.TableNextColumn();
+
+                ImGuiEx.TextV($"Player Name @ World:");
+                ImGui.TableNextColumn();
+
+                ImGuiEx.InputWithRightButtonsArea(() =>
                 {
-                    if (ImGui.Button("Target"))
+                    ImGui.InputText($"##pname", ref Selected.PlayerName, 100, C.Censor ? ImGuiInputTextFlags.Password : ImGuiInputTextFlags.None);
+                }, () =>
+                {
+                    if (Svc.Targets.Target is PlayerCharacter pc)
                     {
-                        Selected.PlayerName = pc.GetNameWithWorld();
+                        if (ImGui.Button("Target"))
+                        {
+                            Selected.PlayerName = pc.GetNameWithWorld();
+                        }
                     }
+                });
+
+                ImGui.TableNextRow();
+                ImGui.TableNextColumn();
+                ImGuiEx.TextV($"Allowed Status Types:");
+                if (!Selected.AllowedTypes.Any())
+                {
+                    ImGuiEx.HelpMarker("No status types selected. Please select at least one status type or no Moodles will be eligible.", EColor.RedBright, FontAwesomeIcon.ExclamationTriangle.ToIconString());
                 }
-            });
+                ImGui.TableNextColumn();
+                foreach (var x in Enum.GetValues<StatusType>())
+                {
+                    ImGuiEx.CollectionCheckbox($"{x}", x, Selected.AllowedTypes);
+                }
 
-            ImGui.TableNextRow();
-            ImGui.TableNextColumn();
-            ImGuiEx.TextV($"Allowed Status Types:");
-            ImGui.TableNextColumn();
-            foreach(var x in Enum.GetValues<StatusType>())
-            {
-                ImGuiEx.CollectionCheckbox($"{x}", x, Selected.AllowedTypes);
+                ImGui.TableNextRow();
+                ImGui.TableNextColumn();
+                ImGuiEx.TextV($"Maximum Duration:");
+                if (Selected.TotalMaxDurationSeconds < 1 && !Selected.AnyDuration)
+                {
+                    ImGuiEx.HelpMarker("No maximum duration configured. Please set one or no Moodles will be eligible.", EColor.RedBright, FontAwesomeIcon.ExclamationTriangle.ToIconString());
+                }
+                ImGui.TableNextColumn();
+
+                Utils.DurationSelector("Any Duration", ref Selected.AnyDuration, ref Selected.Days, ref Selected.Hours, ref Selected.Minutes, ref Selected.Seconds);
+
+                ImGui.EndTable();
             }
-
-            ImGui.EndTable();
         }
     }
 

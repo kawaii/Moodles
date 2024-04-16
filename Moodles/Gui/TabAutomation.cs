@@ -9,7 +9,7 @@ using System.Data;
 namespace Moodles.Gui;
 public static class TabAutomation
 {
-    public static Vector2 JobIconSize => new Vector2(24f.Scale(), 24f.Scale());
+    public static Vector2 JobIconSize => new Vector2(24f, 24f);
     static AutomationProfile Selected => P.OtterGuiHandler.AutomationList.Current;
     static string Filter = "";
     static bool Editing = true;

@@ -39,6 +39,7 @@ public static class TabMoodles
                 Utils.GetMyStatusManager(Player.NameWithWorld).AddOrUpdate(Selected.PrepareToApply(AsPermanent ? PrepareOptions.Persistent : PrepareOptions.NoOption));
             }
             ImGui.SameLine();
+
             var dis = Svc.Targets.Target is not PlayerCharacter;
             if (dis) ImGui.BeginDisabled();
             var isMare = Utils.GetMarePlayers().Contains(Svc.Targets.Target?.Address ?? -1);
@@ -53,23 +54,7 @@ public static class TabMoodles
                     }
                     else
                     {
-                        var preparedStatus = Selected.PrepareToApply(AsPermanent ? PrepareOptions.Persistent : PrepareOptions.NoOption);
-                        if (!preparedStatus.IsValid(out var error))
-                        {
-                            Notify.Error($"Could not apply status: {error}");
-                        }
-                        else
-                        {
-                            var message = new IncomingMessage(Player.NameWithWorld, target.GetNameWithWorld(), [preparedStatus]);
-                            if (P.IPCProcessor.BroadcastMareMessage.TryInvoke(Convert.ToBase64String(message.Serialize())))
-                            {
-                                Notify.Info($"Broadcast success");
-                            }
-                            else
-                            {
-                                Notify.Error("Broadcast failed");
-                            }
-                        }
+                        Selected.SendMareMessage(target);
                     }
                 }
                 catch(Exception e)
@@ -79,9 +64,10 @@ public static class TabMoodles
             }
             if (isMare) { ImGuiEx.HelpMarker("This doesn't do anything yet, why are you clicking it? :)", color: ImGuiColors.DalamudRed); }
             if (dis) ImGui.EndDisabled();
+
             if (ImGui.BeginTable("##moodles", 2, ImGuiTableFlags.Borders | ImGuiTableFlags.RowBg | ImGuiTableFlags.SizingStretchSame))
             {
-                ImGui.TableSetupColumn("Name", ImGuiTableColumnFlags.WidthFixed, 175f.Scale());
+                ImGui.TableSetupColumn("Name", ImGuiTableColumnFlags.WidthFixed, 175f);
                 ImGui.TableSetupColumn("Field", ImGuiTableColumnFlags.WidthStretch);
 
                 ImGui.TableNextColumn();
@@ -203,22 +189,8 @@ public static class TabMoodles
                     ImGuiEx.HelpMarker("Duration must be at least 1 second", EColor.RedBright, FontAwesomeIcon.ExclamationTriangle.ToIconString());
                 }
                 ImGui.TableNextColumn();
-                ImGui.Checkbox("Permanent", ref Selected.NoExpire);
-                if (!Selected.NoExpire)
-                {
-                    ImGui.SameLine();
-                    ImGuiEx.SetNextItemWidthScaled(30);
-                    ImGui.DragInt("D", ref Selected.Days, 0.1f, 0, 999);
-                    ImGui.SameLine();
-                    ImGuiEx.SetNextItemWidthScaled(30);
-                    ImGui.DragInt("H##h", ref Selected.Hours, 0.1f, 0, 23);
-                    ImGui.SameLine();
-                    ImGuiEx.SetNextItemWidthScaled(30);
-                    ImGui.DragInt("M##m", ref Selected.Minutes, 0.1f, 0, 59);
-                    ImGui.SameLine();
-                    ImGuiEx.SetNextItemWidthScaled(30);
-                    ImGui.DragInt("S##s", ref Selected.Seconds, 0.1f, 0, 59);
-                }
+
+                Utils.DurationSelector("Permanent", ref Selected.NoExpire, ref Selected.Days, ref Selected.Hours, ref Selected.Minutes, ref Selected.Seconds);
 
                 ImGui.TableNextRow();
 
