@@ -18,7 +18,7 @@ using UIColor = ECommons.ChatMethods.UIColor;
 namespace Moodles;
 public static unsafe partial class Utils
 {
-    public static void SendMareMessage(this Preset Preset, PlayerCharacter target)
+    public static void SendMareMessage(this Preset Preset, IPlayerCharacter target)
     {
         var list = new List<MyStatus>();
         foreach (var s in C.SavedStatuses.Where(x => Preset.Statuses.Contains(x.GUID)))
@@ -48,7 +48,7 @@ public static unsafe partial class Utils
         }
     }
 
-    public static void SendMareMessage(this MyStatus Status, PlayerCharacter target)
+    public static void SendMareMessage(this MyStatus Status, IPlayerCharacter target)
     {
         var preparedStatus = Status.PrepareToApply();
         preparedStatus.Applier = Player.NameWithWorld ?? "";
@@ -106,7 +106,7 @@ public static unsafe partial class Utils
         for (int i = 0; i < friends->InfoProxyCommonList.CharDataSpan.Length; i++)
         {
             var entry = friends->InfoProxyCommonList.CharDataSpan[i];
-            var name = MemoryHelper.ReadStringNullTerminated((nint)entry.Name);
+            var name = entry.NameString;
             if(name != "")
             {
                 ret.Add($"{name}@{ExcelWorldHelper.GetName(entry.HomeWorld)}");
@@ -181,7 +181,7 @@ public static unsafe partial class Utils
         return C.Censor ? s.Split(" ").Where(x => x.Length > 0).Select(x => $"{x[0]}.").Join(" "):s;
     }
 
-    public static IEnumerable<AutomationCombo> GetSuitableAutomation(PlayerCharacter pc = null)
+    public static IEnumerable<AutomationCombo> GetSuitableAutomation(IPlayerCharacter pc = null)
     {
         pc ??= Player.Object;
         foreach (var x in C.AutomationProfiles)
@@ -199,7 +199,7 @@ public static unsafe partial class Utils
         }
     }
 
-    public static bool TryFindPlayer(string name, out PlayerCharacter pcr)
+    public static bool TryFindPlayer(string name, out IPlayerCharacter pcr)
     {
         if (name == Player.NameWithWorld)
         {
@@ -210,7 +210,7 @@ public static unsafe partial class Utils
         {
             foreach (var x in Svc.Objects)
             {
-                if (x is PlayerCharacter pc && pc.GetNameWithWorld() == name)
+                if (x is IPlayerCharacter pc && pc.GetNameWithWorld() == name)
                 {
                     pcr = pc;
                     return true;
@@ -221,12 +221,12 @@ public static unsafe partial class Utils
         return false;
     }
 
-    public static bool CanSpawnVFX(PlayerCharacter target)
+    public static bool CanSpawnVFX(IPlayerCharacter target)
     {
         return true;
     }
 
-    public static bool CanSpawnFlytext(PlayerCharacter target)
+    public static bool CanSpawnFlytext(IPlayerCharacter target)
     {
         if (!target.IsTargetable) return false;
         if (!Player.Interactable) return false;
@@ -263,7 +263,7 @@ public static unsafe partial class Utils
         return manager;
     }
 
-    public static MyStatusManager GetMyStatusManager(this PlayerCharacter pc, bool create = true) => GetMyStatusManager(pc.GetNameWithWorld(), create);
+    public static MyStatusManager GetMyStatusManager(this IPlayerCharacter pc, bool create = true) => GetMyStatusManager(pc.GetNameWithWorld(), create);
 
     public static ulong Frame => CSFramework.Instance()->FrameCounter;
 

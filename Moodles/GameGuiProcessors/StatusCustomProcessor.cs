@@ -109,7 +109,7 @@ public unsafe class StatusCustomProcessor : IDisposable
             for (int i = 24; i >= 5; i--)
             {
                 var c = addon->UldManager.NodeList[i];
-                if (c->IsVisible)
+                if (c->IsVisible())
                 {
                     StatusCnt++;
                 }
@@ -162,12 +162,12 @@ public unsafe class StatusCustomProcessor : IDisposable
             else
             {
                 baseCnt = 24 - Player.Object.StatusList.Count(x => x.StatusId != 0 && userStatuses.Contains(x.StatusId));
-                if (Svc.Condition[ConditionFlag.Mounted] && MemoryHelper.ReadStringNullTerminated((nint)addon->Name) == "StatusCustom2") baseCnt--;
+                if (Svc.Condition[ConditionFlag.Mounted] && addon->NameString == "StatusCustom2") baseCnt--;
             }
             for (int i = baseCnt; i >= 5; i--)
             {
                 var c = addon->UldManager.NodeList[i];
-                if (c->IsVisible) c->NodeFlags ^= NodeFlags.Visible;
+                if (c->IsVisible()) c->NodeFlags ^= NodeFlags.Visible;
             }
             if (!hideAll)
             {

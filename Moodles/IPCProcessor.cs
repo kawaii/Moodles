@@ -16,7 +16,7 @@ public class IPCProcessor : IDisposable
 {
     [EzIPCEvent] readonly Action Ready;
     [EzIPCEvent] readonly Action Unloading;
-    [EzIPCEvent] public readonly Action<PlayerCharacter> StatusManagerModified;
+    [EzIPCEvent] public readonly Action<IPlayerCharacter> StatusManagerModified;
     [EzIPC("MareSynchronos.GetHandledAddresses", false)] public readonly Func<List<nint>> GetMarePlayers;
     [EzIPC("MareSynchronos.BroadcastMessage", false)] public readonly Action<string> BroadcastMareMessage;
 
@@ -63,17 +63,17 @@ public class IPCProcessor : IDisposable
     [EzIPC("ClearStatusManagerByName")]
     void ClearStatusManager(string name)
     {
-        var obj = Svc.Objects.FirstOrDefault(x => x is PlayerCharacter pc && pc.GetNameWithWorld() == name);
-        obj ??= Svc.Objects.FirstOrDefault(x => x is PlayerCharacter pc && pc.Name.ToString() == name);
+        var obj = Svc.Objects.FirstOrDefault(x => x is IPlayerCharacter pc && pc.GetNameWithWorld() == name);
+        obj ??= Svc.Objects.FirstOrDefault(x => x is IPlayerCharacter pc && pc.Name.ToString() == name);
         if (obj == null) return;
-        ClearStatusManager((PlayerCharacter)obj);
+        ClearStatusManager((IPlayerCharacter)obj);
     }
 
     [EzIPC("ClearStatusManagerByPtr")]
-    void ClearStatusManager(nint ptr) => ClearStatusManager((PlayerCharacter)Svc.Objects.CreateObjectReference(ptr));
+    void ClearStatusManager(nint ptr) => ClearStatusManager((IPlayerCharacter)Svc.Objects.CreateObjectReference(ptr));
 
     [EzIPC("ClearStatusManagerByPC")]
-    void ClearStatusManager(PlayerCharacter pc)
+    void ClearStatusManager(IPlayerCharacter pc)
     {
         var m = pc.GetMyStatusManager();
         foreach(var s in m.Statuses)
@@ -89,17 +89,17 @@ public class IPCProcessor : IDisposable
     [EzIPC("SetStatusManagerByName")]
     void SetStatusManager(string name, string data)
     {
-        var obj = Svc.Objects.FirstOrDefault(x => x is PlayerCharacter pc && pc.GetNameWithWorld() == name);
-        obj ??= Svc.Objects.FirstOrDefault(x => x is PlayerCharacter pc && pc.Name.ToString() == name);
+        var obj = Svc.Objects.FirstOrDefault(x => x is IPlayerCharacter pc && pc.GetNameWithWorld() == name);
+        obj ??= Svc.Objects.FirstOrDefault(x => x is IPlayerCharacter pc && pc.Name.ToString() == name);
         if (obj == null) return;
-        SetStatusManager((PlayerCharacter)obj, data);
+        SetStatusManager((IPlayerCharacter)obj, data);
     }
 
     [EzIPC("SetStatusManagerByPtr")]
-    void SetStatusManager(nint ptr, string data) => SetStatusManager((PlayerCharacter)Svc.Objects.CreateObjectReference(ptr), data);
+    void SetStatusManager(nint ptr, string data) => SetStatusManager((IPlayerCharacter)Svc.Objects.CreateObjectReference(ptr), data);
 
     [EzIPC("SetStatusManagerByPC")]
-    void SetStatusManager(PlayerCharacter pc, string data)
+    void SetStatusManager(IPlayerCharacter pc, string data)
     {
         pc.GetMyStatusManager().Apply(data);
     }
@@ -110,17 +110,17 @@ public class IPCProcessor : IDisposable
     [EzIPC("GetStatusManagerByName")]
     string GetStatusManager(string name)
     {
-        var obj = Svc.Objects.FirstOrDefault(x => x is PlayerCharacter pc && pc.GetNameWithWorld() == name);
-        obj ??= Svc.Objects.FirstOrDefault(x => x is PlayerCharacter pc && pc.Name.ToString() == name);
+        var obj = Svc.Objects.FirstOrDefault(x => x is IPlayerCharacter pc && pc.GetNameWithWorld() == name);
+        obj ??= Svc.Objects.FirstOrDefault(x => x is IPlayerCharacter pc && pc.Name.ToString() == name);
         if (obj == null) return null;
-        return GetStatusManager((PlayerCharacter)obj);
+        return GetStatusManager((IPlayerCharacter)obj);
     }
 
     [EzIPC("GetStatusManagerByPtr")]
-    string GetStatusManager(nint ptr) => GetStatusManager((PlayerCharacter)Svc.Objects.CreateObjectReference(ptr));
+    string GetStatusManager(nint ptr) => GetStatusManager((IPlayerCharacter)Svc.Objects.CreateObjectReference(ptr));
 
     [EzIPC("GetStatusManagerByPC")]
-    string GetStatusManager(PlayerCharacter pc)
+    string GetStatusManager(IPlayerCharacter pc)
     {
         if (pc == null) return null;
         return pc.GetMyStatusManager().SerializeToBase64();
@@ -151,7 +151,7 @@ public class IPCProcessor : IDisposable
     }
 
     [EzIPC]
-    void AddOrUpdateMoodleByGUID(Guid guid, PlayerCharacter pc)
+    void AddOrUpdateMoodleByGUID(Guid guid, IPlayerCharacter pc)
     {
         if(C.SavedStatuses.TryGetFirst(x => x.GUID == guid, out var status))
         {
@@ -164,7 +164,7 @@ public class IPCProcessor : IDisposable
     }
 
     [EzIPC]
-    void ApplyPresetByGUID(Guid guid, PlayerCharacter pc)
+    void ApplyPresetByGUID(Guid guid, IPlayerCharacter pc)
     {
         if (C.SavedPresets.TryGetFirst(x => x.GUID == guid, out var preset))
         {
@@ -177,7 +177,7 @@ public class IPCProcessor : IDisposable
     }
 
     [EzIPC]
-    void RemoveMoodleByGUID(Guid guid, PlayerCharacter pc)
+    void RemoveMoodleByGUID(Guid guid, IPlayerCharacter pc)
     {
         if (C.SavedStatuses.TryGetFirst(x => x.GUID == guid, out var status))
         {
@@ -196,7 +196,7 @@ public class IPCProcessor : IDisposable
     }
 
     [EzIPC]
-    void RemovePresetByGUID(Guid guid, PlayerCharacter pc)
+    void RemovePresetByGUID(Guid guid, IPlayerCharacter pc)
     {
         if (C.SavedPresets.TryGetFirst(x => x.GUID == guid, out var preset))
         {

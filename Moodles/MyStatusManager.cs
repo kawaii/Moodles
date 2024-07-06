@@ -17,7 +17,7 @@ public class MyStatusManager
     public HashSet<Guid> RemTextShown = [];
     public List<MyStatus> Statuses = [];
     public bool Ephemeral = false;
-    internal PlayerCharacter Owner => (PlayerCharacter)Svc.Objects.FirstOrDefault(x => x is PlayerCharacter pc && pc.GetNameWithWorld() == C.StatusManagers.FirstOrDefault(s => s.Value == this).Key);
+    internal IPlayerCharacter Owner => (IPlayerCharacter)Svc.Objects.FirstOrDefault(x => x is IPlayerCharacter pc && pc.GetNameWithWorld() == C.StatusManagers.FirstOrDefault(s => s.Value == this).Key);
     [NonSerialized] internal bool NeedFireEvent = false;
 
     public void AddOrUpdate(MyStatus newStatus, bool Unchecked = false, bool triggerEvent = true)

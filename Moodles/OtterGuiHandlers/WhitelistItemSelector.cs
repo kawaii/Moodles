@@ -307,9 +307,10 @@ public class WhitelistItemSelector<T>
     private void DrawAddTargetButton(float width)
     {
         using var font = ImRaii.DefaultFont();
-        if (ImGuiUtil.DrawDisabledButton(FontAwesomeIcon.User.ToIconString(), new Vector2(width, 0), "Add an empty entry prefilled with current target", Svc.Targets.Target is not PlayerCharacter, true))
+        if (ImGuiUtil.DrawDisabledButton(FontAwesomeIcon.User.ToIconString(), new Vector2(width, 0), 
+            "Add an empty entry prefilled with current target", Svc.Targets.Target is not IPlayerCharacter, true))
         {
-            C.Whitelist.Add(new() { PlayerName = ((PlayerCharacter)Svc.Targets.Target!).GetNameWithWorld() });
+            C.Whitelist.Add(new() { PlayerName = ((IPlayerCharacter)Svc.Targets.Target!).GetNameWithWorld() });
         }
     }
 

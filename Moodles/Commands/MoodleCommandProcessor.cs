@@ -192,7 +192,7 @@ public static class MoodleCommandProcessor
             throw new MoodleChatException("GUID is an invalid parameter type for automation.");
         }
 
-        PlayerCharacter playerCharacter = null;
+        IPlayerCharacter playerCharacter = null;
         
         if (targetState == TargetState.Self)
         {
@@ -200,7 +200,7 @@ public static class MoodleCommandProcessor
         }
         else if (targetState == TargetState.Target)
         {
-            if (Svc.Targets.Target is PlayerCharacter pCharacter)
+            if (Svc.Targets.Target is IPlayerCharacter pCharacter)
             {
                 playerCharacter = pCharacter;
             }
@@ -414,7 +414,7 @@ public static class MoodleCommandProcessor
         }
         else if (targetState == TargetState.Target)
         {
-            if (Svc.Targets.Target is PlayerCharacter pCharacter)
+            if (Svc.Targets.Target is IPlayerCharacter pCharacter)
             {
                 statusManager = Utils.GetMyStatusManager(Player.GetNameWithWorld(pCharacter));
             }
@@ -442,7 +442,7 @@ public static class MoodleCommandProcessor
         return statusManager;
     }
 
-    unsafe static PlayerCharacter PlayerFromString(string playerString)
+    unsafe static IPlayerCharacter PlayerFromString(string playerString)
     {
         var splitString = playerString.Split('@');
         var hasWorld = false;
@@ -473,7 +473,7 @@ public static class MoodleCommandProcessor
             throw new MoodleChatException($"Specified Target Selector '{playerString}' could not be found.");
         }
 
-        return (PlayerCharacter)Svc.Objects.CreateObjectReference((nint)battleChara);
+        return (IPlayerCharacter)Svc.Objects.CreateObjectReference((nint)battleChara);
     }
 
     static string GetCustomString(bool applyCounter = true)
