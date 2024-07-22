@@ -123,22 +123,22 @@ public unsafe static class UI
             ImGui.Checkbox($"Suppress", ref Suppress);
             ImGuiEx.InputUint($"dec", ref Opcode);
             ImGuiEx.InputHex($"hex", ref Opcode);
-            if (ImGui.Button("Enable")) P.Memory.ProcessActorControlPacketHook.Enable();
+            /*if (ImGui.Button("Enable")) P.Memory.ProcessActorControlPacketHook.Enable();
             if (ImGui.Button("Pause")) P.Memory.ProcessActorControlPacketHook.Pause();
             if (ImGui.Button("Disable")) P.Memory.ProcessActorControlPacketHook.Disable();
             ImGuiEx.Text($"Enabled: {P.Memory.ProcessActorControlPacketHook.IsEnabled}");
-            ImGuiEx.Text($"Created: {P.Memory.ProcessActorControlPacketHook.IsCreated}");
+            ImGuiEx.Text($"Created: {P.Memory.ProcessActorControlPacketHook.IsCreated}");*/
         }
         if (ImGui.CollapsingHeader("Packet hook"))
         {
             ImGui.Checkbox($"Suppress", ref Suppress);
             ImGuiEx.InputUint($"dec", ref Opcode);
             ImGuiEx.InputHex($"hex", ref Opcode);
-            if (ImGui.Button("Enable")) P.Memory.PacketDispatcher_OnReceivePacketHook.Enable();
+            /*if (ImGui.Button("Enable")) P.Memory.PacketDispatcher_OnReceivePacketHook.Enable();
             if (ImGui.Button("Pause")) P.Memory.PacketDispatcher_OnReceivePacketHook.Pause();
             if (ImGui.Button("Disable")) P.Memory.PacketDispatcher_OnReceivePacketHook.Disable();
             ImGuiEx.Text($"Enabled: {P.Memory.PacketDispatcher_OnReceivePacketHook.IsEnabled}");
-            ImGuiEx.Text($"Created: {P.Memory.PacketDispatcher_OnReceivePacketHook.IsCreated}");
+            ImGuiEx.Text($"Created: {P.Memory.PacketDispatcher_OnReceivePacketHook.IsCreated}");*/
         }
         if (ImGui.CollapsingHeader("Friendlist"))
         {
@@ -161,7 +161,7 @@ public unsafe static class UI
         }
         if(ImGui.CollapsingHeader("Flytext debugger"))
         {
-            if(ImGui.Button("Enable hook"))
+            /*if(ImGui.Button("Enable hook"))
             {
                 P.Memory.UnkDelegateHook.Enable();
             }
@@ -180,7 +180,7 @@ public unsafe static class UI
             if (ImGui.Button("Disable ac hook"))
             {
                 P.Memory.ProcessActorControlPacketHook.Disable();
-            }
+            }*/
             if (ImGui.Button("Enable bl hook"))
             {
                 P.Memory.BattleLog_AddToScreenLogWithScreenLogKindHook.Enable();
