@@ -12,13 +12,13 @@ namespace Moodles;
 public class IPCTester
 {
     [EzIPC] readonly Func<int> Version;
-    [EzIPC] readonly Func<PlayerCharacter, string> GetStatusManagerByPC;
+    [EzIPC] readonly Func<IPlayerCharacter, string> GetStatusManagerByPC;
     [EzIPC] readonly Func<nint, string> GetStatusManagerByPtr;
     [EzIPC] readonly Func<string, string> GetStatusManagerByName;
-    [EzIPC] readonly Action<PlayerCharacter, string> SetStatusManagerByPC;
+    [EzIPC] readonly Action<IPlayerCharacter, string> SetStatusManagerByPC;
     [EzIPC] readonly Action<nint, string> SetStatusManagerByPtr;
     [EzIPC] readonly Action<string, string> SetStatusManagerByName;
-    [EzIPC] readonly Action<PlayerCharacter> ClearStatusManagerByPC;
+    [EzIPC] readonly Action<IPlayerCharacter> ClearStatusManagerByPC;
     [EzIPC] readonly Action<nint> ClearStatusManagerByPtr;
     [EzIPC] readonly Action<string> ClearStatusManagerByName;
 
@@ -28,15 +28,16 @@ public class IPCTester
     }
 
     [EzIPCEvent]
-    private void StatusManagerModified(PlayerCharacter character)
+    private void StatusManagerModified(IPlayerCharacter character)
     {
         PluginLog.Debug($"IPC test: status manager modified {character}");
     }
 
     public void Draw()
     {
+        // update to use better copy and paste functionality later.
         ImGuiEx.Text($"Version: {Version()}");
-        if (Svc.Targets.Target is PlayerCharacter pc)
+        if (Svc.Targets.Target is IPlayerCharacter pc)
         {
             if (ImGui.Button("Copy (PC)"))
             {

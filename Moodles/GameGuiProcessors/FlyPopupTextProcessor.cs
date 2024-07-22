@@ -45,14 +45,14 @@ public sealed unsafe class FlyPopupTextProcessor : IDisposable
         if(Queue.Count > C.FlyPopupTextLimit)
         {
             PluginLog.Warning($"FlyPopupTextProcessor Queue is too large! Trimming to {C.FlyPopupTextLimit} closest entities.");
-            var n = Queue.RemoveAll(x => Svc.Objects.FirstOrDefault(z => z.ObjectId == x.Owner) is not PlayerCharacter);
+            var n = Queue.RemoveAll(x => Svc.Objects.FirstOrDefault(z => z.OwnerId == x.Owner) is not IPlayerCharacter);
             if(n > 0) PluginLog.Information($"  Removed {n} non-player entities");
-            Queue = Queue.OrderBy(x => Vector3.DistanceSquared(Player.Object.Position, Svc.Objects.First(z => z.ObjectId == x.Owner).Position)).Take(C.FlyPopupTextLimit).ToList();
+            Queue = Queue.OrderBy(x => Vector3.DistanceSquared(Player.Object.Position, Svc.Objects.First(z => z.OwnerId == x.Owner).Position)).Take(C.FlyPopupTextLimit).ToList();
         }
         while (Queue.TryDequeue(out var e))
         {
-            var target = Svc.Objects.FirstOrDefault(x => x.ObjectId == e.Owner);
-            if (target is PlayerCharacter pc)
+            var target = Svc.Objects.FirstOrDefault(x => x.OwnerId == e.Owner);
+            if (target is IPlayerCharacter pc)
             {
                 PluginLog.Debug($"Processing {e.Status.Title} at {Utils.Frame} for {pc}...");
                 CurrentElement = e;
@@ -135,13 +135,13 @@ public sealed unsafe class FlyPopupTextProcessor : IDisposable
 
     bool IsCandidateValid(AtkResNode* node)
     {
-        if (!node->IsVisible) return false;
+        if (!node->IsVisible()) return false;
         var c = node->GetAsAtkComponentNode()->Component;
         if (c->UldManager.NodeListCount < 3 || c->UldManager.NodeListCount > 4) return false;
         if (c->UldManager.NodeList[1]->Type != NodeType.Text) return false;
-        if (!c->UldManager.NodeList[1]->IsVisible) return false;
+        if (!c->UldManager.NodeList[1]->IsVisible()) return false;
         if (c->UldManager.NodeList[2]->Type != NodeType.Image) return false;
-        if (!c->UldManager.NodeList[2]->IsVisible) return false;
+        if (!c->UldManager.NodeList[2]->IsVisible()) return false;
         var text = MemoryHelper.ReadSeString(&c->UldManager.NodeList[1]->GetAsAtkTextNode()->NodeText)?.ExtractText();
         if (StatusData.TryGetValue((uint)CurrentElement.Status.AdjustedIconID, out var data))
         {

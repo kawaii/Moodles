@@ -44,7 +44,7 @@ public unsafe class FocusTargetInfoProcessor
             for (int i = 8; i >= 4; i--)
             {
                 var c = addon->UldManager.NodeList[i];
-                if (c->IsVisible)
+                if (c->IsVisible())
                 {
                     NumStatuses++;
                 }
@@ -65,7 +65,7 @@ public unsafe class FocusTargetInfoProcessor
 
     public void UpdateAddon(AtkUnitBase* addon, bool hideAll = false)
     {
-        if (addon != null && IsAddonReady(addon) && Svc.Targets.FocusTarget is PlayerCharacter pc)
+        if (addon != null && IsAddonReady(addon) && Svc.Targets.FocusTarget is IPlayerCharacter pc)
         {
             int baseCnt;
             if (P.CommonProcessor.NewMethod)
@@ -79,7 +79,7 @@ public unsafe class FocusTargetInfoProcessor
             for (int i = baseCnt; i >= 4; i--)
             {
                 var c = addon->UldManager.NodeList[i];
-                if (c->IsVisible) c->NodeFlags ^= NodeFlags.Visible;
+                if (c->IsVisible()) c->NodeFlags ^= NodeFlags.Visible;
             }
             if (!hideAll)
             {

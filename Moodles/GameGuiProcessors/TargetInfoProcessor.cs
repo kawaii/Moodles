@@ -44,7 +44,7 @@ public unsafe class TargetInfoProcessor
             for (int i = 32; i >= 3; i--)
             {
                 var c = addon->UldManager.NodeList[i];
-                if (c->IsVisible)
+                if (c->IsVisible())
                 {
                     NumStatuses++;
                 }
@@ -63,8 +63,8 @@ public unsafe class TargetInfoProcessor
 
     public void UpdateAddon(AtkUnitBase* addon, bool hideAll = false)
     {
-        GameObject target = Svc.Targets.SoftTarget! ?? Svc.Targets.Target!;
-        if (target is PlayerCharacter pc)
+        IGameObject target = Svc.Targets.SoftTarget! ?? Svc.Targets.Target!;
+        if (target is IPlayerCharacter pc)
         {
             if (addon != null && IsAddonReady(addon))
             {
@@ -80,7 +80,7 @@ public unsafe class TargetInfoProcessor
                 for (int i = baseCnt; i >= 3; i--)
                 {
                     var c = addon->UldManager.NodeList[i];
-                    if (c->IsVisible) c->NodeFlags ^= NodeFlags.Visible;
+                    if (c->IsVisible()) c->NodeFlags ^= NodeFlags.Visible;
                 }
                 if (!hideAll)
                 {

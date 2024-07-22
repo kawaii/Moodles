@@ -30,7 +30,7 @@ public class AutomationList : ItemSelector<AutomationProfile>
         {
             foreach(var x in Svc.Objects)
             {
-                if(x is PlayerCharacter pc)
+                if(x is IPlayerCharacter pc)
                 {
                     if (Utils.GetSuitableAutomation(pc).ContainsAny(p.Combos))
                     {

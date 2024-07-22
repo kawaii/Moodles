@@ -69,7 +69,7 @@ public static class TabWhitelist
                     ImGui.InputText($"##pname", ref Selected.PlayerName, 100, C.Censor ? ImGuiInputTextFlags.Password : ImGuiInputTextFlags.None);
                 }, () =>
                 {
-                    if (Svc.Targets.Target is PlayerCharacter pc)
+                    if (Svc.Targets.Target is IPlayerCharacter pc)
                     {
                         if (ImGui.Button("Target"))
                         {
