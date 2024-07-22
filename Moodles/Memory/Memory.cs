@@ -8,15 +8,16 @@ namespace Moodles;
 public unsafe partial class Memory : IDisposable
 {
     public delegate nint AtkComponentIconText_LoadIconByIDDelegate(void* iconText, int iconId);
-    public AtkComponentIconText_LoadIconByIDDelegate AtkComponentIconText_LoadIconByID = EzDelegate.Get<AtkComponentIconText_LoadIconByIDDelegate>("E8 ?? ?? ?? ?? 41 8D 47 2E");
-
+    // OLD -> public AtkComponentIconText_LoadIconByIDDelegate AtkComponentIconText_LoadIconByID = EzDelegate.Get<AtkComponentIconText_LoadIconByIDDelegate>("E8 ?? ?? ?? ?? 41 8D 47 2E");
+    public AtkComponentIconText_LoadIconByIDDelegate AtkComponentIconText_LoadIconByID = EzDelegate.Get<AtkComponentIconText_LoadIconByIDDelegate>("E8 ?? ?? ?? ?? 41 8D 47 3C");
+    
     public Memory()
     {
         EzSignatureHelper.Initialize(this);
     }
 
     delegate void AtkComponentIconText_ReceiveEvent(nint a1, short a2, nint a3, nint a4, nint a5);
-    [EzHook("48 89 5C 24 ?? 55 48 8B EC 48 83 EC 50 44 0F B7 C2")]
+    [EzHook("44 0F B7 C2 4D 8B D1")]
     EzHook<AtkComponentIconText_ReceiveEvent> AtkComponentIconText_ReceiveEventHook;
     void AtkComponentIconText_ReceiveEventDetour(nint a1, short a2, nint a3, nint a4, nint a5)
     {

@@ -28,7 +28,7 @@ public class Moodles : IDalamudPlugin
     public IPCProcessor IPCProcessor;
     public IPCTester IPCTester;
 
-    public Moodles(DalamudPluginInterface pi)
+    public Moodles(IDalamudPluginInterface pi)
     {
         P = this;
         ECommonsMain.Init(pi, this);
@@ -114,7 +114,7 @@ public class Moodles : IDalamudPlugin
             var marePlayers = Utils.GetMarePlayers();
             foreach(var x in Svc.Objects)
             {
-                if(x is PlayerCharacter pc)
+                if(x is IPlayerCharacter pc)
                 {
                     var m = pc.GetMyStatusManager(false);
                     if(m != null)
@@ -163,7 +163,7 @@ public class Moodles : IDalamudPlugin
         {
             if (m.Value.Ephemeral)
             {
-                if(!Svc.Objects.Any(x => x is PlayerCharacter pc && pc.GetNameWithWorld() == m.Key))
+                if(!Svc.Objects.Any(x => x is IPlayerCharacter pc && pc.GetNameWithWorld() == m.Key))
                 {
                     toRem.Add(m.Key);
                 }
@@ -190,7 +190,7 @@ public class Moodles : IDalamudPlugin
         List<(string Name, Job Job)> newSeenPlayers = [];
         foreach (var q in Svc.Objects)
         {
-            if (q?.Address != Player.Object?.Address && q is PlayerCharacter pc)
+            if (q?.Address != Player.Object?.Address && q is IPlayerCharacter pc)
             {
                 var name = pc.GetNameWithWorld();
                 var identifier = (name, pc.GetJob());

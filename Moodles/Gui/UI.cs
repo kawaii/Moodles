@@ -74,7 +74,7 @@ public unsafe static class UI
             {
                 foreach (var x in Svc.Objects)
                 {
-                    if (x is PlayerCharacter pc)
+                    if (x is IPlayerCharacter pc)
                     {
                         var addr = pc.Address;
                         P.Memory.ApplyStatusHitEffectHook.Original((StatusHitEffectKind)ID, addr, addr, sa4, (byte)sa5, (short)sa6, (byte)sa7);
@@ -123,22 +123,22 @@ public unsafe static class UI
             ImGui.Checkbox($"Suppress", ref Suppress);
             ImGuiEx.InputUint($"dec", ref Opcode);
             ImGuiEx.InputHex($"hex", ref Opcode);
-            if (ImGui.Button("Enable")) P.Memory.ProcessActorControlPacketHook.Enable();
+            /*if (ImGui.Button("Enable")) P.Memory.ProcessActorControlPacketHook.Enable();
             if (ImGui.Button("Pause")) P.Memory.ProcessActorControlPacketHook.Pause();
             if (ImGui.Button("Disable")) P.Memory.ProcessActorControlPacketHook.Disable();
             ImGuiEx.Text($"Enabled: {P.Memory.ProcessActorControlPacketHook.IsEnabled}");
-            ImGuiEx.Text($"Created: {P.Memory.ProcessActorControlPacketHook.IsCreated}");
+            ImGuiEx.Text($"Created: {P.Memory.ProcessActorControlPacketHook.IsCreated}");*/
         }
         if (ImGui.CollapsingHeader("Packet hook"))
         {
             ImGui.Checkbox($"Suppress", ref Suppress);
             ImGuiEx.InputUint($"dec", ref Opcode);
             ImGuiEx.InputHex($"hex", ref Opcode);
-            if (ImGui.Button("Enable")) P.Memory.PacketDispatcher_OnReceivePacketHook.Enable();
+            /*if (ImGui.Button("Enable")) P.Memory.PacketDispatcher_OnReceivePacketHook.Enable();
             if (ImGui.Button("Pause")) P.Memory.PacketDispatcher_OnReceivePacketHook.Pause();
             if (ImGui.Button("Disable")) P.Memory.PacketDispatcher_OnReceivePacketHook.Disable();
             ImGuiEx.Text($"Enabled: {P.Memory.PacketDispatcher_OnReceivePacketHook.IsEnabled}");
-            ImGuiEx.Text($"Created: {P.Memory.PacketDispatcher_OnReceivePacketHook.IsCreated}");
+            ImGuiEx.Text($"Created: {P.Memory.PacketDispatcher_OnReceivePacketHook.IsCreated}");*/
         }
         if (ImGui.CollapsingHeader("Friendlist"))
         {
@@ -161,7 +161,7 @@ public unsafe static class UI
         }
         if(ImGui.CollapsingHeader("Flytext debugger"))
         {
-            if(ImGui.Button("Enable hook"))
+            /*if(ImGui.Button("Enable hook"))
             {
                 P.Memory.UnkDelegateHook.Enable();
             }
@@ -180,7 +180,7 @@ public unsafe static class UI
             if (ImGui.Button("Disable ac hook"))
             {
                 P.Memory.ProcessActorControlPacketHook.Disable();
-            }
+            }*/
             if (ImGui.Button("Enable bl hook"))
             {
                 P.Memory.BattleLog_AddToScreenLogWithScreenLogKindHook.Enable();
@@ -193,9 +193,9 @@ public unsafe static class UI
 
             if(ImGui.BeginCombo("object", $"{OID:X8}"))
             {
-                foreach (var x in Svc.Objects.Where(x => x is PlayerCharacter).Cast<PlayerCharacter>())
+                foreach (var x in Svc.Objects.Where(x => x is IPlayerCharacter).Cast<IPlayerCharacter>())
                 {
-                    if (ImGui.Selectable($"{x.Name}")) OID = x.ObjectId;
+                    if (ImGui.Selectable($"{x.Name}")) OID = x.OwnerId;
                 }
                 ImGui.EndCombo();
             }
@@ -209,7 +209,7 @@ public unsafe static class UI
             ImGui.Button("Execute");
             if (ImGui.IsItemHovered() && (ImGui.IsMouseClicked(ImGuiMouseButton.Left) || ImGui.IsMouseDown(ImGuiMouseButton.Right)))
             {
-                if(Svc.Objects.TryGetFirst(x => x.ObjectId == OID, out var obj))
+                if(Svc.Objects.TryGetFirst(x => x.OwnerId == OID, out var obj))
                 {
                     P.Memory.BattleLog_AddToScreenLogWithScreenLogKindHook.Original(obj.Address, My ? Player.Object.Address : obj.Address, MessageID, 5, (byte)a4, (int)a5, (int)StatusID, (int)a7, (int)a8);
                     Notify.Info($"Success");
@@ -229,7 +229,7 @@ public unsafe static class UI
                     ImGuiEx.Text($"{x.StatusId}, {x.GameData.Name}, permanent: {x.GameData.IsPermanent}, category: {x.GameData.StatusCategory}");
                 }
             }
-            if(Svc.Targets.Target is PlayerCharacter pc)
+            if(Svc.Targets.Target is IPlayerCharacter pc)
             {
                 ImGuiEx.Text($"Target id: {(nint)ClientObjectManager.Instance()->GetObjectByIndex(16):X16}");
             }
@@ -252,7 +252,7 @@ public unsafe static class UI
             Owner = Player.NameWithWorld;
         }
         ImGui.SameLine();
-        if (ImGui.Button("Target") && Svc.Targets.Target is PlayerCharacter pct)
+        if (ImGui.Button("Target") && Svc.Targets.Target is IPlayerCharacter pct)
         {
             Owner = pct.GetNameWithWorld();
         }
@@ -262,7 +262,7 @@ public unsafe static class UI
         {
             foreach (var x in Svc.Objects)
             {
-                if (x is PlayerCharacter pc)
+                if (x is IPlayerCharacter pc)
                 {
                     if (ImGui.Selectable(pc.GetNameWithWorld())) Owner = pc.GetNameWithWorld();
                 }
@@ -275,7 +275,7 @@ public unsafe static class UI
         {
             foreach (var x in Svc.Party)
             {
-                if (x.GameObject is PlayerCharacter pc)
+                if (x.GameObject is IPlayerCharacter pc)
                 {
                     if (ImGui.Selectable(pc.GetNameWithWorld())) Owner = pc.GetNameWithWorld();
                 }
@@ -381,7 +381,7 @@ public unsafe static class UI
                         Status.Seconds = Random.Shared.Next(5, 60);
                         if (Random.Shared.Next(20) == 0) Status.Minutes = Random.Shared.Next(5, 60);
                         if (Random.Shared.Next(100) == 0) Status.Hours = Random.Shared.Next(5, 60);
-                        var array = Svc.Objects.Where(x => x is PlayerCharacter pc && pc.IsTargetable).Cast<PlayerCharacter>().ToArray();
+                        var array = Svc.Objects.Where(x => x is IPlayerCharacter pc && pc.IsTargetable).Cast<IPlayerCharacter>().ToArray();
                         Utils.GetMyStatusManager(array[Random.Shared.Next(array.Length)]).AddOrUpdate(Status.JSONClone().PrepareToApply());
                     }
                 }
@@ -452,7 +452,7 @@ public unsafe static class UI
                     }
                 }));
             }
-            ImGuiEx.EzTable(null, ImGuiTableFlags.RowBg | ImGuiTableFlags.Borders, entries);
+            ImGuiEx.EzTable(null, ImGuiTableFlags.RowBg | ImGuiTableFlags.Borders, entries, false);
         }
     }
 

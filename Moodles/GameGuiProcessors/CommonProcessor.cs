@@ -108,7 +108,7 @@ public unsafe class CommonProcessor : IDisposable
 
     private void Tick()
     {
-        List<(PlayerCharacter Player, StatusHitEffectKind Kind)> SHECandidates = [];
+        List<(IPlayerCharacter Player, StatusHitEffectKind Kind)> SHECandidates = [];
         if (HoveringOver != 0)
         {
             if (IsKeyPressed(LimitedKeys.LeftMouseButton)) WasRightMousePressed = false;
@@ -134,7 +134,7 @@ public unsafe class CommonProcessor : IDisposable
                         {
                             if (Utils.CanSpawnFlytext(pc))
                             {
-                                FlyPopupTextProcessor.Enqueue(new(x, true, pc.ObjectId));
+                                FlyPopupTextProcessor.Enqueue(new(x, true, pc.OwnerId));
                             }
                             if (Utils.CanSpawnVFX(pc))
                             {
@@ -159,7 +159,7 @@ public unsafe class CommonProcessor : IDisposable
                         {
                             if (Utils.CanSpawnFlytext(pc))
                             {
-                                FlyPopupTextProcessor.Enqueue(new(x, false, pc.ObjectId));
+                                FlyPopupTextProcessor.Enqueue(new(x, false, pc.OwnerId));
                             }
                             if (Utils.CanSpawnVFX(pc))
                             {
@@ -177,9 +177,9 @@ public unsafe class CommonProcessor : IDisposable
             if (statusManager.Value.NeedFireEvent)
             {
                 statusManager.Value.NeedFireEvent = false;
-                if (Svc.Objects.TryGetFirst(x => x is PlayerCharacter pc && pc.GetNameWithWorld() == statusManager.Key, out var pc))
+                if (Svc.Objects.TryGetFirst(x => x is IPlayerCharacter pc && pc.GetNameWithWorld() == statusManager.Key, out var pc))
                 {
-                    P.IPCProcessor.StatusManagerModified((PlayerCharacter)pc);
+                    P.IPCProcessor.StatusManagerModified((IPlayerCharacter)pc);
                 }
             }
         }
@@ -200,11 +200,11 @@ public unsafe class CommonProcessor : IDisposable
 
     public void SetIcon(AtkUnitBase* addon, AtkResNode* container, MyStatus status)
     {
-        if (!container->IsVisible) container->NodeFlags ^= NodeFlags.Visible;
+        if (!container->IsVisible()) container->NodeFlags ^= NodeFlags.Visible;
         P.Memory.AtkComponentIconText_LoadIconByID(container->GetAsAtkComponentNode()->Component, (int)status.AdjustedIconID);
         var dispelNode = container->GetAsAtkComponentNode()->Component->UldManager.NodeList[0];
         if (status.Dispelable && !DispelableIcons.Contains((uint)status.IconID)) status.Dispelable = false;
-        if (status.Dispelable != dispelNode->IsVisible)
+        if (status.Dispelable != dispelNode->IsVisible())
         {
             dispelNode->NodeFlags ^= NodeFlags.Visible;
         }
@@ -217,7 +217,7 @@ public unsafe class CommonProcessor : IDisposable
         }
         if (timerText != null)
         {
-            if (!textNode->IsVisible) textNode->NodeFlags ^= NodeFlags.Visible;
+            if (!textNode->IsVisible()) textNode->NodeFlags ^= NodeFlags.Visible;
         }
         var t = textNode->GetAsAtkTextNode();
         t->SetText((timerText ?? SeString.Empty).Encode());
@@ -239,30 +239,30 @@ public unsafe class CommonProcessor : IDisposable
         {
             //PluginLog.Debug($"Trigger 0:{addr:X16} / {Utils.Frame} / {GetCallStackID()}");
             C.StatusManagers.Each(f => f.Value.Statuses.Each(z => z.TooltipShown = -1));
-            status.TooltipShown = addon->ID;
-            AtkStage.GetSingleton()->TooltipManager.HideTooltip(addon->ID);
+            status.TooltipShown = addon->Id;
+            AtkStage.Instance()->TooltipManager.HideTooltip(addon->Id);
             var str = status.Title;
             if(status.Description != "")
             {
                 str += $"\n{status.Description}";
             }
             MemoryHelper.WriteSeString(TooltipMemory, Utils.ParseBBSeString(str));
-            AtkStage.GetSingleton()->TooltipManager.ShowTooltip((ushort)addon->ID, container, (byte*)TooltipMemory);
+            AtkStage.Instance()->TooltipManager.ShowTooltip((ushort)addon->Id, container, (byte*)TooltipMemory);
         }
-        if(status.TooltipShown == addon->ID && HoveringOver != addr)
+        if(status.TooltipShown == addon->Id && HoveringOver != addr)
         {
             //PluginLog.Debug($"Trigger 1 {addr:X16} / {Utils.Frame} / {GetCallStackID()}");
             status.TooltipShown = -1;
             if(HoveringOver == 0)
             {
                 //PluginLog.Debug($"Trigger 2 / {Utils.Frame} / {GetCallStackID()}");
-                AtkStage.GetSingleton()->TooltipManager.HideTooltip(addon->ID);
+                AtkStage.Instance()->TooltipManager.HideTooltip(addon->Id);
             }
         }
         if (CancelRequests.Contains(addr))
         {
             CancelRequests.Remove(addr);
-            var name = MemoryHelper.ReadStringNullTerminated((nint)addon->Name);
+            var name = addon->NameString;
             if (name.StartsWith("_StatusCustom") || name == "_Status")
             {
                 status.ExpiresAt = 0;

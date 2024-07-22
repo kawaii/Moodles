@@ -46,7 +46,7 @@ public unsafe class StatusProcessor : IDisposable
             for (int i = 25; i >= 1; i--)
             {
                 var c = addon->UldManager.NodeList[i];
-                if (c->IsVisible)
+                if (c->IsVisible())
                 {
                     NumStatuses++;
                 }
@@ -80,7 +80,7 @@ public unsafe class StatusProcessor : IDisposable
             for (int i = baseCnt; i >= 1; i--)
             {
                 var c = addon->UldManager.NodeList[i];
-                if (c->IsVisible) c->NodeFlags ^= NodeFlags.Visible;
+                if (c->IsVisible()) c->NodeFlags ^= NodeFlags.Visible;
             }
             if (!hideAll)
             {

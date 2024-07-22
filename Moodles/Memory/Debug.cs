@@ -4,7 +4,7 @@ using Moodles.Gui;
 namespace Moodles;
 public unsafe partial class Memory
 {
-    public delegate void ProcessActorControlPacket(uint a1, uint a2, uint a3, uint a4, uint a5, uint a6, int a7, uint a8, long a9, byte a10);
+    /*public delegate void ProcessActorControlPacket(uint a1, uint a2, uint a3, uint a4, uint a5, uint a6, int a7, uint a8, long a9, byte a10);
     [EzHook("40 55 53 41 55 41 56 41 57 48 8D AC 24", false)]
     public EzHook<ProcessActorControlPacket> ProcessActorControlPacketHook;
     void ProcessActorControlPacketDetour(uint a1, uint a2, uint a3, uint a4, uint a5, uint a6, int a7, uint a8, long a9, byte a10)
@@ -96,5 +96,5 @@ public unsafe partial class Memory
     internal UnkFunc1D UnkFunc1 = EzDelegate.Get<UnkFunc1D>("48 83 EC 28 8B 81 ?? ?? ?? ?? 4C 8B C1");
 
     internal delegate byte UnkFunc2D(nint a1, int a2, byte a3);
-    internal UnkFunc2D UnkFunc2 = EzDelegate.Get<UnkFunc2D>("48 89 5C 24 ?? 48 89 74 24 ?? 57 48 83 EC 20 0F B6 81 ?? ?? ?? ?? 41 0F B6 F8");
+    internal UnkFunc2D UnkFunc2 = EzDelegate.Get<UnkFunc2D>("48 89 5C 24 ?? 48 89 74 24 ?? 57 48 83 EC 20 0F B6 81 ?? ?? ?? ?? 41 0F B6 F8");*/
 }

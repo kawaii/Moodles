@@ -80,12 +80,12 @@ public static class TabAutomation
             }
             ImGui.SameLine();
             {
-                var dis = Svc.Targets.Target is not PlayerCharacter;
+                var dis = Svc.Targets.Target is not IPlayerCharacter;
                 if (dis) ImGui.BeginDisabled();
                 if (ImGui.Button("Set to Target", buttonSize))
                 {
-                    Selected.World = ((PlayerCharacter)Svc.Targets.Target).HomeWorld.Id;
-                    Selected.Character = ((PlayerCharacter)Svc.Targets.Target).Name.ToString();
+                    Selected.World = ((IPlayerCharacter)Svc.Targets.Target).HomeWorld.Id;
+                    Selected.Character = ((IPlayerCharacter)Svc.Targets.Target).Name.ToString();
                 }
                 if (dis) ImGui.EndDisabled();
             }

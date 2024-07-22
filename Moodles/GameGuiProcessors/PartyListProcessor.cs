@@ -56,7 +56,7 @@ public unsafe class PartyListProcessor : IDisposable
                     var iconArray = Utils.GetNodeIconArray(addon->UldManager.NodeList[index]);
                     foreach(var x in iconArray)
                     {
-                        if(x->IsVisible) NumStatuses[storeIndex]++;
+                        if(x->IsVisible()) NumStatuses[storeIndex]++;
                     }
                 }
                 storeIndex++;
@@ -90,7 +90,7 @@ public unsafe class PartyListProcessor : IDisposable
                     for (int i = this.NumStatuses[n]; i < iconArray.Length; i++)
                     {
                         var c = iconArray[i];
-                        if (c->IsVisible) c->NodeFlags ^= NodeFlags.Visible;
+                        if (c->IsVisible()) c->NodeFlags ^= NodeFlags.Visible;
                     }
                     if (!hideAll)
                     {
@@ -113,7 +113,7 @@ public unsafe class PartyListProcessor : IDisposable
         }
     }
 
-    public List<PlayerCharacter> GetVisibleParty()
+    public List<IPlayerCharacter> GetVisibleParty()
     {
         if (Svc.Party.Length < 2)
         {
@@ -121,11 +121,11 @@ public unsafe class PartyListProcessor : IDisposable
         }
         else
         {
-            List<PlayerCharacter> ret = [Svc.ClientState.LocalPlayer];
+            List<IPlayerCharacter> ret = [Svc.ClientState.LocalPlayer];
             for (int i = 1; i < Math.Min(8, Svc.Party.Length); i++)
             {
                 var obj = FakePronoun.Resolve($"<{i + 1}>");
-                if (Svc.Objects.CreateObjectReference((nint)obj) is PlayerCharacter pc)
+                if (Svc.Objects.CreateObjectReference((nint)obj) is IPlayerCharacter pc)
                 {
                     ret.Add(pc);
                 }

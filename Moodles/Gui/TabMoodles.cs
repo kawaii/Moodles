@@ -40,14 +40,14 @@ public static class TabMoodles
             }
             ImGui.SameLine();
 
-            var dis = Svc.Targets.Target is not PlayerCharacter;
+            var dis = Svc.Targets.Target is not IPlayerCharacter;
             if (dis) ImGui.BeginDisabled();
             var isMare = Utils.GetMarePlayers().Contains(Svc.Targets.Target?.Address ?? -1);
             if (ImGui.Button($"Apply to Target ({(isMare?"via Mare Synchronos":"Locally")})"))
             {
                 try
                 {
-                    var target = (PlayerCharacter)Svc.Targets.Target;
+                    var target = (IPlayerCharacter)Svc.Targets.Target;
                     if (!isMare)
                     {
                         Utils.GetMyStatusManager(target.GetNameWithWorld()).AddOrUpdate(Selected.PrepareToApply(AsPermanent ? PrepareOptions.Persistent : PrepareOptions.NoOption));
