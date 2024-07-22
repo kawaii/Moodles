@@ -6,7 +6,7 @@ namespace Moodles;
 public unsafe partial class Memory
 {
     public delegate void BattleLog_AddToScreenLogWithScreenLogKind(nint target, nint source, FlyTextKind kind, byte a4, byte a5, int a6, int statusID, int stackCount, int damageType);
-    [EzHook("48 85 C9 0F 84 ?? ?? ?? ?? 55 56 41 55", false)]
+    [EzHook("48 85 C9 0F 84 ?? ?? ?? ?? 56 41 56", false)]
     public EzHook<BattleLog_AddToScreenLogWithScreenLogKind> BattleLog_AddToScreenLogWithScreenLogKindHook;
 
     void BattleLog_AddToScreenLogWithScreenLogKindDetour(nint target, nint source, FlyTextKind kind, byte a4, byte a5, int a6, int statusID, int stackCount, int damageType)
