@@ -144,7 +144,7 @@ public static unsafe partial class Utils
         var lst = new List<nint>();
         var atk = node->GetAsAtkComponentNode();
         if (atk is null) return [];
-        var atk = atk->Component->UldManager;
+        var uldm = atk->Component->UldManager;
         for (int i = 0; i < uldm.NodeListCount; i++)
         {
             var next = uldm.NodeList[i];
