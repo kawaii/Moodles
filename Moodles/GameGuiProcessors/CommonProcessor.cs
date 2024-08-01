@@ -134,7 +134,7 @@ public unsafe class CommonProcessor : IDisposable
                         {
                             if (Utils.CanSpawnFlytext(pc))
                             {
-                                FlyPopupTextProcessor.Enqueue(new(x, true, pc.OwnerId));
+                                FlyPopupTextProcessor.Enqueue(new(x, true, pc.EntityId));
                             }
                             if (Utils.CanSpawnVFX(pc))
                             {
@@ -159,7 +159,7 @@ public unsafe class CommonProcessor : IDisposable
                         {
                             if (Utils.CanSpawnFlytext(pc))
                             {
-                                FlyPopupTextProcessor.Enqueue(new(x, false, pc.OwnerId));
+                                FlyPopupTextProcessor.Enqueue(new(x, false, pc.EntityId));
                             }
                             if (Utils.CanSpawnVFX(pc))
                             {
