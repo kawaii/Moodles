@@ -45,9 +45,9 @@ public sealed unsafe class FlyPopupTextProcessor : IDisposable
         if(Queue.Count > C.FlyPopupTextLimit)
         {
             PluginLog.Warning($"FlyPopupTextProcessor Queue is too large! Trimming to {C.FlyPopupTextLimit} closest entities.");
-            var n = Queue.RemoveAll(x => Svc.Objects.FirstOrDefault(z => z.OwnerId == x.Owner) is not IPlayerCharacter);
+            var n = Queue.RemoveAll(x => Svc.Objects.FirstOrDefault(z => z.EntityId == x.Owner) is not IPlayerCharacter);
             if(n > 0) PluginLog.Information($"  Removed {n} non-player entities");
-            Queue = Queue.OrderBy(x => Vector3.DistanceSquared(Player.Object.Position, Svc.Objects.First(z => z.OwnerId == x.Owner).Position)).Take(C.FlyPopupTextLimit).ToList();
+            Queue = Queue.OrderBy(x => Vector3.DistanceSquared(Player.Object.Position, Svc.Objects.First(z => z.EntityId == x.Owner).Position)).Take(C.FlyPopupTextLimit).ToList();
         }
         while (Queue.TryDequeue(out var e))
         {
