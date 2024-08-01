@@ -107,7 +107,7 @@ public sealed unsafe class FlyPopupTextProcessor : IDisposable
                         if (IsCandidateValid(candidate))
                         {
                             var c = candidate->GetAsAtkComponentNode()->Component;
-                            var sestr = new SeStringBuilder().AddText(CurrentElement.IsAddition ? "+ " : "- ").Append(CurrentElement.Status.Title + " test");//.Append(Utils.ParseBBSeString(CurrentElement.Status.Title));
+                            var sestr = new SeStringBuilder().AddText(CurrentElement.IsAddition ? "+ " : "- ").Append(Utils.ParseBBSeString(CurrentElement.Status.Title));
                             c->UldManager.NodeList[1]->GetAsAtkTextNode()->SetText(sestr.Encode());
                             c->UldManager.NodeList[2]->GetAsAtkImageNode()->LoadTexture(Svc.Texture.GetIconPath(CurrentElement.Status.AdjustedIconID), 1);
                             CurrentElement = null;
