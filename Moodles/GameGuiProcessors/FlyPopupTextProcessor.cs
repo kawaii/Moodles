@@ -45,16 +45,27 @@ public sealed unsafe class FlyPopupTextProcessor : IDisposable
         if(Queue.Count > C.FlyPopupTextLimit)
         {
             PluginLog.Warning($"FlyPopupTextProcessor Queue is too large! Trimming to {C.FlyPopupTextLimit} closest entities.");
-            var n = Queue.RemoveAll(x => Svc.Objects.FirstOrDefault(z => z.OwnerId == x.Owner) is not IPlayerCharacter);
+            var n = Queue.RemoveAll(x => Svc.Objects.FirstOrDefault(z => z.EntityId == x.Owner) is not IPlayerCharacter);
             if(n > 0) PluginLog.Information($"  Removed {n} non-player entities");
-            Queue = Queue.OrderBy(x => Vector3.DistanceSquared(Player.Object.Position, Svc.Objects.First(z => z.OwnerId == x.Owner).Position)).Take(C.FlyPopupTextLimit).ToList();
+            Queue = Queue.OrderBy(x => Vector3.DistanceSquared(Player.Object.Position, Svc.Objects.First(z => z.EntityId == x.Owner).Position)).Take(C.FlyPopupTextLimit).ToList();
         }
         while (Queue.TryDequeue(out var e))
         {
-            var target = Svc.Objects.FirstOrDefault(x => x.OwnerId == e.Owner);
-            if (target is IPlayerCharacter pc)
+            IPlayerCharacter? target = null;
+            for (int i = 0; i < Svc.Objects.Length; i++)
             {
-                PluginLog.Debug($"Processing {e.Status.Title} at {Utils.Frame} for {pc}...");
+                var cur = Svc.Objects[i];
+                if (cur == null) continue;
+                if (cur.EntityId != e.Owner) continue;
+                if (cur is not IPlayerCharacter pChara) continue;
+
+                target = pChara;
+                break;
+            }
+
+            if (target != null)
+            {
+                PluginLog.Debug($"Processing {e.Status.Title} at {Utils.Frame} for {target}...");
                 CurrentElement = e;
                 var isMine = e.Status.Applier == Player.NameWithWorld && e.IsAddition;
                 FlyTextKind kind;
@@ -123,7 +134,6 @@ public sealed unsafe class FlyPopupTextProcessor : IDisposable
                             var c = candidate->GetAsAtkComponentNode()->Component;
                             var sestr = new SeStringBuilder().AddText(CurrentElement.IsAddition ? "+ " : "- ").Append(Utils.ParseBBSeString(CurrentElement.Status.Title));
                             c->UldManager.NodeList[1]->GetAsAtkTextNode()->SetText(sestr.Encode());
-                            //c->UldManager.NodeList[2]->GetAsAtkImageNode()->LoadTexture(Svc.Texture.GetIconPath(CurrentElement.Status.AdjustedIconID), 1);
                             CurrentElement = null;
                             return;
                         }
@@ -143,16 +153,10 @@ public sealed unsafe class FlyPopupTextProcessor : IDisposable
         if (c->UldManager.NodeList[2]->Type != NodeType.Image) return false;
         if (!c->UldManager.NodeList[2]->IsVisible()) return false;
         var text = MemoryHelper.ReadSeString(&c->UldManager.NodeList[1]->GetAsAtkTextNode()->NodeText)?.ExtractText();
+        if (!text.StartsWith('-') && !text.StartsWith('+')) return false;
         if (StatusData.TryGetValue((uint)CurrentElement.Status.AdjustedIconID, out var data))
         {
-            if (CurrentElement.IsAddition)
-            {
-                if (text != $"+ {data.Name}") return false;
-            }
-            else
-            {
-                if (text != $"- {data.Name}") return false;
-            }
+            if (!text.Contains(data.Name)) return false;
         }
         else
         {

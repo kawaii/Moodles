@@ -142,7 +142,9 @@ public static unsafe partial class Utils
     public static AtkResNode*[] GetNodeIconArray(AtkResNode* node, bool reverse = false)
     {
         var lst = new List<nint>();
-        var uldm = node->GetAsAtkComponentNode()->Component->UldManager;
+        var atk = node->GetAsAtkComponentNode();
+        if (atk is null) return [];
+        var uldm = atk->Component->UldManager;
         for (int i = 0; i < uldm.NodeListCount; i++)
         {
             var next = uldm.NodeList[i];
