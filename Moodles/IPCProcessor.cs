@@ -10,6 +10,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
+using static FFXIVClientStructs.FFXIV.Client.UI.RaptureAtkHistory.Delegates;
 
 namespace Moodles;
 public class IPCProcessor : IDisposable
@@ -156,10 +157,41 @@ public class IPCProcessor : IDisposable
         if(C.SavedStatuses.TryGetFirst(x => x.GUID == guid, out var status))
         {
             var sm = pc.GetMyStatusManager();
-            if (!sm.Ephemeral)
+            if(!sm.Ephemeral)
             {
                 sm.AddOrUpdate(status.PrepareToApply(), false, true);
             }
+        }
+    }
+
+    [EzIPC]
+    void AddOrUpdateMoodle((IPlayerCharacter Player, Guid UniqueID, int IconID, string Title, string Description, int StatusType, bool Dispelable, int Stacks, TimeSpan? ExpiresIn) data)
+    {
+        var status = new MyStatus()
+        {
+            GUID = data.UniqueID,
+            IconID = data.IconID,
+            Title = data.Title,
+            Description = data.Description,
+            Type = (StatusType)data.StatusType,
+            Dispelable = data.Dispelable,
+            Stacks = data.Stacks,
+        };
+        if(data.ExpiresIn == null)
+        {
+            status.NoExpire = true;
+        }
+        else
+        {
+            status.Days = data.ExpiresIn.Value.Days;
+            status.Minutes = data.ExpiresIn.Value.Minutes;
+            status.Seconds = data.ExpiresIn.Value.Seconds;
+            status.Hours = data.ExpiresIn.Value.Hours;
+        }
+        var sm = data.Player.GetMyStatusManager();
+        if(!sm.Ephemeral)
+        {
+            sm.AddOrUpdate(status.PrepareToApply(), false, true);
         }
     }
 
