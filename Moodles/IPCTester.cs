@@ -33,6 +33,18 @@ public class IPCTester
         PluginLog.Debug($"IPC test: status manager modified {character}");
     }
 
+    [EzIPCEvent]
+    private void StatusModified(Guid statusGuid)
+    {
+         PluginLog.Debug($"IPC test: Moodle status modified {statusGuid}");
+    }
+
+    [EzIPCEvent]
+    private void PresetModified(Guid presetGuid)
+    {
+         PluginLog.Debug($"IPC test: Preset status modified {presetGuid}");
+    }
+
     public void Draw()
     {
         // update to use better copy and paste functionality later.

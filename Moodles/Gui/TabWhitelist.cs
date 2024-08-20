@@ -2,6 +2,7 @@
 using ECommons;
 using ECommons.ExcelServices;
 using ECommons.GameHelpers;
+using FFXIVClientStructs;
 using Moodles.Data;
 using Moodles.OtterGuiHandlers;
 using OtterGui.Raii;
@@ -15,15 +16,6 @@ public static class TabWhitelist
     static bool Editing = true;
     public static void Draw()
     {
-        if (ImGui.BeginTable($"##Table", 1, ImGuiTableFlags.SizingStretchSame | ImGuiTableFlags.Borders))
-        {
-            ImGui.TableHeader($"#h");
-            ImGui.TableNextRow();
-            ImGui.TableNextColumn();
-            ImGui.TableSetBgColor(ImGuiTableBgTarget.CellBg, EColor.RedBright.ToUint());
-            ImGuiEx.LineCentered(() => ImGuiEx.Text(EColor.White, "None of this stuff works yet, oh well. :)"));
-            ImGui.EndTable();
-        }
         P.OtterGuiHandler.Whitelist.Draw(200f);
         ImGui.SameLine();
         using var group = ImRaii.Group();
@@ -33,7 +25,7 @@ public static class TabWhitelist
 
     private static void DrawHeader()
     {
-        HeaderDrawer.Draw(Selected == null ? "Mare Synchronos Global Settings" : (Selected.PlayerName.Censor($"Whitelist entry {C.Whitelist.IndexOf(Selected) + 1}")), 0, ImGui.GetColorU32(ImGuiCol.FrameBg), 0, HeaderDrawer.Button.IncognitoButton(C.Censor, v => C.Censor = v));
+        HeaderDrawer.Draw(Selected == null ? "GagSpeak Visible Pair Settings" : (Selected.PlayerName.Censor($"Whitelist entry {C.Whitelist.IndexOf(Selected) + 1}")), 0, ImGui.GetColorU32(ImGuiCol.FrameBg), 0, HeaderDrawer.Button.IncognitoButton(C.Censor, v => C.Censor = v));
     }
 
     private static void DrawSelected()
@@ -42,14 +34,15 @@ public static class TabWhitelist
         if (!child)
             return;
 
+        // if there are 0 entries in the whitelist, clear the current.
+        if (C.Whitelist.Count == 0)
+        {
+            P.OtterGuiHandler.Whitelist.EnsureCurrent();
+        }
+
         if (Selected == null)
         {
-            ImGui.Checkbox("Allow Moodles From All Players", ref C.BroadcastAllowAll);
-            ImGui.Checkbox("Allow Moodles From Friends", ref C.BroadcastAllowFriends);
-            ImGui.Checkbox("Allow Moodles From Party Members", ref C.BroadcastAllowParty);
-            ImGuiEx.Text($"External Moodle Maximum Duration:");
-            ImGuiEx.Spacing();
-            Utils.DurationSelector("Any Duration", ref C.BroadcastDefaultEntry.AnyDuration, ref C.BroadcastDefaultEntry.Days, ref C.BroadcastDefaultEntry.Hours, ref C.BroadcastDefaultEntry.Minutes, ref C.BroadcastDefaultEntry.Seconds);
+            ImGuiEx.Text($"No GagSpeak Pairs are visible to view the permissions of. Select one to view permissions!");
         }
         else
         {
@@ -60,85 +53,44 @@ public static class TabWhitelist
 
                 ImGui.TableNextRow();
                 ImGui.TableNextColumn();
-
-                ImGuiEx.TextV($"Player Name @ World:");
-                ImGui.TableNextColumn();
-
-                ImGuiEx.InputWithRightButtonsArea(() =>
-                {
-                    ImGui.InputText($"##pname", ref Selected.PlayerName, 100, C.Censor ? ImGuiInputTextFlags.Password : ImGuiInputTextFlags.None);
-                }, () =>
-                {
-                    if (Svc.Targets.Target is IPlayerCharacter pc)
-                    {
-                        if (ImGui.Button("Target"))
-                        {
-                            Selected.PlayerName = pc.GetNameWithWorld();
-                        }
-                    }
-                });
-
-                ImGui.TableNextRow();
-                ImGui.TableNextColumn();
                 ImGuiEx.TextV($"Allowed Status Types:");
-                if (!Selected.AllowedTypes.Any())
-                {
-                    ImGuiEx.HelpMarker("No status types selected. Please select at least one status type or no Moodles will be eligible.", EColor.RedBright, FontAwesomeIcon.ExclamationTriangle.ToIconString());
-                }
                 ImGui.TableNextColumn();
+
+                ImGui.BeginDisabled();
                 foreach (var x in Enum.GetValues<StatusType>())
                 {
                     ImGuiEx.CollectionCheckbox($"{x}", x, Selected.AllowedTypes);
                 }
+                ImGui.EndDisabled();
 
                 ImGui.TableNextRow();
                 ImGui.TableNextColumn();
                 ImGuiEx.TextV($"Maximum Duration:");
-                if (Selected.TotalMaxDurationSeconds < 1 && !Selected.AnyDuration)
-                {
-                    ImGuiEx.HelpMarker("No maximum duration configured. Please set one or no Moodles will be eligible.", EColor.RedBright, FontAwesomeIcon.ExclamationTriangle.ToIconString());
-                }
                 ImGui.TableNextColumn();
 
+                ImGui.BeginDisabled();
                 Utils.DurationSelector("Any Duration", ref Selected.AnyDuration, ref Selected.Days, ref Selected.Hours, ref Selected.Minutes, ref Selected.Seconds);
+                ImGui.EndDisabled();
+            
+                ImGui.TableNextRow();
+                ImGui.TableNextColumn();
+                ImGuiEx.TextV($"Apply Direction:");
+                ImGui.TableNextColumn();
 
+                ImGui.BeginDisabled();
+                ImGui.Checkbox("Can Apply Our Moodles", ref Selected.CanApplyOurMoodles);
+                ImGui.Checkbox("Can Apply Their Moodles", ref Selected.CanApplyTheirMoodles);
+                ImGui.EndDisabled();
+
+                ImGui.TableNextRow();
+                ImGui.TableNextColumn();
+                ImGuiEx.TextV($"Status Removal:");
+                ImGui.TableNextColumn();
+                ImGui.BeginDisabled();
+                ImGui.Checkbox("Can Remove Moodles", ref Selected.CanRemoveMoodles);
+                ImGui.EndDisabled();
                 ImGui.EndTable();
             }
-        }
-    }
-
-    static void DrawPresetSelector(AutomationCombo combo)
-    {
-        var exists = P.OtterGuiHandler.PresetFileSystem.TryGetPathByID(combo.Preset, out var spath);
-        if (ImGui.BeginCombo("##addnew", spath ?? "Select preset"))
-        {
-            ImGuiEx.SetNextItemFullWidth();
-            ImGui.InputTextWithHint("##search", "Filter", ref Filter, 50);
-            foreach (var x in C.SavedPresets)
-            {
-                if (P.OtterGuiHandler.PresetFileSystem.TryGetPathByID(x.GUID, out var path))
-                {
-                    if (Filter == "" || path.Contains(Filter, StringComparison.OrdinalIgnoreCase))
-                    {
-                        var split = path.Split(@"/");
-                        var name = split[^1];
-                        var directory = split[0..^1].Join(@"/");
-                        if (directory != name)
-                        {
-                            ImGuiEx.RightFloat($"Selector{x.GUID}", () => ImGuiEx.Text(ImGuiColors.DalamudGrey, directory));
-                        }
-                        if (ImGui.Selectable($"{name}##{x.GUID}", combo.Preset == x.GUID))
-                        {
-                            combo.Preset = x.GUID;
-                        }
-                        if (ImGui.IsWindowAppearing() && combo.Preset == x.GUID)
-                        {
-                            ImGui.SetScrollHereY();
-                        }
-                    }
-                }
-            }
-            ImGui.EndCombo();
         }
     }
 }

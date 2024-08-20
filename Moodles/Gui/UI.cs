@@ -151,6 +151,18 @@ public unsafe static class UI
                 ImGuiEx.Text(list.Print("\n"));
             }
         }
+        if (ImGui.CollapsingHeader("GSpeak players"))
+        {
+            ImGui.Text("GSpeakPlayers (From IPC Call)");
+            if (P.IPCProcessor.GetGSpeakPlayers.TryInvoke(out var list))
+            {
+                ImGuiEx.Text(list.Print("\n"));
+            }
+            ImGui.Separator();
+            ImGui.Text("GSpeakPlayers (From Memory)");
+            ImGuiEx.Text(Utils.GSpeakPlayers.Print("\n"));
+ 
+        }
         if (ImGui.CollapsingHeader("IPC"))
         {
             P.IPCTester.Draw();

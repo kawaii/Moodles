@@ -1,7 +1,9 @@
 ﻿using Dalamud.Game.ClientState.Objects.SubKinds;
 using ECommons.ExcelServices;
+using ECommons.ExcelServices.TerritoryEnumeration;
 using Moodles.Data;
 using OtterGui;
+using System.Windows.Forms;
 
 namespace Moodles.OtterGuiHandlers;
 public class Whitelist : WhitelistItemSelector<WhitelistEntry>
@@ -34,6 +36,60 @@ public class Whitelist : WhitelistItemSelector<WhitelistEntry>
     protected override bool Filtered(int idx)
     {
         var p = C.Whitelist[idx];
-        return !p.PlayerName.Contains(this.Filter, StringComparison.OrdinalIgnoreCase);
+        return p != null && !p.PlayerName.Contains(this.Filter, StringComparison.OrdinalIgnoreCase);
+    }
+
+    public static void SyncWithGSpeakPlayers(List<(string, OtherPairsMoodlePermsForClient)> gSpeakPlayers)
+    {
+        var currentNames = C.Whitelist.Select(entry => entry.PlayerName).ToList();
+        // Add new names to the whitelist
+        var newEntries = gSpeakPlayers
+            .Where(player => !currentNames.Contains(player.Item1))
+            .Select(player =>
+            {
+                var perms = player.Item2;
+                var allowedTypes = new[]
+                {
+                    (perms.AllowPositive, StatusType.Positive),
+                    (perms.AllowNegative, StatusType.Negative),
+                    (perms.AllowSpecial, StatusType.Special)
+                }
+                .Where(t => t.Item1)
+                .Select(t => t.Item2)
+                .ToList();
+
+                return new WhitelistEntry
+                {
+                    PlayerName = player.Item1,
+                    AllowedTypes = allowedTypes,
+                    CanApplyOurMoodles = perms.AllowApplyingPairsMoodles,
+                    CanApplyTheirMoodles = perms.AllowApplyingOwnMoodles,
+                    Days = perms.MaxDuration.Days,
+                    Hours = perms.MaxDuration.Hours,
+                    Minutes = perms.MaxDuration.Minutes,
+                    Seconds = perms.MaxDuration.Seconds,
+                    AnyDuration = perms.AllowPermanent,
+                    CanRemoveMoodles = perms.AllowRemoval
+                };
+            })
+            .ToList();
+        // Add the entry range to the whitelist
+        C.Whitelist.AddRange(newEntries);
+
+        // Update names already present if their permissions do not match
+        C.Whitelist
+            .Where(entry => gSpeakPlayers.Any(player => player.Item1 == entry.PlayerName))
+            .ToList()
+            .ForEach(entry =>
+            {
+                var perms = gSpeakPlayers.First(player => player.Item1 == entry.PlayerName).Item2;
+                if (entry.ArePermissionsDifferent(perms))
+                {
+                    entry.UpdatePermissions(perms);
+                }
+            });
+
+        // Remove names that are no longer in the GSpeakPlayers list
+        C.Whitelist.RemoveAll(entry => !gSpeakPlayers.Any(player => player.Item1 == entry.PlayerName));
     }
 }
