@@ -148,9 +148,9 @@ public static unsafe partial class Utils
     }
 
     // TODO: Update this from nint to playername@world eventually.
-    public static List<(string, OtherPairsMoodlePermsForClient)> GSpeakPlayers = [];
+    public static List<(string, MoodlesGSpeakPairPerms, MoodlesGSpeakPairPerms)> GSpeakPlayers = [];
     public static ulong GSpeakPlayersUpdated = 0;
-    public static List<(string, OtherPairsMoodlePermsForClient)> GetGSpeakPlayers()
+    public static List<(string, MoodlesGSpeakPairPerms, MoodlesGSpeakPairPerms)> GetGSpeakPlayers()
     {
         if (Frame != GSpeakPlayersUpdated)
         {

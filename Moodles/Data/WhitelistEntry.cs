@@ -6,6 +6,10 @@ using System.Text;
 using System.Threading.Tasks;
 
 namespace Moodles.Data;
+
+/// <summary>
+/// Contains the Entry for a loaded visible pair, and the permissions they have set for you.
+/// </summary>
 [Serializable]
 public class WhitelistEntry
 {
@@ -32,33 +36,41 @@ public class WhitelistEntry
     // if we can remove active moodles off them.
     public bool CanRemoveMoodles = false;
 
+    public MoodlesGSpeakPairPerms ClientPermsForPair = new();
+
     internal long TotalMaxDurationSeconds => this.Seconds * 1000 + this.Minutes * 1000 * 60 + this.Hours * 1000 * 60 * 60 + this.Days * 1000 * 60 * 60 * 24;
     internal long MaxExpirationUnixTimeSeconds => this.AnyDuration ? long.MaxValue : Utils.Time + TotalMaxDurationSeconds;
 
-    public bool CheckStatus(MyStatus status)
+    // checks if when applying incoming moodles, that we have the permission to apply them.
+    public bool CheckStatus(MoodlesGSpeakPairPerms status, bool statusIsPerminant)
     {
-        if (!AllowedTypes.Contains(status.Type)) return false;
-        if (status.ExpiresAt > MaxExpirationUnixTimeSeconds) return false;
-        if (PlayerName != status.Applier) return false;
-        return true;
+          if(status.AllowPositive != ClientPermsForPair.AllowPositive) return false;
+          if(status.AllowNegative != ClientPermsForPair.AllowNegative) return false;
+          if(status.AllowSpecial != ClientPermsForPair.AllowSpecial) return false;
+          if(status.AllowApplyingPairsMoodles != ClientPermsForPair.AllowApplyingPairsMoodles) return false;
+          if(status.AllowPermanent != ClientPermsForPair.AllowPermanent) return false;
+          if(status.MaxDuration > ClientPermsForPair.MaxDuration && !statusIsPerminant) return false;
+          if(status.AllowRemoval != ClientPermsForPair.AllowRemoval) return false;
+          return true;
     }
 
-    public bool ArePermissionsDifferent(OtherPairsMoodlePermsForClient newPerms)
+    public bool ArePermissionsDifferent(MoodlesGSpeakPairPerms newClientPermsForPair, MoodlesGSpeakPairPerms newPairPermsForClient)
     {
-        return AllowedTypes.Contains(StatusType.Positive) != newPerms.AllowPositive
-        || AllowedTypes.Contains(StatusType.Negative) != newPerms.AllowNegative
-        || AllowedTypes.Contains(StatusType.Special) != newPerms.AllowSpecial
-        || CanApplyOurMoodles != newPerms.AllowApplyingPairsMoodles // this flips because the intended direction is flipped
-        || CanApplyTheirMoodles != newPerms.AllowApplyingOwnMoodles // same as above
-        || Days != newPerms.MaxDuration.Days
-        || Hours != newPerms.MaxDuration.Hours
-        || Minutes != newPerms.MaxDuration.Minutes
-        || Seconds != newPerms.MaxDuration.Seconds
-        || AnyDuration != newPerms.AllowPermanent
-        || CanRemoveMoodles != newPerms.AllowRemoval;
+        return AllowedTypes.Contains(StatusType.Positive) != newPairPermsForClient.AllowPositive
+        || AllowedTypes.Contains(StatusType.Negative) != newPairPermsForClient.AllowNegative
+        || AllowedTypes.Contains(StatusType.Special) != newPairPermsForClient.AllowSpecial
+        || CanApplyOurMoodles != newPairPermsForClient.AllowApplyingPairsMoodles // this flips because the intended direction is flipped
+        || CanApplyTheirMoodles != newPairPermsForClient.AllowApplyingOwnMoodles // same as above
+        || Days != newPairPermsForClient.MaxDuration.Days
+        || Hours != newPairPermsForClient.MaxDuration.Hours
+        || Minutes != newPairPermsForClient.MaxDuration.Minutes
+        || Seconds != newPairPermsForClient.MaxDuration.Seconds
+        || AnyDuration != newPairPermsForClient.AllowPermanent
+        || CanRemoveMoodles != newPairPermsForClient.AllowRemoval
+        || !ClientPermsForPair.Equals(newClientPermsForPair);
     }
 
-    public void UpdatePermissions(OtherPairsMoodlePermsForClient newPerms)
+    public void UpdatePermissions(MoodlesGSpeakPairPerms newPerms, MoodlesGSpeakPairPerms newPairPermsForClient)
     {
         AllowedTypes = new List<StatusType>();
         if (newPerms.AllowPositive) AllowedTypes.Add(StatusType.Positive);
@@ -72,5 +84,6 @@ public class WhitelistEntry
         Seconds = newPerms.MaxDuration.Seconds;
         AnyDuration = newPerms.AllowPermanent;
         CanRemoveMoodles = newPerms.AllowRemoval;
+        ClientPermsForPair = newPerms;
     }
 }

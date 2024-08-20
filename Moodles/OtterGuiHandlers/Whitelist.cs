@@ -39,7 +39,7 @@ public class Whitelist : WhitelistItemSelector<WhitelistEntry>
         return p != null && !p.PlayerName.Contains(this.Filter, StringComparison.OrdinalIgnoreCase);
     }
 
-    public static void SyncWithGSpeakPlayers(List<(string, OtherPairsMoodlePermsForClient)> gSpeakPlayers)
+    public static void SyncWithGSpeakPlayers(List<(string, MoodlesGSpeakPairPerms, MoodlesGSpeakPairPerms)> gSpeakPlayers)
     {
         var currentNames = C.Whitelist.Select(entry => entry.PlayerName).ToList();
         // Add new names to the whitelist
@@ -47,7 +47,7 @@ public class Whitelist : WhitelistItemSelector<WhitelistEntry>
             .Where(player => !currentNames.Contains(player.Item1))
             .Select(player =>
             {
-                var perms = player.Item2;
+                var perms = player.Item3;
                 var allowedTypes = new[]
                 {
                     (perms.AllowPositive, StatusType.Positive),
@@ -69,7 +69,8 @@ public class Whitelist : WhitelistItemSelector<WhitelistEntry>
                     Minutes = perms.MaxDuration.Minutes,
                     Seconds = perms.MaxDuration.Seconds,
                     AnyDuration = perms.AllowPermanent,
-                    CanRemoveMoodles = perms.AllowRemoval
+                    CanRemoveMoodles = perms.AllowRemoval,
+                    ClientPermsForPair = player.Item2
                 };
             })
             .ToList();
@@ -82,10 +83,10 @@ public class Whitelist : WhitelistItemSelector<WhitelistEntry>
             .ToList()
             .ForEach(entry =>
             {
-                var perms = gSpeakPlayers.First(player => player.Item1 == entry.PlayerName).Item2;
-                if (entry.ArePermissionsDifferent(perms))
+                var perms = gSpeakPlayers.First(player => player.Item1 == entry.PlayerName);
+                if (entry.ArePermissionsDifferent(perms.Item2, perms.Item3))
                 {
-                    entry.UpdatePermissions(perms);
+                    entry.UpdatePermissions(perms.Item2, perms.Item3);
                 }
             });
 
