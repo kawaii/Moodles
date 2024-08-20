@@ -51,10 +51,14 @@ public static class TabPresets
             }
             ImGui.SameLine();
 
-            var dis = Svc.Targets.Target is not IPlayerCharacter;
-            if (dis) ImGui.BeginDisabled();
             var isMare = Utils.GetMarePlayers().Contains(Svc.Targets.Target?.Address ?? -1);
-            if (ImGui.Button($"Apply to Target ({(isMare ? "via Mare Synchronos" : "Locally")})"))
+            var isGSpeak = Svc.Targets.Target is IPlayerCharacter pc && Utils.GSpeakPlayers.Any(player => player.Item1 == pc.GetNameWithWorld());
+            var dis = Svc.Targets.Target is not IPlayerCharacter || (isMare && !isGSpeak);
+            if (dis) ImGui.BeginDisabled();
+            string buttonText = Svc.Targets.Target is not IPlayerCharacter
+                ? "No Target Selected" : isMare && !isGSpeak
+                    ? "Cannot Apply To Mare User" : $"Apply to Target ({(isGSpeak ? "via GagSpeak" : "Locally")})";
+            if (ImGui.Button(buttonText))
             {
                 try
                 {
@@ -65,7 +69,7 @@ public static class TabPresets
                     }
                     else
                     {
-                        Selected.SendMareMessage(target);
+                        Selected.SendGSpeakMessage(target);
                     }
                 }
                 catch (Exception e)
@@ -73,13 +77,15 @@ public static class TabPresets
                     e.Log();
                 }
             }
-            if (isMare) { ImGuiEx.HelpMarker("This doesn't do anything yet, why are you clicking it? :)", color: ImGuiColors.DalamudRed); }
             if (dis) ImGui.EndDisabled();
 
             ImGuiEx.TextV("On application:");
             ImGui.SameLine();
             ImGuiEx.SetNextItemFullWidth();
-            ImGuiEx.EnumCombo("##on", ref Selected.ApplicationType, ApplicationTypes);
+            if(ImGuiEx.EnumCombo("##on", ref Selected.ApplicationType, ApplicationTypes))
+            {
+                P.IPCProcessor.PresetModified(Selected.GUID);
+            }
             ImGuiEx.SetNextItemFullWidth();
             if(ImGui.BeginCombo("##addnew", "Add new Moodle..."))
             {
@@ -107,6 +113,7 @@ public static class TabPresets
                             if (ImGui.Selectable($"{name}##{x.ID}", false, ImGuiSelectableFlags.DontClosePopups))
                             {
                                 Selected.Statuses.Add(x.GUID);
+                                P.IPCProcessor.PresetModified(Selected.GUID);
                             }
                         }
                     }
@@ -189,14 +196,22 @@ public static class TabPresets
 
                         if (ImGuiEx.IconButton(FontAwesomeIcon.Trash))
                         {
-                            new TickScheduler(() => Selected.Statuses.Remove(statusId));
+                            new TickScheduler(() =>
+                            {
+                                 Selected.Statuses.Remove(statusId);
+                                 P.IPCProcessor.PresetModified(Selected.GUID);
+                            });
                         }
 
                         ImGui.PopID();
                     }
                     else
                     {
-                        new TickScheduler(() => Selected.Statuses.Remove(statusId));
+                        new TickScheduler(() =>
+                        {
+                            Selected.Statuses.Remove(statusId);
+                            P.IPCProcessor.PresetModified(Selected.GUID);
+                        });
                     }
                 }
 

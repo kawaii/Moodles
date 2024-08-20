@@ -5,7 +5,9 @@ using FFXIVClientStructs.FFXIV.Client.UI.Misc;
 using FFXIVClientStructs.FFXIV.Client.UI.Shell;
 using Moodles.Data;
 using Moodles.OtterGuiHandlers;
+using OtterGui;
 using OtterGui.Raii;
+using System.Xml.Linq;
 
 namespace Moodles.Gui;
 public static class TabMoodles
@@ -40,10 +42,14 @@ public static class TabMoodles
             }
             ImGui.SameLine();
 
-            var dis = Svc.Targets.Target is not IPlayerCharacter;
-            if (dis) ImGui.BeginDisabled();
             var isMare = Utils.GetMarePlayers().Contains(Svc.Targets.Target?.Address ?? -1);
-            if (ImGui.Button($"Apply to Target ({(isMare?"via Mare Synchronos":"Locally")})"))
+            var isGSpeak = Svc.Targets.Target is IPlayerCharacter pc && Utils.GSpeakPlayers.Any(player => player.Item1 == pc.GetNameWithWorld());
+            var dis = Svc.Targets.Target is not IPlayerCharacter || (isMare && !isGSpeak);
+            if (dis) ImGui.BeginDisabled();
+            string buttonText = Svc.Targets.Target is not IPlayerCharacter
+                ? "No Target Selected" : isMare && !isGSpeak
+                    ? "Cannot Apply To Mare User" : $"Apply to Target ({(isGSpeak ? "via GagSpeak" : "Locally")})";
+            if (ImGui.Button(buttonText))
             {
                 try
                 {
@@ -54,7 +60,7 @@ public static class TabMoodles
                     }
                     else
                     {
-                        Selected.SendMareMessage(target);
+                        Selected.SendGSpeakMessage(target);
                     }
                 }
                 catch(Exception e)
@@ -62,7 +68,6 @@ public static class TabMoodles
                     e.Log();
                 }
             }
-            if (isMare) { ImGuiEx.HelpMarker("This doesn't do anything yet, why are you clicking it? :)", color: ImGuiColors.DalamudRed); }
             if (dis) ImGui.EndDisabled();
 
             if (ImGui.BeginTable("##moodles", 2, ImGuiTableFlags.Borders | ImGuiTableFlags.RowBg | ImGuiTableFlags.SizingStretchSame))
@@ -88,6 +93,10 @@ public static class TabMoodles
                 ImGui.TableNextColumn();
                 ImGuiEx.SetNextItemFullWidth();
                 ImGui.InputText("##name", ref Selected.Title, 150);
+                if(ImGui.IsItemDeactivatedAfterEdit())
+                {
+                    P.IPCProcessor.StatusModified(Selected.GUID);
+                }
                 ImGui.TableNextRow();
 
                 ImGui.TableNextColumn();
@@ -109,6 +118,11 @@ public static class TabMoodles
                     //P.StatusSelector.Open(Selected);
                     //ImGui.CloseCurrentPopup();
                     ImGui.EndCombo();
+                }
+                // post update to IPC if a new icon is selected.
+                if (Utils.GetIconInfo((uint)Selected.IconID)?.Name != selinfo?.Name)
+                {
+                     P.IPCProcessor.StatusModified(Selected.GUID);
                 }
                 ImGui.TableNextRow(); 
                 
@@ -151,6 +165,10 @@ public static class TabMoodles
                 ImGui.TableNextColumn();
                 ImGuiEx.SetNextItemFullWidth();
                 ImGuiEx.InputTextMultilineExpanding("##desc", ref Selected.Description, 500);
+                if(ImGui.IsItemDeactivatedAfterEdit())
+                {
+                    P.IPCProcessor.StatusModified(Selected.GUID);
+                }
                 ImGui.TableNextRow();
 
                 ImGui.TableNextColumn();
@@ -159,14 +177,21 @@ public static class TabMoodles
                 ImGui.TableNextColumn();
                 ImGuiEx.SetNextItemFullWidth();
                 ImGui.InputTextWithHint("##applier", "Player Name@World", ref Selected.Applier, 150, C.Censor ? ImGuiInputTextFlags.Password : ImGuiInputTextFlags.None);
-
+                if (ImGui.IsItemDeactivatedAfterEdit())
+                {
+                     P.IPCProcessor.StatusModified(Selected.GUID);
+                }
                 ImGui.TableNextRow();
 
                 ImGui.TableNextColumn();
                 ImGuiEx.TextV($"Category:");
                 ImGui.TableNextColumn();
                 ImGuiEx.SetNextItemFullWidth();
-                ImGuiEx.EnumRadio(ref Selected.Type, true);
+                if(ImGuiEx.EnumRadio(ref Selected.Type, true))
+                {
+                     P.IPCProcessor.StatusModified(Selected.GUID);
+                }
+
 
                 if (P.CommonProcessor.DispelableIcons.Contains((uint)Selected.IconID))
                 {
@@ -177,7 +202,10 @@ public static class TabMoodles
                     ImGuiEx.HelpMarker("Applies the dispellable indicator to this Moodle implying it can be removed via the use of Esuna. Only available for icons representing negative status effects.");
                     ImGui.TableNextColumn();
                     ImGuiEx.SetNextItemFullWidth();
-                    ImGui.Checkbox("##dispel", ref Selected.Dispelable);
+                    if (ImGui.Checkbox("##dispel", ref Selected.Dispelable))
+                    {
+                         P.IPCProcessor.StatusModified(Selected.GUID);
+                    }
                 }
 
                 ImGui.TableNextRow();
@@ -190,7 +218,10 @@ public static class TabMoodles
                 }
                 ImGui.TableNextColumn();
 
-                Utils.DurationSelector("Permanent", ref Selected.NoExpire, ref Selected.Days, ref Selected.Hours, ref Selected.Minutes, ref Selected.Seconds);
+                if(Utils.DurationSelector("Permanent", ref Selected.NoExpire, ref Selected.Days, ref Selected.Hours, ref Selected.Minutes, ref Selected.Seconds))
+                {
+                   P.IPCProcessor.StatusModified(Selected.GUID);
+                }
 
                 ImGui.TableNextRow();
 
@@ -199,7 +230,10 @@ public static class TabMoodles
                 ImGuiEx.HelpMarker("When manually applied outside the scope of an automation preset, this Moodle will not be removed or overridden unless you right-click it off.");
                 ImGui.TableNextColumn();
                 ImGuiEx.SetNextItemFullWidth();
-                ImGui.Checkbox($"##sticky", ref Selected.AsPermanent);
+                if(ImGui.Checkbox($"##sticky", ref Selected.AsPermanent))
+                {
+                    P.IPCProcessor.StatusModified(Selected.GUID);
+                }
 
                 ImGui.TableNextColumn();
                 ImGuiEx.TextV($"ID:");
