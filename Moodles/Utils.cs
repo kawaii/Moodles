@@ -7,7 +7,7 @@ using ECommons.PartyFunctions;
 using FFXIVClientStructs.FFXIV.Client.UI.Info;
 using FFXIVClientStructs.FFXIV.Component.GUI;
 using Moodles.Data;
-using Moodles.OtterGuiHandlers;
+using Moodles.OtterGuiHandlers.Whitelist.GSpeak;
 using System.Text.RegularExpressions;
 using Status = Lumina.Excel.GeneratedSheets.Status;
 using UIColor = ECommons.ChatMethods.UIColor;
@@ -148,9 +148,9 @@ public static unsafe partial class Utils
     }
 
     // TODO: Update this from nint to playername@world eventually.
-    public static List<(string, OtherPairsMoodlePermsForClient)> GSpeakPlayers = [];
+    public static List<(string, MoodlesGSpeakPairPerms, MoodlesGSpeakPairPerms)> GSpeakPlayers = [];
     public static ulong GSpeakPlayersUpdated = 0;
-    public static List<(string, OtherPairsMoodlePermsForClient)> GetGSpeakPlayers()
+    public static List<(string, MoodlesGSpeakPairPerms, MoodlesGSpeakPairPerms)> GetGSpeakPlayers()
     {
         if (Frame != GSpeakPlayersUpdated)
         {
@@ -158,7 +158,7 @@ public static unsafe partial class Utils
             if (P.IPCProcessor.GetGSpeakPlayers.TryInvoke(out var ret))
             {
                 GSpeakPlayers = ret;
-                Whitelist.SyncWithGSpeakPlayers(GSpeakPlayers);
+                WhitelistGSpeak.SyncWithGSpeakPlayers(GSpeakPlayers);
             }
         }
         return GSpeakPlayers;
@@ -171,7 +171,7 @@ public static unsafe partial class Utils
                GSpeakPlayersUpdated = Frame;
                GSpeakPlayers = [];
                // update the whitelist
-               Whitelist.SyncWithGSpeakPlayers(GSpeakPlayers);
+               WhitelistGSpeak.SyncWithGSpeakPlayers(GSpeakPlayers);
           }
      }
 

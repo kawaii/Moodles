@@ -1,4 +1,5 @@
-﻿using OtterGui.Log;
+﻿using Moodles.OtterGuiHandlers.Whitelist.GSpeak;
+using OtterGui.Log;
 
 namespace Moodles.OtterGuiHandlers;
 public sealed class OtterGuiHandler : IDisposable
@@ -7,7 +8,8 @@ public sealed class OtterGuiHandler : IDisposable
     public PresetFileSystem PresetFileSystem;
     public Logger Logger;
     public AutomationList AutomationList;
-    public Whitelist Whitelist;
+    public WhitelistGSpeak WhitelistGSpeak;
+    public WhitelistMare WhitelistMare;
     public OtterGuiHandler()
     {
         try
@@ -16,7 +18,8 @@ public sealed class OtterGuiHandler : IDisposable
             MoodleFileSystem = new(this);
             PresetFileSystem = new(this);
             AutomationList = new();
-            Whitelist = new();
+            WhitelistMare = new();
+            WhitelistGSpeak = new();
         }
         catch(Exception ex)
         {

@@ -36,7 +36,7 @@ public class IPCProcessor : IDisposable
      /// Retreives the actively managed player object addresses by Project GagSpeak
      /// TODO: This will eventually be changed to a [ Player Name @ World ] format. Look out for it.
      /// </summary>
-     [EzIPC("GagSpeak.GetHandledVisiblePairs", false)] public readonly Func<List<(string, OtherPairsMoodlePermsForClient)>> GetGSpeakPlayers;
+     [EzIPC("GagSpeak.GetHandledVisiblePairs", false)] public readonly Func<List<(string, MoodlesGSpeakPairPerms, MoodlesGSpeakPairPerms)>> GetGSpeakPlayers;
 
      /// <summary>
      /// Sends to GSpeak a serialized ApplyMoodleStatusMessage struct message to apply respective statuses to a pair.
@@ -111,15 +111,22 @@ public class IPCProcessor : IDisposable
           }
           else
           {
-               // Fetch the status manager of our player object.
-               var sm = Utils.GetMyStatusManager(Player.Object);
-               foreach (var x in statusesToApply)
-               {
-                    // TODO: Check the current GSpeakPlayers permissions to know if we should apply the permissions before applying them.
-                    // (This will be done later, but for now it is already handled via GSpeak and so there is no need for the extra overhead)
-                    sm.AddOrUpdate(MyStatus.FromStatusInfoTuple(x), false, true);
-               }
-          }
+            // see if the sender is in our list of GSpeak players.
+            var gSpeakPlayer = Utils.GSpeakPlayers.FirstOrDefault(w => w.Item1 == senderNameWorld);
+            if (gSpeakPlayer != default)
+            {
+                // Fetch the status manager of our player object.
+                var sm = Utils.GetMyStatusManager(Player.Object);
+                var perms = gSpeakPlayer.Item2; // client perms for pair.
+                foreach (var x in statusesToApply)
+                {
+                    if (C.WhitelistGSpeak.Any(w => w.CheckStatus(perms, x.NoExpire)))
+                    {
+                        sm.AddOrUpdate(MyStatus.FromStatusInfoTuple(x).PrepareToApply(), false, true);
+                    }
+                }
+            }
+        }
      }
 
      /// <summary> 

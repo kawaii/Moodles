@@ -1,13 +1,8 @@
 ﻿using Dalamud.Game.ClientState.Objects.SubKinds;
-using ECommons.EzIpcManager;
 using ECommons.GameHelpers;
-using FFXIVClientStructs.FFXIV.Client.UI.Misc;
-using FFXIVClientStructs.FFXIV.Client.UI.Shell;
 using Moodles.Data;
 using Moodles.OtterGuiHandlers;
-using OtterGui;
 using OtterGui.Raii;
-using System.Xml.Linq;
 
 namespace Moodles.Gui;
 public static class TabMoodles

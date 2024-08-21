@@ -6,9 +6,9 @@ using OtterGui;
 using OtterGui.Raii;
 using ImGuiClip = OtterGui.ImGuiClip;
 
-namespace Moodles.OtterGuiHandlers;
+namespace Moodles.OtterGuiHandlers.Whitelist.GSpeak;
 #nullable enable
-public class WhitelistItemSelector<T>
+public class WhitelistItemSelectorGSpeak<T>
 {
     [Flags]
     public enum Flags : byte
@@ -62,7 +62,7 @@ public class WhitelistItemSelector<T>
     public readonly string DragDropLabel = "##ItemSelectorDragDrop";
     public readonly string MoveLabel = "##ItemSelectorMove";
 
-    public WhitelistItemSelector(IList<T> items, Flags flags = Flags.None)
+    public WhitelistItemSelectorGSpeak(IList<T> items, Flags flags = Flags.None)
     {
         Items = items;
         _lastSize = Items.Count;
@@ -99,7 +99,7 @@ public class WhitelistItemSelector<T>
             return;
 
         _dragDropData = data;
-        ImGui.SetDragDropPayload(DragDropLabel, IntPtr.Zero, 0);
+        ImGui.SetDragDropPayload(DragDropLabel, nint.Zero, 0);
         ImGui.TextUnformatted(tooltip);
     }
 
@@ -229,7 +229,7 @@ public class WhitelistItemSelector<T>
             if (source)
             {
                 _dragDropData = idx;
-                ImGui.SetDragDropPayload(MoveLabel, IntPtr.Zero, 0);
+                ImGui.SetDragDropPayload(MoveLabel, nint.Zero, 0);
                 ImGui.TextUnformatted($"Reordering {idx + 1}...");
             }
         }

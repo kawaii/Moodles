@@ -24,7 +24,7 @@ global using MoodlesStatusInfo = (
     bool AsPermanent
 );
 
-global using OtherPairsMoodlePermsForClient = (
+global using MoodlesGSpeakPairPerms = (
     bool AllowPositive,
     bool AllowNegative,
     bool AllowSpecial,

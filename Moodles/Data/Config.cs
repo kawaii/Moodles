@@ -25,10 +25,11 @@ public class Config : IEzConfig
     public bool Debug = false;
     public bool DisplayCommandFeedback = true;
     public SortOption IconSortOption = SortOption.Numerical;
-    public List<WhitelistEntry> Whitelist = [];
+    public List<WhitelistEntryGSpeak> WhitelistGSpeak = [];
+    public List<WhitelistEntryMare> WhitelistMare = [];
 
     public bool BroadcastAllowAll = false;
     public bool BroadcastAllowFriends = false;
     public bool BroadcastAllowParty = false;
-    public WhitelistEntry BroadcastDefaultEntry = new();
+    public WhitelistEntryGSpeak BroadcastDefaultEntry = new();
 }

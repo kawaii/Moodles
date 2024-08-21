@@ -1,14 +1,9 @@
-﻿using Dalamud.Game.ClientState.Objects.SubKinds;
-using ECommons.ExcelServices;
-using ECommons.ExcelServices.TerritoryEnumeration;
-using Moodles.Data;
-using OtterGui;
-using System.Windows.Forms;
+﻿using Moodles.Data;
 
-namespace Moodles.OtterGuiHandlers;
-public class Whitelist : WhitelistItemSelector<WhitelistEntry>
+namespace Moodles.OtterGuiHandlers.Whitelist.GSpeak;
+public class WhitelistGSpeak : WhitelistItemSelectorGSpeak<WhitelistEntryGSpeak>
 {
-    public Whitelist() : base(C.Whitelist, Flags.Add | Flags.Delete | Flags.Filter)
+    public WhitelistGSpeak() : base(C.WhitelistGSpeak, Flags.Add | Flags.Delete | Flags.Filter)
     {
 
     }
@@ -16,38 +11,38 @@ public class Whitelist : WhitelistItemSelector<WhitelistEntry>
     protected override bool OnAdd(string name)
     {
         if (name == "") return false;
-        C.Whitelist.Add(new() { PlayerName = name });
+        C.WhitelistGSpeak.Add(new() { PlayerName = name });
         return true;
     }
 
     protected override bool OnDraw(int i)
     {
-        var p = C.Whitelist[i];
-        var ret = ImGui.Selectable($"{p.PlayerName.Censor($"WhitelistEntry {i + 1}")}##{i}", this.CurrentIdx == i);
+        var p = C.WhitelistGSpeak[i];
+        var ret = ImGui.Selectable($"{p.PlayerName.Censor($"WhitelistEntry {i + 1}")}##{i}", CurrentIdx == i);
         return ret;
     }
 
     protected override bool OnDelete(int idx)
     {
-        C.Whitelist.RemoveAt(idx);
+        C.WhitelistGSpeak.RemoveAt(idx);
         return true;
     }
 
     protected override bool Filtered(int idx)
     {
-        var p = C.Whitelist[idx];
-        return p != null && !p.PlayerName.Contains(this.Filter, StringComparison.OrdinalIgnoreCase);
+        var p = C.WhitelistGSpeak[idx];
+        return p != null && !p.PlayerName.Contains(Filter, StringComparison.OrdinalIgnoreCase);
     }
 
-    public static void SyncWithGSpeakPlayers(List<(string, OtherPairsMoodlePermsForClient)> gSpeakPlayers)
+    public static void SyncWithGSpeakPlayers(List<(string, MoodlesGSpeakPairPerms, MoodlesGSpeakPairPerms)> gSpeakPlayers)
     {
-        var currentNames = C.Whitelist.Select(entry => entry.PlayerName).ToList();
+        var currentNames = C.WhitelistGSpeak.Select(entry => entry.PlayerName).ToList();
         // Add new names to the whitelist
         var newEntries = gSpeakPlayers
             .Where(player => !currentNames.Contains(player.Item1))
             .Select(player =>
             {
-                var perms = player.Item2;
+                var perms = player.Item3;
                 var allowedTypes = new[]
                 {
                     (perms.AllowPositive, StatusType.Positive),
@@ -58,7 +53,7 @@ public class Whitelist : WhitelistItemSelector<WhitelistEntry>
                 .Select(t => t.Item2)
                 .ToList();
 
-                return new WhitelistEntry
+                return new WhitelistEntryGSpeak
                 {
                     PlayerName = player.Item1,
                     AllowedTypes = allowedTypes,
@@ -69,27 +64,28 @@ public class Whitelist : WhitelistItemSelector<WhitelistEntry>
                     Minutes = perms.MaxDuration.Minutes,
                     Seconds = perms.MaxDuration.Seconds,
                     AnyDuration = perms.AllowPermanent,
-                    CanRemoveMoodles = perms.AllowRemoval
+                    CanRemoveMoodles = perms.AllowRemoval,
+                    ClientPermsForPair = player.Item2
                 };
             })
             .ToList();
         // Add the entry range to the whitelist
-        C.Whitelist.AddRange(newEntries);
+        C.WhitelistGSpeak.AddRange(newEntries);
 
         // Update names already present if their permissions do not match
-        C.Whitelist
+        C.WhitelistGSpeak
             .Where(entry => gSpeakPlayers.Any(player => player.Item1 == entry.PlayerName))
             .ToList()
             .ForEach(entry =>
             {
-                var perms = gSpeakPlayers.First(player => player.Item1 == entry.PlayerName).Item2;
-                if (entry.ArePermissionsDifferent(perms))
+                var perms = gSpeakPlayers.First(player => player.Item1 == entry.PlayerName);
+                if (entry.ArePermissionsDifferent(perms.Item2, perms.Item3))
                 {
-                    entry.UpdatePermissions(perms);
+                    entry.UpdatePermissions(perms.Item2, perms.Item3);
                 }
             });
 
         // Remove names that are no longer in the GSpeakPlayers list
-        C.Whitelist.RemoveAll(entry => !gSpeakPlayers.Any(player => player.Item1 == entry.PlayerName));
+        C.WhitelistGSpeak.RemoveAll(entry => !gSpeakPlayers.Any(player => player.Item1 == entry.PlayerName));
     }
 }
