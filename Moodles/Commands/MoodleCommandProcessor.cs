@@ -136,7 +136,7 @@ public static class MoodleCommandProcessor
         {
             if(Utils.GetMarePlayers().Contains(statusManager.Owner?.Address ?? -1))
             {
-                myStatus.SendMareMessage(statusManager.Owner);
+                myStatus.SendGSpeakMessage(statusManager.Owner);
             }
             else
             {
@@ -149,7 +149,7 @@ public static class MoodleCommandProcessor
             {
                 var newStatus = myStatus.JSONClone();
                 newStatus.ExpiresAt = 0;
-                newStatus.SendMareMessage(statusManager.Owner);
+                newStatus.SendGSpeakMessage(statusManager.Owner);
             }
             else
             {

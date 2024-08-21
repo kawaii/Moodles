@@ -1,26 +1,29 @@
 ﻿using Dalamud.Game.ClientState.Objects.SubKinds;
 using Dalamud.Game.Text.SeStringHandling;
-using Dalamud.Memory;
 using ECommons.ExcelServices;
 using ECommons.EzIpcManager;
 using ECommons.GameHelpers;
 using ECommons.PartyFunctions;
-using FFXIVClientStructs.FFXIV.Client.Network;
-using FFXIVClientStructs.FFXIV.Client.UI;
 using FFXIVClientStructs.FFXIV.Client.UI.Info;
 using FFXIVClientStructs.FFXIV.Component.GUI;
 using Moodles.Data;
+using Moodles.OtterGuiHandlers.Whitelist.GSpeak;
 using System.Text.RegularExpressions;
-using static System.ComponentModel.Design.ObjectSelectorEditor;
 using Status = Lumina.Excel.GeneratedSheets.Status;
 using UIColor = ECommons.ChatMethods.UIColor;
 
 namespace Moodles;
 public static unsafe partial class Utils
 {
-    public static void SendMareMessage(this Preset Preset, IPlayerCharacter target)
+    /// <summary>
+    /// Sends a message to GSpeak to apply the preset's collective statuses to the target player.
+    /// <para> All Moodles Status's are applied directly to the status manager. And not to their Saved Moodles. </para>
+    /// </summary>
+    /// <param name="Preset"> The preset to apply. </param>
+    /// <param name="target"> The target player to apply the statuses to. </param>
+    public static void SendGSpeakMessage(this Preset Preset, IPlayerCharacter target)
     {
-        var list = new List<MyStatus>();
+        var list = new List<MoodlesStatusInfo>();
         foreach (var s in C.SavedStatuses.Where(x => Preset.Statuses.Contains(x.GUID)))
         {
             var preparedStatus = s.PrepareToApply();
@@ -31,13 +34,12 @@ public static unsafe partial class Utils
             }
             else
             {
-                list.Add(preparedStatus);
+                list.Add(preparedStatus.ToStatusInfoTuple());
             }
         }
         if (list.Count > 0)
         {
-            var message = new IncomingMessage(Player.NameWithWorld, target.GetNameWithWorld(), list);
-            if (P.IPCProcessor.BroadcastMareMessage.TryInvoke(Convert.ToBase64String(message.Serialize())))
+            if (P.IPCProcessor.ApplyStatusesToGSpeakPair.TryInvoke(Player.NameWithWorld, target.GetNameWithWorld(), list, false))
             {
                 Notify.Info($"Broadcast success");
             }
@@ -48,7 +50,7 @@ public static unsafe partial class Utils
         }
     }
 
-    public static void SendMareMessage(this MyStatus Status, IPlayerCharacter target)
+    public static void SendGSpeakMessage(this MyStatus Status, IPlayerCharacter target)
     {
         var preparedStatus = Status.PrepareToApply();
         preparedStatus.Applier = Player.NameWithWorld ?? "";
@@ -58,8 +60,7 @@ public static unsafe partial class Utils
         }
         else
         {
-            var message = new IncomingMessage(Player.NameWithWorld, target.GetNameWithWorld(), [preparedStatus]);
-            if (P.IPCProcessor.BroadcastMareMessage.TryInvoke(Convert.ToBase64String(message.Serialize())))
+            if (P.IPCProcessor.ApplyStatusesToGSpeakPair.TryInvoke(Player.NameWithWorld, target.GetNameWithWorld(), [preparedStatus.ToStatusInfoTuple()], true))
             {
                 Notify.Info($"Broadcast success");
             }
@@ -70,25 +71,41 @@ public static unsafe partial class Utils
         }
     }
 
-    public static void DurationSelector(string PermanentTitle, ref bool NoExpire, ref int Days, ref int Hours, ref int Minutes, ref int Seconds)
-    {
-        ImGui.Checkbox(PermanentTitle, ref NoExpire);
-        if (!NoExpire)
-        {
-            ImGui.SameLine();
-            ImGui.SetNextItemWidth(30);
-            ImGui.DragInt("D", ref Days, 0.1f, 0, 999);
-            ImGui.SameLine();
-            ImGui.SetNextItemWidth(30);
-            ImGui.DragInt("H##h", ref Hours, 0.1f, 0, 23);
-            ImGui.SameLine();
-            ImGui.SetNextItemWidth(30);
-            ImGui.DragInt("M##m", ref Minutes, 0.1f, 0, 59);
-            ImGui.SameLine();
-            ImGui.SetNextItemWidth(30);
-            ImGui.DragInt("S##s", ref Seconds, 0.1f, 0, 59);
-        }
-    }
+     private static long LastChangeTime;
+
+     public static bool DurationSelector(string PermanentTitle, ref bool NoExpire, ref int Days, ref int Hours, ref int Minutes, ref int Seconds)
+     {
+          bool modified = false;
+
+          if(ImGui.Checkbox(PermanentTitle, ref NoExpire))
+          {
+               modified = true;
+          }
+          if (!NoExpire)
+          {
+               ImGui.SameLine();
+               ImGui.SetNextItemWidth(30);
+               ImGui.DragInt("D", ref Days, 0.1f, 0, 999);
+               if (ImGui.IsItemDeactivatedAfterEdit()) modified = true;
+               ImGui.SameLine();
+               ImGui.SetNextItemWidth(30);
+               ImGui.DragInt("H##h", ref Hours, 0.1f, 0, 23);
+               if (ImGui.IsItemDeactivatedAfterEdit()) modified = true;
+               ImGui.SameLine();
+               ImGui.SetNextItemWidth(30);
+               ImGui.DragInt("M##m", ref Minutes, 0.1f, 0, 59);
+               if (ImGui.IsItemDeactivatedAfterEdit()) modified = true;
+               ImGui.SameLine();
+               ImGui.SetNextItemWidth(30);
+               ImGui.DragInt("S##s", ref Seconds, 0.1f, 0, 59);
+               if(ImGui.IsItemDeactivatedAfterEdit()) modified = true;
+
+          }
+          // Wait 5 seconds before firing our status modified event. (helps prevent flooding)
+          if(modified) return true;
+          // otherwise, return false for the change.
+          return false;
+     }
 
     public static bool CheckWhitelistGlobal(MyStatus status)
     {
@@ -107,7 +124,7 @@ public static unsafe partial class Utils
         {
             var entry = friends->InfoProxyCommonList.CharDataSpan[i];
             var name = entry.NameString;
-            if(name != "")
+            if (name != "")
             {
                 ret.Add($"{name}@{ExcelWorldHelper.GetName(entry.HomeWorld)}");
             }
@@ -129,6 +146,34 @@ public static unsafe partial class Utils
         }
         return MarePlayers;
     }
+
+    // TODO: Update this from nint to playername@world eventually.
+    public static List<(string, MoodlesGSpeakPairPerms, MoodlesGSpeakPairPerms)> GSpeakPlayers = [];
+    public static ulong GSpeakPlayersUpdated = 0;
+    public static List<(string, MoodlesGSpeakPairPerms, MoodlesGSpeakPairPerms)> GetGSpeakPlayers()
+    {
+        if (Frame != GSpeakPlayersUpdated)
+        {
+            GSpeakPlayersUpdated = Frame;
+            if (P.IPCProcessor.GetGSpeakPlayers.TryInvoke(out var ret))
+            {
+                GSpeakPlayers = ret;
+                WhitelistGSpeak.SyncWithGSpeakPlayers(GSpeakPlayers);
+            }
+        }
+        return GSpeakPlayers;
+    }
+
+     public static void ClearGSpeakPlayers()
+     {
+          if (Frame != GSpeakPlayersUpdated)
+          {
+               GSpeakPlayersUpdated = Frame;
+               GSpeakPlayers = [];
+               // update the whitelist
+               WhitelistGSpeak.SyncWithGSpeakPlayers(GSpeakPlayers);
+          }
+     }
 
     public static bool IsNotNull(this MyStatus status)
     {
@@ -180,7 +225,7 @@ public static unsafe partial class Utils
 
     public static string CensorCharacter(this string s)
     {
-        return C.Censor ? s.Split(" ").Where(x => x.Length > 0).Select(x => $"{x[0]}.").Join(" "):s;
+        return C.Censor ? s.Split(" ").Where(x => x.Length > 0).Select(x => $"{x[0]}.").Join(" ") : s;
     }
 
     public static IEnumerable<AutomationCombo> GetSuitableAutomation(IPlayerCharacter pc = null)
@@ -344,7 +389,7 @@ public static unsafe partial class Utils
             error = "Error: Color is out of range.";
             return new SeStringBuilder().AddText($"{error}\0").Build();
         }
-        catch(Exception e)
+        catch (Exception e)
         {
             error = "Error: please check syntax.";
             return new SeStringBuilder().AddText($"{error}\0").Build();
@@ -356,7 +401,7 @@ public static unsafe partial class Utils
 
     public static uint FindStatusByIconID(uint iconID)
     {
-        foreach(var x in Svc.Data.GetExcelSheet<Status>())
+        foreach (var x in Svc.Data.GetExcelSheet<Status>())
         {
             if (x.Icon == iconID) return x.RowId;
             if (x.MaxStacks > 1 && iconID >= x.Icon + 1 && iconID < x.Icon + x.MaxStacks) return x.RowId;
@@ -383,7 +428,7 @@ public static unsafe partial class Utils
     static Dictionary<uint, IconInfo?> IconInfoCache = [];
     public static IconInfo? GetIconInfo(uint iconID)
     {
-        if(IconInfoCache.TryGetValue(iconID, out var iconInfo))
+        if (IconInfoCache.TryGetValue(iconID, out var iconInfo))
         {
             return iconInfo;
         }

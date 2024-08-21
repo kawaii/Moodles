@@ -6,9 +6,9 @@ using OtterGui;
 using OtterGui.Raii;
 using ImGuiClip = OtterGui.ImGuiClip;
 
-namespace Moodles.OtterGuiHandlers;
+namespace Moodles.OtterGuiHandlers.Whitelist.GSpeak;
 #nullable enable
-public class WhitelistItemSelector<T>
+public class WhitelistItemSelectorGSpeak<T>
 {
     [Flags]
     public enum Flags : byte
@@ -62,7 +62,7 @@ public class WhitelistItemSelector<T>
     public readonly string DragDropLabel = "##ItemSelectorDragDrop";
     public readonly string MoveLabel = "##ItemSelectorMove";
 
-    public WhitelistItemSelector(IList<T> items, Flags flags = Flags.None)
+    public WhitelistItemSelectorGSpeak(IList<T> items, Flags flags = Flags.None)
     {
         Items = items;
         _lastSize = Items.Count;
@@ -99,7 +99,7 @@ public class WhitelistItemSelector<T>
             return;
 
         _dragDropData = data;
-        ImGui.SetDragDropPayload(DragDropLabel, IntPtr.Zero, 0);
+        ImGui.SetDragDropPayload(DragDropLabel, nint.Zero, 0);
         ImGui.TextUnformatted(tooltip);
     }
 
@@ -229,7 +229,7 @@ public class WhitelistItemSelector<T>
             if (source)
             {
                 _dragDropData = idx;
-                ImGui.SetDragDropPayload(MoveLabel, IntPtr.Zero, 0);
+                ImGui.SetDragDropPayload(MoveLabel, nint.Zero, 0);
                 ImGui.TextUnformatted($"Reordering {idx + 1}...");
             }
         }
@@ -304,161 +304,12 @@ public class WhitelistItemSelector<T>
         FilterDirty = false;
     }
 
-    private void DrawAddTargetButton(float width)
-    {
-        using var font = ImRaii.DefaultFont();
-        if (ImGuiUtil.DrawDisabledButton(FontAwesomeIcon.User.ToIconString(), new Vector2(width, 0), 
-            "Add an empty entry prefilled with current target", Svc.Targets.Target is not IPlayerCharacter, true))
-        {
-            C.Whitelist.Add(new() { PlayerName = ((IPlayerCharacter)Svc.Targets.Target!).GetNameWithWorld() });
-        }
-    }
-
-    private void DrawSettingsButton(float width)
-    {
-        if (ImGui.Button(FontAwesomeIcon.Cog.ToIconString(), Vector2.UnitX * width))
-        {
-            this.ClearCurrentSelection();
-        }
-    }
-
-    private void DrawAddButton(float width)
-    {
-        const string newNamePopupAdd = "##NewNameAdd";
-
-        if (ImGui.Button(FontAwesomeIcon.Plus.ToIconString(), Vector2.UnitX * width))
-            ImGui.OpenPopup(newNamePopupAdd);
-        using var font = ImRaii.PushFont(UiBuilder.DefaultFont);
-        ImGuiUtil.HoverTooltip("Add New");
-
-        if (!OpenNameField(newNamePopupAdd, out var newName))
-            return;
-
-        if (OnAdd(newName))
-        {
-            TryRestoreCurrent();
-            SetFilterDirty();
-        }
-    }
-
-    private void DrawImportButton(float width)
-    {
-        const string newNamePopupImport = "##NewNameImport";
-
-        if (ImGui.Button(FontAwesomeIcon.Clipboard.ToIconString(), Vector2.UnitX * width))
-            ImGui.OpenPopup(newNamePopupImport);
-        using var font = ImRaii.PushFont(UiBuilder.DefaultFont);
-        ImGuiUtil.HoverTooltip("Import from Clipboard");
-
-        if (!OpenNameField(newNamePopupImport, out var newName))
-            return;
-
-        if (OnClipboardImport(newName, ImGuiUtil.GetClipboardText()))
-        {
-            TryRestoreCurrent();
-            SetFilterDirty();
-        }
-    }
-
-    // The popup to enter a name used by all Creation-buttons.
-    private bool OpenNameField(string popupName, out string newName)
-    {
-        newName = string.Empty;
-        if (ImGuiUtil.OpenNameField(popupName, ref _newName))
-        {
-            newName = _newName;
-            _newName = string.Empty;
-            return true;
-        }
-
-        return false;
-    }
-
-    private void DrawDuplicateButton(float width)
-    {
-        const string newNamePopupDuplicate = "##NewNameDuplicate";
-
-        if (ImGui.Button(FontAwesomeIcon.Clone.ToIconString(), Vector2.UnitX * width))
-            ImGui.OpenPopup(newNamePopupDuplicate);
-
-        using var font = ImRaii.PushFont(UiBuilder.DefaultFont);
-        ImGuiUtil.HoverTooltip("Duplicate Current Selection");
-
-        if (!OpenNameField(newNamePopupDuplicate, out var newName))
-            return;
-
-        if (OnDuplicate(newName, CurrentIdx))
-        {
-            TryRestoreCurrent();
-            SetFilterDirty();
-        }
-    }
-
-    protected virtual bool DeleteButtonEnabled()
-        => ImGui.GetIO().KeyCtrl;
-
-    protected virtual string DeleteButtonTooltip()
-        => "Delete Current Selection. Hold Control while clicking.";
-
-    private void DrawDeleteButton(float width)
-    {
-        using var font = ImRaii.DefaultFont();
-        if (ImGuiUtil.DrawDisabledButton(FontAwesomeIcon.Trash.ToIconString(), new Vector2(width, 0), DeleteButtonTooltip(), !DeleteButtonEnabled(), true)
-         && CurrentIdx >= 0
-         && OnDelete(CurrentIdx))
-        {
-            FilterDirty = true;
-            SetCurrent(CurrentIdx > 0 ? CurrentIdx - 1 : CurrentIdx);
-        }
-    }
-
-    private void DrawButtons(float width)
-    {
-        if (_numButtons == 0)
-            return;
-
-        using var font = ImRaii.PushFont(UiBuilder.IconFont);
-        var buttonWidth = width / _numButtons;
-
-        if (_flags.HasFlag(Flags.Add))
-        {
-            DrawAddButton(buttonWidth);
-            ImGui.SameLine();
-        }
-
-        if (_flags.HasFlag(Flags.Import))
-        {
-            DrawImportButton(buttonWidth);
-            ImGui.SameLine();
-        }
-
-        if (_flags.HasFlag(Flags.Duplicate))
-        {
-            DrawDuplicateButton(buttonWidth);
-            ImGui.SameLine();
-        }
-
-        DrawAddTargetButton(buttonWidth);
-        ImGui.SameLine();
-        
-        if (_flags.HasFlag(Flags.Delete))
-        {
-            DrawDeleteButton(buttonWidth);
-            ImGui.SameLine();
-        }
-
-        DrawSettingsButton(buttonWidth);
-        ImGui.SameLine();
-
-        ImGui.NewLine();
-    }
-
     public void Draw(float width)
     {
         using var id = ImRaii.PushId(Label);
         using var style = ImRaii.PushStyle(ImGuiStyleVar.WindowPadding, Vector2.Zero);
         using var group = ImRaii.Group();
-        using var child = ImRaii.Child(string.Empty, new Vector2(width, -ImGui.GetFrameHeight()), true);
+        using var child = ImRaii.Child(string.Empty, new Vector2(width, 0), true);
         if (!child)
             return;
 
@@ -471,7 +322,6 @@ public class WhitelistItemSelector<T>
             .Push(ImGuiStyleVar.WindowPadding, Vector2.Zero)
             .Push(ImGuiStyleVar.ItemSpacing, Vector2.Zero);
         child.Dispose();
-        DrawButtons(width);
     }
 }
 
