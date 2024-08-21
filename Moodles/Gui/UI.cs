@@ -211,7 +211,7 @@ public unsafe static class UI
             {
                 if(Svc.Objects.TryGetFirst(x => x.OwnerId == OID, out var obj))
                 {
-                    P.Memory.BattleLog_AddToScreenLogWithScreenLogKindHook.Original(obj.Address, My ? Player.Object.Address : obj.Address, MessageID, 5, (byte)a4, (int)a5, (int)StatusID, (int)a7, (int)a8);
+                    P.Memory.BattleLog_AddToScreenLogWithScreenLogKindDetour(obj.Address, My ? Player.Object.Address : obj.Address, MessageID, 5, (byte)a4, (int)a5, (int)StatusID, (int)a7, (int)a8);
                     Notify.Info($"Success");
                 }
             }

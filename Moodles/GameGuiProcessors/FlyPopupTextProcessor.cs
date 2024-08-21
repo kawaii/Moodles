@@ -79,7 +79,7 @@ public sealed unsafe class FlyPopupTextProcessor : IDisposable
                 }
                 if (StatusData.TryGetValue((uint)e.Status.AdjustedIconID, out var data))
                 {
-                    P.Memory.BattleLog_AddToScreenLogWithScreenLogKindHook.Original(target.Address, isMine ? Player.Object.Address : target.Address, kind, 5, 0, 0, (int)data.StatusId, (int)data.StackCount, 0);
+                    P.Memory.BattleLog_AddToScreenLogWithScreenLogKindDetour(target.Address, isMine ? Player.Object.Address : target.Address, kind, 5, 0, 0, (int)data.StatusId, (int)data.StackCount, 0);
                 }
                 else
                 {
