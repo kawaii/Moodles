@@ -14,9 +14,9 @@ public unsafe partial class Memory
         try
         {
             PluginLog.Debug($"BattleLog_AddActionLogMessageDetour: {target:X16}, {source:X16}, {kind}, {a4}, {a5}, {a6}, {statusID}, {stackCount}, {damageType}");
-            if (UI.Suppress) return;
+            if(UI.Suppress) return;
         }
-        catch (Exception e)
+        catch(Exception e)
         {
             e.Log();
         }

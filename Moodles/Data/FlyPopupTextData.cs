@@ -7,8 +7,8 @@ public class FlyPopupTextData
 
     public FlyPopupTextData(MyStatus status, bool isAddition, uint owner)
     {
-        this.Status = status;
-        this.IsAddition = isAddition;
-        this.Owner = owner;
+        Status = status;
+        IsAddition = isAddition;
+        Owner = owner;
     }
 }

@@ -6,13 +6,13 @@ namespace Moodles.Gui.TabWhitelists.Tabs;
 
 internal class MareWhitelist : PluginWhitelist
 {
-    WhitelistEntryMare Selected => P.OtterGuiHandler.WhitelistMare.Current;
+    private WhitelistEntryMare Selected => P.OtterGuiHandler.WhitelistMare.Current;
 
     public override string pluginName { get; } = "Mare Synchronos";
 
     protected override void DrawWhitelist()
     {
-        if (ImGui.BeginTable($"##Table", 1, ImGuiTableFlags.SizingStretchSame | ImGuiTableFlags.Borders))
+        if(ImGui.BeginTable($"##Table", 1, ImGuiTableFlags.SizingStretchSame | ImGuiTableFlags.Borders))
         {
             ImGui.TableHeader($"#h");
             ImGui.TableNextRow();
@@ -33,22 +33,22 @@ internal class MareWhitelist : PluginWhitelist
     protected override void Draw()
     {
         using var child = ImRaii.Child("##Panel", -Vector2.One, true);
-        if (!child)
+        if(!child)
             return;
 
         // if there are 0 entries in the whitelist, clear the current.
-        if (C.WhitelistMare.Count == 0)
+        if(C.WhitelistMare.Count == 0)
         {
             P.OtterGuiHandler.WhitelistMare.EnsureCurrent();
         }
 
-        if (Selected == null)
+        if(Selected == null)
         {
             ImGuiEx.Text($"No GagSpeak Pairs are visible to view the permissions of. Select one to view permissions!");
         }
         else
         {
-            if (ImGui.BeginTable("##wl", 2, ImGuiTableFlags.RowBg | ImGuiTableFlags.SizingFixedFit | ImGuiTableFlags.Borders))
+            if(ImGui.BeginTable("##wl", 2, ImGuiTableFlags.RowBg | ImGuiTableFlags.SizingFixedFit | ImGuiTableFlags.Borders))
             {
                 ImGui.TableSetupColumn("##txt", ImGuiTableColumnFlags.WidthFixed, 150);
                 ImGui.TableSetupColumn("##inp", ImGuiTableColumnFlags.WidthStretch);
@@ -59,7 +59,7 @@ internal class MareWhitelist : PluginWhitelist
                 ImGui.TableNextColumn();
 
                 ImGui.BeginDisabled();
-                foreach (var x in Enum.GetValues<StatusType>())
+                foreach(var x in Enum.GetValues<StatusType>())
                 {
                     ImGuiEx.CollectionCheckbox($"{x}", x, Selected.AllowedTypes);
                 }

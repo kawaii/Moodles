@@ -32,12 +32,12 @@ public static class HeaderDrawer
 
         public readonly void Draw()
         {
-            if (!Visible)
+            if(!Visible)
                 return;
 
             using var color = ImRaii.PushColor(ImGuiCol.Border, BorderColor)
                 .Push(ImGuiCol.Text, TextColor, TextColor != 0);
-            if (ImGuiUtil.DrawDisabledButton(Icon.ToIconString(), new Vector2(Width, ImGui.GetFrameHeight()), string.Empty, Disabled, true))
+            if(ImGuiUtil.DrawDisabledButton(Icon.ToIconString(), new Vector2(Width, ImGui.GetFrameHeight()), string.Empty, Disabled, true))
                 OnClick?.Invoke();
             color.Pop();
             ImGuiUtil.HoverTooltip(Description);
@@ -66,7 +66,7 @@ public static class HeaderDrawer
             .Push(ImGuiStyleVar.FrameBorderSize, ImGuiHelpers.GlobalScale);
 
         var leftButtonSize = 0f;
-        foreach (var button in buttons.Take(leftButtons).Where(b => b.Visible))
+        foreach(var button in buttons.Take(leftButtons).Where(b => b.Visible))
         {
             button.Draw();
             ImGui.SameLine();
@@ -78,14 +78,14 @@ public static class HeaderDrawer
 
         style.Pop();
         style.Push(ImGuiStyleVar.ButtonTextAlign, new Vector2(0.5f + (rightButtonSize - leftButtonSize) / midSize, 0.5f));
-        if (textColor != 0)
+        if(textColor != 0)
             ImGuiUtil.DrawTextButton(text, new Vector2(midSize, ImGui.GetFrameHeight()), frameColor, textColor);
         else
             ImGuiUtil.DrawTextButton(text, new Vector2(midSize, ImGui.GetFrameHeight()), frameColor);
         style.Pop();
         style.Push(ImGuiStyleVar.FrameBorderSize, ImGuiHelpers.GlobalScale);
 
-        foreach (var button in buttons.Skip(leftButtons).Where(b => b.Visible))
+        foreach(var button in buttons.Skip(leftButtons).Where(b => b.Visible))
         {
             ImGui.SameLine();
             button.Draw();

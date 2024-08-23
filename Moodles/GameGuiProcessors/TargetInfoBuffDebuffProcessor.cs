@@ -1,10 +1,9 @@
-﻿using Dalamud.Game.Addon.Lifecycle.AddonArgTypes;
-using Dalamud.Game.Addon.Lifecycle;
+﻿using Dalamud.Game.Addon.Lifecycle;
+using Dalamud.Game.Addon.Lifecycle.AddonArgTypes;
+using Dalamud.Game.ClientState.Objects.SubKinds;
 using ECommons.GameHelpers;
 using FFXIVClientStructs.FFXIV.Component.GUI;
-using Dalamud.Game.ClientState.Objects.SubKinds;
 using Moodles.Data;
-using Dalamud.Game.ClientState.Objects.Types;
 
 namespace Moodles.GameGuiProcessors;
 public unsafe class TargetInfoBuffDebuffProcessor
@@ -14,9 +13,9 @@ public unsafe class TargetInfoBuffDebuffProcessor
     {
         Svc.AddonLifecycle.RegisterListener(AddonEvent.PostUpdate, "_TargetInfoBuffDebuff", TargetInfoBuffDebuffUpdate);
         Svc.AddonLifecycle.RegisterListener(AddonEvent.PostRequestedUpdate, "_TargetInfoBuffDebuff", TargetInfoBuffDebuffRequestedUpdate);
-        if (Player.Available && TryGetAddonByName<AtkUnitBase>("_TargetInfoBuffDebuff", out var addon) && IsAddonReady(addon))
+        if(Player.Available && TryGetAddonByName<AtkUnitBase>("_TargetInfoBuffDebuff", out var addon) && IsAddonReady(addon))
         {
-            this.TargetInfoBuffDebuffRequestedUpdate(AddonEvent.PostRequestedUpdate, new ArtificialAddonArgs(addon));
+            TargetInfoBuffDebuffRequestedUpdate(AddonEvent.PostRequestedUpdate, new ArtificialAddonArgs(addon));
         }
     }
 
@@ -28,23 +27,23 @@ public unsafe class TargetInfoBuffDebuffProcessor
 
     public void HideAll()
     {
-        if (TryGetAddonByName<AtkUnitBase>("_TargetInfoBuffDebuff", out var addon) && IsAddonReady(addon))
+        if(TryGetAddonByName<AtkUnitBase>("_TargetInfoBuffDebuff", out var addon) && IsAddonReady(addon))
         {
-            this.UpdateAddon(addon, true);
+            UpdateAddon(addon, true);
         }
     }
 
     private void TargetInfoBuffDebuffRequestedUpdate(AddonEvent type, AddonArgs args)
     {
-        if (P == null) return;
+        if(P == null) return;
         var addon = (AtkUnitBase*)args.Addon;
-        if (addon != null && IsAddonReady(addon))
+        if(addon != null && IsAddonReady(addon))
         {
             NumStatuses = 0;
-            for (var i = 3u; i <= 32; i++)
+            for(var i = 3u; i <= 32; i++)
             {
                 var c = addon->UldManager.SearchNodeById(i);
-                if (c->IsVisible())
+                if(c->IsVisible())
                 {
                     NumStatuses++;
                 }
@@ -55,21 +54,21 @@ public unsafe class TargetInfoBuffDebuffProcessor
 
     private void TargetInfoBuffDebuffUpdate(AddonEvent type, AddonArgs args)
     {
-        if (P == null) return;
-        if (!Player.Available) return;
-        if (!P.CanModifyUI()) return;
+        if(P == null) return;
+        if(!Player.Available) return;
+        if(!P.CanModifyUI()) return;
         UpdateAddon((AtkUnitBase*)args.Addon);
     }
 
     public void UpdateAddon(AtkUnitBase* addon, bool hideAll = false)
     {
-        IGameObject target = Svc.Targets.SoftTarget! ?? Svc.Targets.Target!;
-        if (target is IPlayerCharacter pc)
+        var target = Svc.Targets.SoftTarget! ?? Svc.Targets.Target!;
+        if(target is IPlayerCharacter pc)
         {
-            if (addon != null && IsAddonReady(addon))
+            if(addon != null && IsAddonReady(addon))
             {
                 int baseCnt;
-                if (P.CommonProcessor.NewMethod)
+                if(P.CommonProcessor.NewMethod)
                 {
                     baseCnt = 3 + NumStatuses;
                 }
@@ -77,18 +76,18 @@ public unsafe class TargetInfoBuffDebuffProcessor
                 {
                     baseCnt = 3 + pc.StatusList.Count(x => x.StatusId != 0);
                 }
-                for (var i = baseCnt; i <= 32; i++)
+                for(var i = baseCnt; i <= 32; i++)
                 {
                     var c = addon->UldManager.SearchNodeById((uint)i);
-                    if (c->IsVisible()) c->NodeFlags ^= NodeFlags.Visible;
+                    if(c->IsVisible()) c->NodeFlags ^= NodeFlags.Visible;
                 }
-                if (!hideAll)
+                if(!hideAll)
                 {
-                    foreach (var x in pc.GetMyStatusManager().Statuses)
+                    foreach(var x in pc.GetMyStatusManager().Statuses)
                     {
-                        if (baseCnt > 32) break;
+                        if(baseCnt > 32) break;
                         var rem = x.ExpiresAt - Utils.Time;
-                        if (rem > 0)
+                        if(rem > 0)
                         {
                             SetIcon(addon, baseCnt, x);
                             baseCnt++;
@@ -99,7 +98,7 @@ public unsafe class TargetInfoBuffDebuffProcessor
         }
     }
 
-    void SetIcon(AtkUnitBase* addon, int id, MyStatus status)
+    private void SetIcon(AtkUnitBase* addon, int id, MyStatus status)
     {
         var container = addon->UldManager.SearchNodeById((uint)id);
         P.CommonProcessor.SetIcon(addon, container, status);

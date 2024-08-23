@@ -2,36 +2,33 @@
 using Dalamud.Game.Gui.FlyText;
 using ECommons.Configuration;
 using ECommons.EzIpcManager;
-using ECommons.GameFunctions;
 using ECommons.GameHelpers;
 using ECommons.Throttlers;
-using FFXIVClientStructs.FFXIV.Client.Game.Event;
 using FFXIVClientStructs.FFXIV.Client.Game.Object;
 using Lumina.Excel.GeneratedSheets;
 using Moodles.Data;
-using System.IO;
 
 namespace Moodles.Gui;
-public unsafe static class UI
+public static unsafe class UI
 {
-    static MyStatus Status = new();
-    static int Duration = 20;
-    static string Owner = "";
+    private static MyStatus Status = new();
+    private static int Duration = 20;
+    private static string Owner = "";
     public static bool Suppress = false;
     public static readonly Vector2 StatusIconSize = new(24, 32);
-    static uint OID = 0;
-    static FlyTextKind MessageID = FlyTextKind.Debuff;
-    static uint a4 = 0;
-    static uint a5 = 0;
-    static uint a7 = 0;
-    static uint a8 = 0;
-    static uint StatusID = 0;
-    static bool My = false;
-    static int Cnt = 10;
+    private static uint OID = 0;
+    private static FlyTextKind MessageID = FlyTextKind.Debuff;
+    private static uint a4 = 0;
+    private static uint a5 = 0;
+    private static uint a7 = 0;
+    private static uint a8 = 0;
+    private static uint StatusID = 0;
+    private static bool My = false;
+    private static int Cnt = 10;
 
     public static void Draw()
     {
-        if (EzThrottler.Throttle("PeriodicConfigSave", 30 * 1000)) EzConfig.Save();
+        if(EzThrottler.Throttle("PeriodicConfigSave", 30 * 1000)) EzConfig.Save();
         ImGuiEx.EzTabBar("##main", [
             ("Moodles", TabMoodles.Draw, null, true),
             ("Presets", TabPresets.Draw, null, true),
@@ -65,27 +62,27 @@ public unsafe static class UI
             ImGui.InputInt("a6", ref sa6);
             ImGui.SetNextItemWidth(150f);
             ImGui.InputInt("a7", ref sa7);
-            if (ImGui.Button("Do"))
+            if(ImGui.Button("Do"))
             {
                 var addr = Svc.Targets.Target?.Address ?? Player.Object.Address;
                 P.Memory.ApplyStatusHitEffectHook.Original((StatusHitEffectKind)ID, addr, addr, sa4, (byte)sa5, (short)sa6, (byte)sa7);
             }
-            if (ImGui.Button("Do (all players)"))
+            if(ImGui.Button("Do (all players)"))
             {
-                foreach (var x in Svc.Objects)
+                foreach(var x in Svc.Objects)
                 {
-                    if (x is IPlayerCharacter pc)
+                    if(x is IPlayerCharacter pc)
                     {
                         var addr = pc.Address;
                         P.Memory.ApplyStatusHitEffectHook.Original((StatusHitEffectKind)ID, addr, addr, sa4, (byte)sa5, (short)sa6, (byte)sa7);
                     }
                 }
             }
-            if (ImGui.BeginCombo("From StatusHitEffect", "From StatusHitEffect"))
+            if(ImGui.BeginCombo("From StatusHitEffect", "From StatusHitEffect"))
             {
-                foreach (var x in Svc.Data.GetExcelSheet<StatusHitEffect>())
+                foreach(var x in Svc.Data.GetExcelSheet<StatusHitEffect>())
                 {
-                    if (ImGui.Selectable($"{x.Location.Value.Location} / {(StatusHitEffectKind)x.Location.Row}", false, ImGuiSelectableFlags.DontClosePopups))
+                    if(ImGui.Selectable($"{x.Location.Value.Location} / {(StatusHitEffectKind)x.Location.Row}", false, ImGuiSelectableFlags.DontClosePopups))
                     {
                         var addr = Svc.Targets.Target?.Address ?? Player.Object.Address;
                         P.Memory.ApplyStatusHitEffectHook.Original((StatusHitEffectKind)x.Location.Row, addr, addr, sa4, (byte)sa5, (short)sa6, (byte)sa7);
@@ -93,11 +90,11 @@ public unsafe static class UI
                 }
                 ImGui.EndCombo();
             }
-            if (ImGui.BeginCombo("From ActionCastVFX", "From ActionCastVFX"))
+            if(ImGui.BeginCombo("From ActionCastVFX", "From ActionCastVFX"))
             {
-                foreach (var x in Svc.Data.GetExcelSheet<ActionCastVFX>())
+                foreach(var x in Svc.Data.GetExcelSheet<ActionCastVFX>())
                 {
-                    if (ImGui.Selectable($"{x.VFX.Value.Location} / {(StatusHitEffectKind)x.VFX.Row}", false, ImGuiSelectableFlags.DontClosePopups))
+                    if(ImGui.Selectable($"{x.VFX.Value.Location} / {(StatusHitEffectKind)x.VFX.Row}", false, ImGuiSelectableFlags.DontClosePopups))
                     {
                         var addr = Svc.Targets.Target?.Address ?? Player.Object.Address;
                         P.Memory.ApplyStatusHitEffectHook.Original((StatusHitEffectKind)x.VFX.Row, addr, addr, sa4, (byte)sa5, (short)sa6, (byte)sa7);
@@ -105,11 +102,11 @@ public unsafe static class UI
                 }
                 ImGui.EndCombo();
             }
-            if (ImGui.BeginCombo("From StatusLoopVFX", "From StatusLoopVFX"))
+            if(ImGui.BeginCombo("From StatusLoopVFX", "From StatusLoopVFX"))
             {
-                foreach (var x in Svc.Data.GetExcelSheet<StatusLoopVFX>())
+                foreach(var x in Svc.Data.GetExcelSheet<StatusLoopVFX>())
                 {
-                    if (ImGui.Selectable($"{x.VFX.Value.Location} / {(StatusHitEffectKind)x.VFX.Row}", false, ImGuiSelectableFlags.DontClosePopups))
+                    if(ImGui.Selectable($"{x.VFX.Value.Location} / {(StatusHitEffectKind)x.VFX.Row}", false, ImGuiSelectableFlags.DontClosePopups))
                     {
                         var addr = Svc.Targets.Target?.Address ?? Player.Object.Address;
                         P.Memory.ApplyStatusHitEffectHook.Original((StatusHitEffectKind)x.VFX.Row, addr, addr, sa4, (byte)sa5, (short)sa6, (byte)sa7);
@@ -118,7 +115,7 @@ public unsafe static class UI
                 ImGui.EndCombo();
             }
         }
-        if (ImGui.CollapsingHeader("Actor control hook"))
+        if(ImGui.CollapsingHeader("Actor control hook"))
         {
             ImGui.Checkbox($"Suppress", ref Suppress);
             ImGuiEx.InputUint($"dec", ref Opcode);
@@ -129,7 +126,7 @@ public unsafe static class UI
             ImGuiEx.Text($"Enabled: {P.Memory.ProcessActorControlPacketHook.IsEnabled}");
             ImGuiEx.Text($"Created: {P.Memory.ProcessActorControlPacketHook.IsCreated}");*/
         }
-        if (ImGui.CollapsingHeader("Packet hook"))
+        if(ImGui.CollapsingHeader("Packet hook"))
         {
             ImGui.Checkbox($"Suppress", ref Suppress);
             ImGuiEx.InputUint($"dec", ref Opcode);
@@ -140,30 +137,30 @@ public unsafe static class UI
             ImGuiEx.Text($"Enabled: {P.Memory.PacketDispatcher_OnReceivePacketHook.IsEnabled}");
             ImGuiEx.Text($"Created: {P.Memory.PacketDispatcher_OnReceivePacketHook.IsCreated}");*/
         }
-        if (ImGui.CollapsingHeader("Friendlist"))
+        if(ImGui.CollapsingHeader("Friendlist"))
         {
             ImGuiEx.Text(Utils.GetFriendlist().Print("\n"));
         }
-        if (ImGui.CollapsingHeader("Mare players"))
+        if(ImGui.CollapsingHeader("Mare players"))
         {
-            if (P.IPCProcessor.GetMarePlayers.TryInvoke(out var list))
+            if(P.IPCProcessor.GetMarePlayers.TryInvoke(out var list))
             {
                 ImGuiEx.Text(list.Print("\n"));
             }
         }
-        if (ImGui.CollapsingHeader("GSpeak players"))
+        if(ImGui.CollapsingHeader("GSpeak players"))
         {
             ImGui.Text("GSpeakPlayers (From IPC Call)");
-            if (P.IPCProcessor.GetGSpeakPlayers.TryInvoke(out var list))
+            if(P.IPCProcessor.GetGSpeakPlayers.TryInvoke(out var list))
             {
                 ImGuiEx.Text(list.Print("\n"));
             }
             ImGui.Separator();
             ImGui.Text("GSpeakPlayers (From Memory)");
             ImGuiEx.Text(Utils.GSpeakPlayers.Print("\n"));
- 
+
         }
-        if (ImGui.CollapsingHeader("IPC"))
+        if(ImGui.CollapsingHeader("IPC"))
         {
             P.IPCTester.Draw();
         }
@@ -193,21 +190,21 @@ public unsafe static class UI
             {
                 P.Memory.ProcessActorControlPacketHook.Disable();
             }*/
-            if (ImGui.Button("Enable bl hook"))
+            if(ImGui.Button("Enable bl hook"))
             {
                 P.Memory.BattleLog_AddToScreenLogWithScreenLogKindHook.Enable();
             }
             ImGui.SameLine();
-            if (ImGui.Button("Disable bl hook"))
+            if(ImGui.Button("Disable bl hook"))
             {
                 P.Memory.BattleLog_AddToScreenLogWithScreenLogKindHook.Disable();
             }
 
             if(ImGui.BeginCombo("object", $"{OID:X8}"))
             {
-                foreach (var x in Svc.Objects.Where(x => x is IPlayerCharacter).Cast<IPlayerCharacter>())
+                foreach(var x in Svc.Objects.Where(x => x is IPlayerCharacter).Cast<IPlayerCharacter>())
                 {
-                    if (ImGui.Selectable($"{x.Name}")) OID = x.OwnerId;
+                    if(ImGui.Selectable($"{x.Name}")) OID = x.OwnerId;
                 }
                 ImGui.EndCombo();
             }
@@ -219,7 +216,7 @@ public unsafe static class UI
             ImGuiEx.InputUint("a8", ref a8);
             ImGui.Checkbox("From me", ref My);
             ImGui.Button("Execute");
-            if (ImGui.IsItemHovered() && (ImGui.IsMouseClicked(ImGuiMouseButton.Left) || ImGui.IsMouseDown(ImGuiMouseButton.Right)))
+            if(ImGui.IsItemHovered() && (ImGui.IsMouseClicked(ImGuiMouseButton.Left) || ImGui.IsMouseDown(ImGuiMouseButton.Right)))
             {
                 if(Svc.Objects.TryGetFirst(x => x.OwnerId == OID, out var obj))
                 {
@@ -230,7 +227,7 @@ public unsafe static class UI
 
         }
         ImGui.Checkbox("Enable UI modifications", ref C.Enabled);
-        if (ImGui.CollapsingHeader("Status debugging"))
+        if(ImGui.CollapsingHeader("Status debugging"))
         {
             ImGuiEx.Text($"{P.CommonProcessor.HoveringOver:X16}");
             ImGuiEx.Text($"Statuses: {Player.Object.StatusList.Count(x => P.CommonProcessor.PositiveStatuses.Contains(x.StatusId))}|{Player.Object.StatusList.Count(x => P.CommonProcessor.NegativeStatuses.Contains(x.StatusId))}|{Player.Object.StatusList.Count(x => P.CommonProcessor.SpecialStatuses.Contains(x.StatusId))}");
@@ -248,91 +245,91 @@ public unsafe static class UI
 
             ImGuiEx.Text($"SeenPlayers:\n{P.SeenPlayers.Print("\n")}");
         }
-        if (ImGui.BeginCombo("Select status manager", $"{Owner}"))
+        if(ImGui.BeginCombo("Select status manager", $"{Owner}"))
         {
             foreach(var x in C.StatusManagers)
             {
-                if (ImGui.Selectable(x.Key))
+                if(ImGui.Selectable(x.Key))
                 {
                     Owner = x.Key;
                 }
             }
             ImGui.EndCombo();
         }
-        if (ImGui.Button("Self"))
+        if(ImGui.Button("Self"))
         {
             Owner = Player.NameWithWorld;
         }
         ImGui.SameLine();
-        if (ImGui.Button("Target") && Svc.Targets.Target is IPlayerCharacter pct)
+        if(ImGui.Button("Target") && Svc.Targets.Target is IPlayerCharacter pct)
         {
             Owner = pct.GetNameWithWorld();
         }
         ImGui.SameLine();
         ImGui.SetNextItemWidth(200f);
-        if (ImGui.BeginCombo("##Players around", "Players around"))
+        if(ImGui.BeginCombo("##Players around", "Players around"))
         {
-            foreach (var x in Svc.Objects)
+            foreach(var x in Svc.Objects)
             {
-                if (x is IPlayerCharacter pc)
+                if(x is IPlayerCharacter pc)
                 {
-                    if (ImGui.Selectable(pc.GetNameWithWorld())) Owner = pc.GetNameWithWorld();
+                    if(ImGui.Selectable(pc.GetNameWithWorld())) Owner = pc.GetNameWithWorld();
                 }
             }
             ImGui.EndCombo();
         }
         ImGui.SameLine();
         ImGui.SetNextItemWidth(200f);
-        if (ImGui.BeginCombo("##party", "Party"))
+        if(ImGui.BeginCombo("##party", "Party"))
         {
-            foreach (var x in Svc.Party)
+            foreach(var x in Svc.Party)
             {
-                if (x.GameObject is IPlayerCharacter pc)
+                if(x.GameObject is IPlayerCharacter pc)
                 {
-                    if (ImGui.Selectable(pc.GetNameWithWorld())) Owner = pc.GetNameWithWorld();
+                    if(ImGui.Selectable(pc.GetNameWithWorld())) Owner = pc.GetNameWithWorld();
                 }
             }
             ImGui.EndCombo();
         }
         ImGui.SameLine();
-        if (ImGui.Button("Clear all managers"))
+        if(ImGui.Button("Clear all managers"))
         {
             C.StatusManagers.Clear();
         }
-        if (C.StatusManagers.TryGetValue(Owner, out var manager))
+        if(C.StatusManagers.TryGetValue(Owner, out var manager))
         {
-            if (ImGui.CollapsingHeader("Add##collap"))
+            if(ImGui.CollapsingHeader("Add##collap"))
             {
                 var iconArray = new List<uint>();
-                foreach (var x in Svc.Data.GetExcelSheet<Status>())
+                foreach(var x in Svc.Data.GetExcelSheet<Status>())
                 {
-                    if (iconArray.Contains(x.Icon)) continue;
-                    if (x.Icon == 0) continue;
+                    if(iconArray.Contains(x.Icon)) continue;
+                    if(x.Icon == 0) continue;
                     iconArray.Add(x.Icon);
-                    if (x.MaxStacks > 1)
+                    if(x.MaxStacks > 1)
                     {
-                        for (int i = 2; i < x.MaxStacks; i++)
+                        for(var i = 2; i < x.MaxStacks; i++)
                         {
                             iconArray.Add((uint)(x.Icon + i - 1));
                         }
                     }
                 }
                 ImGui.SetNextItemWidth(100f);
-                if (ImGui.BeginCombo("##sel", $"Icon: {Status.IconID}", ImGuiComboFlags.HeightLargest))
+                if(ImGui.BeginCombo("##sel", $"Icon: {Status.IconID}", ImGuiComboFlags.HeightLargest))
                 {
                     var cnt = 0;
-                    foreach (var x in iconArray)
+                    foreach(var x in iconArray)
                     {
-                        if (ThreadLoadImageHandler.TryGetIconTextureWrap(x, false, out var t))
+                        if(ThreadLoadImageHandler.TryGetIconTextureWrap(x, false, out var t))
                         {
                             ImGui.Image(t.ImGuiHandle, new(24, 32));
-                            if (ImGuiEx.HoveredAndClicked())
+                            if(ImGuiEx.HoveredAndClicked())
                             {
                                 Status.IconID = (int)x;
                                 ImGui.CloseCurrentPopup();
                             }
                             cnt++;
-                            if (cnt % 20 != 0) ImGui.SameLine();
+                            if(cnt % 20 != 0) ImGui.SameLine();
                         }
                     }
                     ImGui.Dummy(Vector2.One);
@@ -351,18 +348,18 @@ public unsafe static class UI
                 ImGui.SetNextItemWidth(100f);
                 ImGui.InputText("Applier", ref Status.Applier, 50);
                 ImGui.SameLine();
-                if (ImGui.Button("Me")) Status.Applier = Player.NameWithWorld;
+                if(ImGui.Button("Me")) Status.Applier = Player.NameWithWorld;
                 ImGui.SameLine();
                 ImGuiEx.EnumCombo("Type", ref Status.Type);
-                if (ImGui.Button("Add"))
+                if(ImGui.Button("Add"))
                 {
                     Status.GUID = Guid.NewGuid();
                     Status.ExpiresAt = Utils.Time + Duration * 1000;
-                    if (Duration == 0) Status.ExpiresAt = long.MaxValue;
+                    if(Duration == 0) Status.ExpiresAt = long.MaxValue;
                     manager.AddOrUpdate(Status.JSONClone());
                 }
                 ImGui.SameLine();
-                if (ImGui.Button("Randomize and add"))
+                if(ImGui.Button("Randomize and add"))
                 {
                     Status.GUID = Guid.NewGuid();
                     Status.Title = $"Random status {Random.Shared.Next()}";
@@ -370,17 +367,17 @@ public unsafe static class UI
                     Status.Type = (StatusType)Random.Shared.Next(3);
                     Status.Applier = Random.Shared.Next(2) == 0 ? Player.NameWithWorld : "";
                     Status.Seconds = Random.Shared.Next(5, 60);
-                    if (Random.Shared.Next(20) == 0) Status.Minutes = Random.Shared.Next(5, 60);
-                    if (Random.Shared.Next(100) == 0) Status.Hours = Random.Shared.Next(5, 60);
+                    if(Random.Shared.Next(20) == 0) Status.Minutes = Random.Shared.Next(5, 60);
+                    if(Random.Shared.Next(100) == 0) Status.Hours = Random.Shared.Next(5, 60);
                     manager.AddOrUpdate(Status.JSONClone().PrepareToApply());
                 }
                 ImGui.SameLine();
                 ImGui.SetNextItemWidth(100f);
                 ImGui.InputInt($"Random buffs", ref Cnt);
                 ImGui.SameLine();
-                if (ImGui.Button("add"))
+                if(ImGui.Button("add"))
                 {
-                    for (int i = 0; i < Cnt; i++)
+                    for(var i = 0; i < Cnt; i++)
                     {
                         Status.GUID = Guid.NewGuid();
                         Status.Title = $"Random status {Random.Shared.Next()}";
@@ -391,19 +388,19 @@ public unsafe static class UI
                         Status.Minutes = 0;
                         Status.Hours = 0;
                         Status.Seconds = Random.Shared.Next(5, 60);
-                        if (Random.Shared.Next(20) == 0) Status.Minutes = Random.Shared.Next(5, 60);
-                        if (Random.Shared.Next(100) == 0) Status.Hours = Random.Shared.Next(5, 60);
+                        if(Random.Shared.Next(20) == 0) Status.Minutes = Random.Shared.Next(5, 60);
+                        if(Random.Shared.Next(100) == 0) Status.Hours = Random.Shared.Next(5, 60);
                         var array = Svc.Objects.Where(x => x is IPlayerCharacter pc && pc.IsTargetable).Cast<IPlayerCharacter>().ToArray();
                         Utils.GetMyStatusManager(array[Random.Shared.Next(array.Length)]).AddOrUpdate(Status.JSONClone().PrepareToApply());
                     }
                 }
                 ImGui.SameLine();
-                if (ImGui.Button("Copy bin"))
+                if(ImGui.Button("Copy bin"))
                 {
                     Copy(manager.BinarySerialize().ToHexString());
                 }
                 ImGui.SameLine();
-                if (ImGui.Button("Apply bin") && TryParseByteArray(Paste(), out var a))
+                if(ImGui.Button("Apply bin") && TryParseByteArray(Paste(), out var a))
                 {
                     manager.Apply(a);
                 }
@@ -432,13 +429,13 @@ public unsafe static class UI
                 {
                     ImGuiEx.SetNextItemFullWidth();
                     ImGui.InputText($"##Applier{x.ID}", ref x.Applier, 50);
-                    if (ImGui.IsItemClicked(ImGuiMouseButton.Right)) x.Applier = Player.NameWithWorld;
+                    if(ImGui.IsItemClicked(ImGuiMouseButton.Right)) x.Applier = Player.NameWithWorld;
                 }));
                 entries.Add(new("Expires", delegate
                 {
                     ImGuiEx.SetNextItemFullWidth();
                     ImGuiEx.InputLong($"##Expires{x.ID}", ref x.ExpiresAt);
-                    if (ImGui.IsItemClicked(ImGuiMouseButton.Right)) x.ExpiresAt = long.MaxValue;
+                    if(ImGui.IsItemClicked(ImGuiMouseButton.Right)) x.ExpiresAt = long.MaxValue;
                 }));
                 entries.Add(new("Type", false, delegate
                 {
@@ -458,7 +455,7 @@ public unsafe static class UI
                 }));
                 entries.Add(new("Ctrl", false, delegate
                 {
-                    if (ImGui.Button($"Del##{x.ID}"))
+                    if(ImGui.Button($"Del##{x.ID}"))
                     {
                         x.ExpiresAt = 0;
                     }

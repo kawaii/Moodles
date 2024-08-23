@@ -21,17 +21,17 @@ public sealed unsafe class FlyPopupTextProcessor : IDisposable
         {
             var baseData = new IconStatusData(x.RowId, x.Name.ExtractText(), 0);
             StatusData[x.Icon] = baseData;
-            for (int i = 2; i <= x.MaxStacks; i++)
+            for(var i = 2; i <= x.MaxStacks; i++)
             {
                 StatusData[(uint)(x.Icon + i - 1)] = baseData with { StackCount = (uint)i };
             }
         }
-        Svc.Framework.Update += this.Framework_Update;
+        Svc.Framework.Update += Framework_Update;
     }
 
     public void Enqueue(FlyPopupTextData data)
     {
-        if (C.EnableFlyPopupText)
+        if(C.EnableFlyPopupText)
         {
             Queue.Add(data);
         }
@@ -41,7 +41,7 @@ public sealed unsafe class FlyPopupTextProcessor : IDisposable
     {
         ProcessPopupText();
         ProcessFlyText();
-        if (CurrentElement != null) CurrentElement = null;
+        if(CurrentElement != null) CurrentElement = null;
         if(Queue.Count > C.FlyPopupTextLimit)
         {
             PluginLog.Warning($"FlyPopupTextProcessor Queue is too large! Trimming to {C.FlyPopupTextLimit} closest entities.");
@@ -49,27 +49,27 @@ public sealed unsafe class FlyPopupTextProcessor : IDisposable
             if(n > 0) PluginLog.Information($"  Removed {n} non-player entities");
             Queue = Queue.OrderBy(x => Vector3.DistanceSquared(Player.Object.Position, Svc.Objects.First(z => z.EntityId == x.Owner).Position)).Take(C.FlyPopupTextLimit).ToList();
         }
-        while (Queue.TryDequeue(out var e))
+        while(Queue.TryDequeue(out var e))
         {
             IPlayerCharacter? target = null;
-            for (int i = 0; i < Svc.Objects.Length; i++)
+            for(var i = 0; i < Svc.Objects.Length; i++)
             {
                 var cur = Svc.Objects[i];
-                if (cur == null) continue;
-                if (cur.EntityId != e.Owner) continue;
-                if (cur is not IPlayerCharacter pChara) continue;
+                if(cur == null) continue;
+                if(cur.EntityId != e.Owner) continue;
+                if(cur is not IPlayerCharacter pChara) continue;
 
                 target = pChara;
                 break;
             }
 
-            if (target != null)
+            if(target != null)
             {
                 PluginLog.Debug($"Processing {e.Status.Title} at {Utils.Frame} for {target}...");
                 CurrentElement = e;
                 var isMine = e.Status.Applier == Player.NameWithWorld && e.IsAddition;
                 FlyTextKind kind;
-                if (e.Status.Type == StatusType.Negative)
+                if(e.Status.Type == StatusType.Negative)
                 {
                     kind = e.IsAddition ? FlyTextKind.Debuff : FlyTextKind.DebuffFading;
                 }
@@ -77,7 +77,7 @@ public sealed unsafe class FlyPopupTextProcessor : IDisposable
                 {
                     kind = e.IsAddition ? FlyTextKind.Buff : FlyTextKind.BuffFading;
                 }
-                if (StatusData.TryGetValue((uint)e.Status.AdjustedIconID, out var data))
+                if(StatusData.TryGetValue((uint)e.Status.AdjustedIconID, out var data))
                 {
                     P.Memory.BattleLog_AddToScreenLogWithScreenLogKindDetour(target.Address, isMine ? Player.Object.Address : target.Address, kind, 5, 0, 0, (int)data.StatusId, (int)data.StackCount, 0);
                 }
@@ -94,17 +94,17 @@ public sealed unsafe class FlyPopupTextProcessor : IDisposable
         }
     }
 
-    void ProcessPopupText()
+    private void ProcessPopupText()
     {
-        if (CurrentElement != null)
+        if(CurrentElement != null)
         {
             {
-                if (TryGetAddonByName<AtkUnitBase>("_PopUpText", out var addon))
+                if(TryGetAddonByName<AtkUnitBase>("_PopUpText", out var addon))
                 {
-                    for (int i = 1; i < addon->UldManager.NodeListCount; i++)
+                    for(var i = 1; i < addon->UldManager.NodeListCount; i++)
                     {
                         var candidate = addon->UldManager.NodeList[i];
-                        if (IsCandidateValid(candidate))
+                        if(IsCandidateValid(candidate))
                         {
                             var c = candidate->GetAsAtkComponentNode()->Component;
                             var sestr = new SeStringBuilder().AddText(CurrentElement.IsAddition ? "+ " : "- ").Append(Utils.ParseBBSeString(CurrentElement.Status.Title));
@@ -119,17 +119,17 @@ public sealed unsafe class FlyPopupTextProcessor : IDisposable
         }
     }
 
-    void ProcessFlyText()
+    private void ProcessFlyText()
     {
-        if (CurrentElement != null)
+        if(CurrentElement != null)
         {
             {
-                if (TryGetAddonByName<AtkUnitBase>("_FlyText", out var addon))
+                if(TryGetAddonByName<AtkUnitBase>("_FlyText", out var addon))
                 {
-                    for (int i = 1; i < addon->UldManager.NodeListCount; i++)
+                    for(var i = 1; i < addon->UldManager.NodeListCount; i++)
                     {
                         var candidate = addon->UldManager.NodeList[i];
-                        if (IsCandidateValid(candidate))
+                        if(IsCandidateValid(candidate))
                         {
                             var c = candidate->GetAsAtkComponentNode()->Component;
                             var sestr = new SeStringBuilder().AddText(CurrentElement.IsAddition ? "+ " : "- ").Append(Utils.ParseBBSeString(CurrentElement.Status.Title));
@@ -143,20 +143,20 @@ public sealed unsafe class FlyPopupTextProcessor : IDisposable
         }
     }
 
-    bool IsCandidateValid(AtkResNode* node)
+    private bool IsCandidateValid(AtkResNode* node)
     {
-        if (!node->IsVisible()) return false;
+        if(!node->IsVisible()) return false;
         var c = node->GetAsAtkComponentNode()->Component;
-        if (c->UldManager.NodeListCount < 3 || c->UldManager.NodeListCount > 4) return false;
-        if (c->UldManager.NodeList[1]->Type != NodeType.Text) return false;
-        if (!c->UldManager.NodeList[1]->IsVisible()) return false;
-        if (c->UldManager.NodeList[2]->Type != NodeType.Image) return false;
-        if (!c->UldManager.NodeList[2]->IsVisible()) return false;
+        if(c->UldManager.NodeListCount < 3 || c->UldManager.NodeListCount > 4) return false;
+        if(c->UldManager.NodeList[1]->Type != NodeType.Text) return false;
+        if(!c->UldManager.NodeList[1]->IsVisible()) return false;
+        if(c->UldManager.NodeList[2]->Type != NodeType.Image) return false;
+        if(!c->UldManager.NodeList[2]->IsVisible()) return false;
         var text = MemoryHelper.ReadSeString(&c->UldManager.NodeList[1]->GetAsAtkTextNode()->NodeText)?.ExtractText();
-        if (!text.StartsWith('-') && !text.StartsWith('+')) return false;
-        if (StatusData.TryGetValue((uint)CurrentElement.Status.AdjustedIconID, out var data))
+        if(!text.StartsWith('-') && !text.StartsWith('+')) return false;
+        if(StatusData.TryGetValue((uint)CurrentElement.Status.AdjustedIconID, out var data))
         {
-            if (!text.Contains(data.Name)) return false;
+            if(!text.Contains(data.Name)) return false;
         }
         else
         {
@@ -167,6 +167,6 @@ public sealed unsafe class FlyPopupTextProcessor : IDisposable
 
     public void Dispose()
     {
-        Svc.Framework.Update -= this.Framework_Update;
+        Svc.Framework.Update -= Framework_Update;
     }
 }

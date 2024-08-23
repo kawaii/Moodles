@@ -10,7 +10,7 @@ using System.IO;
 namespace Moodles.OtterGuiHandlers;
 public sealed class PresetFileSystem : FileSystem<Preset>, IDisposable
 {
-    string FilePath = Path.Combine(Svc.PluginInterface.ConfigDirectory.FullName, "PresetFileSystem.json");
+    private string FilePath = Path.Combine(Svc.PluginInterface.ConfigDirectory.FullName, "PresetFileSystem.json");
     public readonly PresetFileSystem.FileSystemSelector Selector;
     public PresetFileSystem(OtterGuiHandler h)
     {
@@ -18,20 +18,20 @@ public sealed class PresetFileSystem : FileSystem<Preset>, IDisposable
         try
         {
             var info = new FileInfo(FilePath);
-            if (info.Exists)
+            if(info.Exists)
             {
-                this.Load(info, C.SavedPresets, ConvertToIdentifier, ConvertToName);
+                Load(info, C.SavedPresets, ConvertToIdentifier, ConvertToName);
             }
             Selector = new(this, h);
         }
-        catch (Exception e)
+        catch(Exception e)
         {
             e.Log();
         }
     }
     public bool TryGetPathByID(Guid id, out string path)
     {
-        if (FindLeaf(C.SavedPresets.FirstOrDefault(x => x.GUID == id), out var leaf))
+        if(FindLeaf(C.SavedPresets.FirstOrDefault(x => x.GUID == id), out var leaf))
         {
             path = leaf.FullName();
             return true;
@@ -49,11 +49,11 @@ public sealed class PresetFileSystem : FileSystem<Preset>, IDisposable
     {
         PluginLog.Debug($"Deleting {item.ID}");
         C.SavedPresets.Remove(item);
-        if (FindLeaf(item, out var leaf))
+        if(FindLeaf(item, out var leaf))
         {
-            this.Delete(leaf);
+            Delete(leaf);
         }
-        this.Save();
+        Save();
     }
 
     public bool FindLeaf(Preset item, out Leaf leaf)
@@ -82,9 +82,9 @@ public sealed class PresetFileSystem : FileSystem<Preset>, IDisposable
         {
             using var FileStream = new FileStream(FilePath, FileMode.Create, FileAccess.ReadWrite, FileShare.ReadWrite);
             using var StreamWriter = new StreamWriter(FileStream);
-            this.SaveToFile(StreamWriter, SaveConverter, true);
+            SaveToFile(StreamWriter, SaveConverter, true);
         }
-        catch (Exception ex)
+        catch(Exception ex)
         {
             PluginLog.Error($"Error saving PresetFileSystem:");
             ex.Log();
@@ -100,11 +100,12 @@ public sealed class PresetFileSystem : FileSystem<Preset>, IDisposable
     public class FileSystemSelector : FileSystemSelector<Preset, FileSystemSelector.State>
     {
         public List<uint> IconArray = [];
-        string NewName = "";
-        string ClipboardText = null;
-        Preset CloneItem = null;
+        private string NewName = "";
+        private string ClipboardText = null;
+        private Preset CloneItem = null;
         public override ISortMode<Preset> SortMode => ISortMode<Preset>.FoldersFirst;
-        static PresetFileSystem FS => P.OtterGuiHandler.PresetFileSystem;
+
+        private static PresetFileSystem FS => P.OtterGuiHandler.PresetFileSystem;
         public FileSystemSelector(PresetFileSystem fs, OtterGuiHandler h) : base(fs, Svc.KeyState, h.Logger, (e) => e.Log())
         {
             AddButton(NewItem, 0);
@@ -124,10 +125,10 @@ public sealed class PresetFileSystem : FileSystem<Preset>, IDisposable
 
         private void CopyToClipboardButton(Vector2 vector)
         {
-            if (!ImGuiUtil.DrawDisabledButton(FontAwesomeIcon.Copy.ToIconString(), vector, "Copy to clipboard.", Selected == null, true)) return;
-            if (this.Selected != null)
+            if(!ImGuiUtil.DrawDisabledButton(FontAwesomeIcon.Copy.ToIconString(), vector, "Copy to clipboard.", Selected == null, true)) return;
+            if(Selected != null)
             {
-                var copy = this.Selected.JSONClone();
+                var copy = Selected.JSONClone();
                 copy.GUID = Guid.Empty;
                 Copy(EzConfig.DefaultSerializationFactory.Serialize(copy, false));
             }
@@ -135,7 +136,7 @@ public sealed class PresetFileSystem : FileSystem<Preset>, IDisposable
 
         private void ImportButton(Vector2 size)
         {
-            if (!ImGuiUtil.DrawDisabledButton(FontAwesomeIcon.FileImport.ToIconString(), size, "Try to import a profile from your clipboard.", false,
+            if(!ImGuiUtil.DrawDisabledButton(FontAwesomeIcon.FileImport.ToIconString(), size, "Try to import a profile from your clipboard.", false,
                     true))
                 return;
 
@@ -158,7 +159,7 @@ public sealed class PresetFileSystem : FileSystem<Preset>, IDisposable
 
         private void NewItem(Vector2 size)
         {
-            if (ImGuiUtil.DrawDisabledButton(FontAwesomeIcon.Plus.ToIconString(), size, "Create new preset", false,
+            if(ImGuiUtil.DrawDisabledButton(FontAwesomeIcon.Plus.ToIconString(), size, "Create new preset", false,
                     true))
             {
                 ClipboardText = null;
@@ -169,20 +170,20 @@ public sealed class PresetFileSystem : FileSystem<Preset>, IDisposable
 
         private void DrawNewItemPopup()
         {
-            if (!ImGuiUtil.OpenNameField("##NewItem", ref NewName))
+            if(!ImGuiUtil.OpenNameField("##NewItem", ref NewName))
                 return;
 
-            if (NewName == "")
+            if(NewName == "")
             {
                 Notify.Error($"Name can not be empty!");
                 return;
             }
 
-            if (ClipboardText != null)
+            if(ClipboardText != null)
             {
 
             }
-            else if (CloneItem != null)
+            else if(CloneItem != null)
             {
 
             }
@@ -194,7 +195,7 @@ public sealed class PresetFileSystem : FileSystem<Preset>, IDisposable
                     C.SavedPresets.Add(newItem);
                     FS.CreateLeaf(FS.Root, NewName, newItem);
                 }
-                catch (Exception e)
+                catch(Exception e)
                 {
                     e.LogVerbose();
                     Notify.Error($"This name already exists!");
@@ -213,7 +214,7 @@ public sealed class PresetFileSystem : FileSystem<Preset>, IDisposable
 
         protected override bool ApplyFilters(IPath path)
         {
-            return FilterValue.Length > 0 && !path.FullName().Contains(this.FilterValue, StringComparison.OrdinalIgnoreCase);
+            return FilterValue.Length > 0 && !path.FullName().Contains(FilterValue, StringComparison.OrdinalIgnoreCase);
         }
 
     }

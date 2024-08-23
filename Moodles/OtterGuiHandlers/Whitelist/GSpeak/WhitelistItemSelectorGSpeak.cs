@@ -1,8 +1,4 @@
-﻿using Dalamud.Game.ClientState.Objects.SubKinds;
-using Dalamud.Interface;
-using ECommons.GameHelpers;
-using ImGuiNET;
-using OtterGui;
+﻿using OtterGui;
 using OtterGui.Raii;
 using ImGuiClip = OtterGui.ImGuiClip;
 
@@ -95,7 +91,7 @@ public class WhitelistItemSelectorGSpeak<T>
     public void CreateDropSource<TData>(TData data, string tooltip)
     {
         using var source = ImRaii.DragDropSource();
-        if (!source)
+        if(!source)
             return;
 
         _dragDropData = data;
@@ -106,13 +102,13 @@ public class WhitelistItemSelectorGSpeak<T>
     public bool CreateDropTarget<TData>(Action<TData> action)
     {
         using var target = ImRaii.DragDropTarget();
-        if (!target)
+        if(!target)
             return false;
 
-        if (!ImGuiUtil.IsDropping(DragDropLabel))
+        if(!ImGuiUtil.IsDropping(DragDropLabel))
             return false;
 
-        if (_dragDropData is not TData data)
+        if(_dragDropData is not TData data)
             return false;
 
         action(data);
@@ -122,10 +118,10 @@ public class WhitelistItemSelectorGSpeak<T>
     public bool CreateDropTarget<TData>(Func<TData, bool> func)
     {
         using var target = ImRaii.DragDropTarget();
-        if (!target)
+        if(!target)
             return false;
 
-        if (!ImGuiUtil.IsDropping(DragDropLabel))
+        if(!ImGuiUtil.IsDropping(DragDropLabel))
             return false;
 
         return _dragDropData is TData data && func(data);
@@ -147,18 +143,18 @@ public class WhitelistItemSelectorGSpeak<T>
     public void TryRestoreCurrent()
     {
         CurrentIdx = Current == null ? -1 : Items.IndexOf(Current);
-        if (CurrentIdx == -1)
+        if(CurrentIdx == -1)
             Current = default;
     }
 
     private void SetCurrent(int idx)
     {
-        if (idx < Items.Count)
+        if(idx < Items.Count)
         {
             CurrentIdx = idx;
             Current = Items[idx];
         }
-        else if (Items.Count > 0)
+        else if(Items.Count > 0)
         {
             CurrentIdx = Items.Count - 1;
             Current = Items.Last();
@@ -172,14 +168,14 @@ public class WhitelistItemSelectorGSpeak<T>
     protected void SetCurrent(T item)
     {
         var idx = Items.IndexOf(item);
-        if (idx >= 0)
+        if(idx >= 0)
             SetCurrent(idx);
     }
 
     public T? EnsureCurrent()
     {
         TryRestoreCurrent();
-        if (Current == null)
+        if(Current == null)
             SetCurrent(0);
 
         return Current;
@@ -216,17 +212,17 @@ public class WhitelistItemSelectorGSpeak<T>
         // Add a slight distance from the border so that the padding of a selectable fills the whole border.
         ImGui.SetCursorPosX(ImGui.GetCursorPosX() + ImGui.GetStyle().FramePadding.X);
         // Assume that OnDraw functions like a Selectable, if it returns true, select the value.
-        if (OnDraw(idx) && idx != CurrentIdx)
+        if(OnDraw(idx) && idx != CurrentIdx)
         {
             CurrentIdx = idx;
             Current = Items[idx];
         }
 
         // If the ItemSelector supports Move, every item is a Move-DragDropSource. The data is the index of the dragged element.
-        if (_flags.HasFlag(Flags.Move))
+        if(_flags.HasFlag(Flags.Move))
         {
             using var source = ImRaii.DragDropSource();
-            if (source)
+            if(source)
             {
                 _dragDropData = idx;
                 ImGui.SetDragDropPayload(MoveLabel, nint.Zero, 0);
@@ -235,46 +231,46 @@ public class WhitelistItemSelectorGSpeak<T>
         }
 
         // If the ItemSelector supports Move or Drop, every item is a DragDropTarget.
-        if ((_flags & (Flags.Move | Flags.Drop)) == Flags.None)
+        if((_flags & (Flags.Move | Flags.Drop)) == Flags.None)
             return;
 
         using var target = ImRaii.DragDropTarget();
-        if (!target)
+        if(!target)
             return;
 
         // Handle drops.
-        if (ImGuiUtil.IsDropping(DragDropLabel))
+        if(ImGuiUtil.IsDropping(DragDropLabel))
         {
             OnDrop(_dragDropData, idx);
         }
-        else if (ImGuiUtil.IsDropping(MoveLabel))
+        else if(ImGuiUtil.IsDropping(MoveLabel))
         {
             var oldIdx = (int)(_dragDropData ?? idx);
-            if (OnMove(oldIdx, idx) && oldIdx == CurrentIdx)
+            if(OnMove(oldIdx, idx) && oldIdx == CurrentIdx)
                 SetCurrent(idx);
         }
     }
 
     private void DrawFilter(float width)
     {
-        if (!_flags.HasFlag(Flags.Filter))
+        if(!_flags.HasFlag(Flags.Filter))
             return;
 
         var newFilter = Filter;
         using var style = ImRaii.PushStyle(ImGuiStyleVar.FrameRounding, 0);
         ImGui.SetNextItemWidth(width);
         var enterPressed = ImGui.InputTextWithHint(string.Empty, "Filter...", ref newFilter, 64, ImGuiInputTextFlags.EnterReturnsTrue);
-        if (newFilter != Filter)
+        if(newFilter != Filter)
         {
             Filter = newFilter;
             FilterDirty = true;
         }
 
         // Select the topmost item of the filtered list on enter.
-        if (enterPressed)
+        if(enterPressed)
         {
             UpdateFilteredItems();
-            if (FilteredItems.Count > 0)
+            if(FilteredItems.Count > 0)
                 SetCurrent(FilteredItems.First());
         }
 
@@ -285,19 +281,19 @@ public class WhitelistItemSelectorGSpeak<T>
     // or the filter was set to dirty for any reason.
     private void UpdateFilteredItems()
     {
-        if (_lastSize != Items.Count)
+        if(_lastSize != Items.Count)
         {
             FilterDirty = true;
             _lastSize = Items.Count;
         }
 
-        if (!FilterDirty)
+        if(!FilterDirty)
             return;
 
         FilteredItems.Clear();
-        for (var idx = 0; idx < Items.Count; ++idx)
+        for(var idx = 0; idx < Items.Count; ++idx)
         {
-            if (!Filtered(idx))
+            if(!Filtered(idx))
                 FilteredItems.Add(idx);
         }
 
@@ -310,7 +306,7 @@ public class WhitelistItemSelectorGSpeak<T>
         using var style = ImRaii.PushStyle(ImGuiStyleVar.WindowPadding, Vector2.Zero);
         using var group = ImRaii.Group();
         using var child = ImRaii.Child(string.Empty, new Vector2(width, 0), true);
-        if (!child)
+        if(!child)
             return;
 
         style.Pop();
@@ -333,12 +329,12 @@ public static class ItemDetailsWindow
         using var style = ImRaii.PushStyle(ImGuiStyleVar.WindowPadding, Vector2.Zero);
         using var id = ImRaii.PushId(label);
         using var child = ImRaii.Child(string.Empty, ImGui.GetContentRegionAvail(), true, ImGuiWindowFlags.MenuBar);
-        if (!child)
+        if(!child)
             return;
 
         style.Pop();
 
-        if (ImGui.BeginMenuBar())
+        if(ImGui.BeginMenuBar())
         {
             drawHeader();
             ImGui.EndMenuBar();

@@ -5,16 +5,16 @@ namespace Moodles.Gui;
 
 public static class TabWhitelist
 {
-    static List<PluginWhitelist> pluginWhitelists = new List<PluginWhitelist>() {
+    private static List<PluginWhitelist> pluginWhitelists = [
         new MareWhitelist(),
         new GagspeakWhitelist(),
-    };
+    ];
 
     public static void Draw()
     {
-        List<(string name, Action function, Vector4? color, bool child)> tabs = new();
+        List<(string name, Action function, Vector4? color, bool child)> tabs = [];
 
-        foreach (var whitelist in pluginWhitelists) 
+        foreach(var whitelist in pluginWhitelists)
         {
             tabs.Add((whitelist.pluginName, whitelist.DrawWhitelistTab, null, true));
         }

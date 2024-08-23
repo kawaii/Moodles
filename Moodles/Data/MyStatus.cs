@@ -34,37 +34,37 @@ public partial class MyStatus
     public bool ShouldSerializePersistent() => ShouldSerializeGUID();
     public bool ShouldSerializeExpiresAt() => ShouldSerializeGUID();
 
-    internal uint AdjustedIconID => (uint)(this.IconID + this.Stacks - 1);
-    internal long TotalDurationSeconds => this.Seconds * 1000 + this.Minutes * 1000 * 60 + this.Hours * 1000 * 60 * 60 + this.Days * 1000 * 60 * 60 * 24;
+    internal uint AdjustedIconID => (uint)(IconID + Stacks - 1);
+    internal long TotalDurationSeconds => Seconds * 1000 + Minutes * 1000 * 60 + Hours * 1000 * 60 * 60 + Days * 1000 * 60 * 60 * 24;
 
     public bool IsValid(out string error)
     {
-        if (this.IconID == 0)
+        if(IconID == 0)
         {
             error = ("Icon is not set");
             return false;
         }
-        if (this.Title.Length == 0)
+        if(Title.Length == 0)
         {
             error = ("Title is not set");
             return false;
         }
-        if (this.TotalDurationSeconds < 1 && !this.NoExpire)
+        if(TotalDurationSeconds < 1 && !NoExpire)
         {
             error = ("Duration is not set");
             return false;
         }
         {
-            Utils.ParseBBSeString(this.Title, out var parseError);
-            if (parseError != null)
+            Utils.ParseBBSeString(Title, out var parseError);
+            if(parseError != null)
             {
                 error = $"Syntax error in title: {parseError}";
                 return false;
             }
         }
         {
-            Utils.ParseBBSeString(this.Description, out var parseError);
-            if (parseError != null)
+            Utils.ParseBBSeString(Description, out var parseError);
+            if(parseError != null)
             {
                 error = $"Syntax error in description: {parseError}";
                 return false;

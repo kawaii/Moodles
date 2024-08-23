@@ -1,7 +1,4 @@
-﻿using ECommons.EzHookManager;
-using Moodles.Gui;
-
-namespace Moodles;
+﻿namespace Moodles;
 public unsafe partial class Memory
 {
     /*public delegate void ProcessActorControlPacket(uint a1, uint a2, uint a3, uint a4, uint a5, uint a6, int a7, uint a8, long a9, byte a10);

@@ -8,12 +8,12 @@ public class AutomationList : ItemSelector<AutomationProfile>
 {
     public AutomationList() : base(C.AutomationProfiles, Flags.Add | Flags.Delete | Flags.Filter)
     {
-        
+
     }
 
     protected override bool OnAdd(string name)
     {
-        if (name == "") return false;
+        if(name == "") return false;
         C.AutomationProfiles.Add(new() { Name = name });
         return true;
     }
@@ -22,7 +22,7 @@ public class AutomationList : ItemSelector<AutomationProfile>
     {
         var p = C.AutomationProfiles[i];
         var col = !p.Enabled;
-        if (col)
+        if(col)
         {
             ImGui.PushStyleColor(ImGuiCol.Text, ImGuiColors.DalamudGrey);
         }
@@ -32,12 +32,12 @@ public class AutomationList : ItemSelector<AutomationProfile>
             {
                 if(x is IPlayerCharacter pc)
                 {
-                    if (Utils.GetSuitableAutomation(pc).ContainsAny(p.Combos))
+                    if(Utils.GetSuitableAutomation(pc).ContainsAny(p.Combos))
                     {
                         col = true;
                         ImGui.PushStyleColor(ImGuiCol.Text, ImGuiEx.Vector4FromRGB(0x3fd969));
                     }
-                    if (!C.AutoOther) break;
+                    if(!C.AutoOther) break;
                 }
             }
         }
@@ -47,8 +47,8 @@ public class AutomationList : ItemSelector<AutomationProfile>
         ImGui.SetCursorPos(new(190f - size.X, cur.Y + size.Y));
         ImGuiEx.Text($"{text}");
         ImGui.SetCursorPos(cur);
-        var ret = ImGui.Selectable($"{p.Name.Censor($"Automation set {i+1}")}\n ##{i}", this.CurrentIdx == i);
-        if (col) ImGui.PopStyleColor();
+        var ret = ImGui.Selectable($"{p.Name.Censor($"Automation set {i + 1}")}\n ##{i}", CurrentIdx == i);
+        if(col) ImGui.PopStyleColor();
         return ret;
     }
 
@@ -61,6 +61,6 @@ public class AutomationList : ItemSelector<AutomationProfile>
     protected override bool Filtered(int idx)
     {
         var p = C.AutomationProfiles[idx];
-        return !p.Character.Contains(this.Filter, StringComparison.OrdinalIgnoreCase);
+        return !p.Character.Contains(Filter, StringComparison.OrdinalIgnoreCase);
     }
 }
