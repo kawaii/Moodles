@@ -120,6 +120,12 @@ public class MyStatusManager
         return Convert.ToBase64String(BinarySerialize());
     }
 
+    public List<MoodlesStatusInfo> GetActiveStatusInfo()
+    {
+        if (this.Statuses.Count == 0) return new List<MoodlesStatusInfo>();
+        return this.Statuses.Select(x => x.ToStatusInfoTuple()).ToList();
+    }
+
     public void Apply(byte[] data) => SetStatusesAsEphemeral(MemoryPackSerializer.Deserialize<List<MyStatus>>(data));
 
     public void Apply(string base64string)
