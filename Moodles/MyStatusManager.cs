@@ -1,9 +1,7 @@
 ﻿using Dalamud.Game.ClientState.Objects.SubKinds;
 using ECommons.GameHelpers;
 using MemoryPack;
-using MemoryPack.Compression;
 using Moodles.Data;
-using System.IO.Compression;
 
 namespace Moodles;
 [Serializable]

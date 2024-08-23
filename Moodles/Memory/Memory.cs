@@ -1,8 +1,4 @@
 ﻿using ECommons.EzHookManager;
-using FFXIVClientStructs.FFXIV.Client.Game.UI;
-using Lumina.Excel.GeneratedSheets;
-using Moodles.Gui;
-using System.Reflection.Emit;
 
 namespace Moodles;
 public unsafe partial class Memory : IDisposable

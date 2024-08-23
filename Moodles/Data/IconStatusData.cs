@@ -1,10 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-
-namespace Moodles.Data;
+﻿namespace Moodles.Data;
 public record struct IconStatusData
 {
     public uint StatusId;

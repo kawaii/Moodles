@@ -1,8 +1,4 @@
-﻿using Dalamud.Game.ClientState.Objects.SubKinds;
-using Dalamud.Interface;
-using ECommons.GameHelpers;
-using ImGuiNET;
-using OtterGui;
+﻿using OtterGui;
 using OtterGui.Raii;
 using ImGuiClip = OtterGui.ImGuiClip;
 
