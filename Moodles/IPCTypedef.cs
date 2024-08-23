@@ -1,8 +1,16 @@
 ﻿
+global using MoodlesGSpeakPairPerms = (
+    bool AllowPositive,
+    bool AllowNegative,
+    bool AllowSpecial,
+    bool AllowApplyingOwnMoodles,
+    bool AllowApplyingPairsMoodles,
+    System.TimeSpan MaxDuration,
+    bool AllowPermanent,
+    bool AllowRemoval
+    );
 global using MoodlesMoodleInfo = (System.Guid ID, uint IconID, string FullPath, string Title);
-
 global using MoodlesProfileInfo = (System.Guid ID, string FullPath);
-
 /// <summary>
 /// Intended to be used for IPC to transfer full data without need for serialization
 /// </summary>
@@ -23,16 +31,5 @@ global using MoodlesStatusInfo = (
     bool NoExpire,
     bool AsPermanent
 );
-
-global using MoodlesGSpeakPairPerms = (
-    bool AllowPositive,
-    bool AllowNegative,
-    bool AllowSpecial,
-    bool AllowApplyingOwnMoodles,
-    bool AllowApplyingPairsMoodles,
-    System.TimeSpan MaxDuration,
-    bool AllowPermanent,
-    bool AllowRemoval
-    );
 
 

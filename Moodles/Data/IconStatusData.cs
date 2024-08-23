@@ -13,8 +13,8 @@ public record struct IconStatusData
 
     public IconStatusData(uint statusId, string name, uint stackCount)
     {
-        this.StatusId = statusId;
-        this.Name = name;
-        this.StackCount = stackCount;
+        StatusId = statusId;
+        Name = name;
+        StackCount = stackCount;
     }
 }

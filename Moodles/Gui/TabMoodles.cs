@@ -7,9 +7,11 @@ using OtterGui.Raii;
 namespace Moodles.Gui;
 public static class TabMoodles
 {
-    static bool AsPermanent = false;
-    static MyStatus Selected => P.OtterGuiHandler.MoodleFileSystem.Selector.Selected;
-    static string Filter = "";
+    private static bool AsPermanent = false;
+
+    private static MyStatus Selected => P.OtterGuiHandler.MoodleFileSystem.Selector.Selected;
+
+    private static string Filter = "";
     public static void Draw()
     {
         P.OtterGuiHandler.MoodleFileSystem.Selector.Draw(200f);
@@ -27,11 +29,11 @@ public static class TabMoodles
     public static void DrawSelected()
     {
         using var child = ImRaii.Child("##Panel", -Vector2.One, true);
-        if (!child || Selected == null)
+        if(!child || Selected == null)
             return;
         {
             var cur = new Vector2(ImGui.GetCursorPosX() + ImGui.GetContentRegionAvail().X - UI.StatusIconSize.X * 2, ImGui.GetCursorPosY()) - new Vector2(10, 0);
-            if (ImGui.Button("Apply to Yourself"))
+            if(ImGui.Button("Apply to Yourself"))
             {
                 Utils.GetMyStatusManager(Player.NameWithWorld).AddOrUpdate(Selected.PrepareToApply(AsPermanent ? PrepareOptions.Persistent : PrepareOptions.NoOption));
             }
@@ -40,16 +42,16 @@ public static class TabMoodles
             var isMare = Utils.GetMarePlayers().Contains(Svc.Targets.Target?.Address ?? -1);
             var isGSpeak = Svc.Targets.Target is IPlayerCharacter pc && Utils.GSpeakPlayers.Any(player => player.Item1 == pc.GetNameWithWorld());
             var dis = Svc.Targets.Target is not IPlayerCharacter || (isMare && !isGSpeak);
-            if (dis) ImGui.BeginDisabled();
-            string buttonText = Svc.Targets.Target is not IPlayerCharacter
+            if(dis) ImGui.BeginDisabled();
+            var buttonText = Svc.Targets.Target is not IPlayerCharacter
                 ? "No Target Selected" : isMare && !isGSpeak
                     ? "Cannot Apply To Mare User" : $"Apply to Target ({(isGSpeak ? "via GagSpeak" : "Locally")})";
-            if (ImGui.Button(buttonText))
+            if(ImGui.Button(buttonText))
             {
                 try
                 {
                     var target = (IPlayerCharacter)Svc.Targets.Target;
-                    if (!isMare)
+                    if(!isMare)
                     {
                         Utils.GetMyStatusManager(target.GetNameWithWorld()).AddOrUpdate(Selected.PrepareToApply(AsPermanent ? PrepareOptions.Persistent : PrepareOptions.NoOption));
                     }
@@ -63,9 +65,9 @@ public static class TabMoodles
                     e.Log();
                 }
             }
-            if (dis) ImGui.EndDisabled();
+            if(dis) ImGui.EndDisabled();
 
-            if (ImGui.BeginTable("##moodles", 2, ImGuiTableFlags.Borders | ImGuiTableFlags.RowBg | ImGuiTableFlags.SizingStretchSame))
+            if(ImGui.BeginTable("##moodles", 2, ImGuiTableFlags.Borders | ImGuiTableFlags.RowBg | ImGuiTableFlags.SizingStretchSame))
             {
                 ImGui.TableSetupColumn("Name", ImGuiTableColumnFlags.WidthFixed, 175f);
                 ImGui.TableSetupColumn("Field", ImGuiTableColumnFlags.WidthStretch);
@@ -76,7 +78,7 @@ public static class TabMoodles
                 Formatting();
                 {
                     Utils.ParseBBSeString(Selected.Title, out var error);
-                    if (error != null)
+                    if(error != null)
                     {
                         ImGuiEx.HelpMarker(error, EColor.RedBright, FontAwesomeIcon.ExclamationTriangle.ToIconString());
                     }
@@ -96,14 +98,14 @@ public static class TabMoodles
 
                 ImGui.TableNextColumn();
                 ImGuiEx.TextV($"Icon:");
-                if (Selected.IconID == 0)
+                if(Selected.IconID == 0)
                 {
                     ImGuiEx.HelpMarker("You must select an icon", EColor.RedBright, FontAwesomeIcon.ExclamationTriangle.ToIconString());
                 }
                 ImGui.TableNextColumn();
                 ImGuiEx.SetNextItemFullWidth();
                 var selinfo = Utils.GetIconInfo((uint)Selected.IconID);
-                if (ImGui.BeginCombo("##sel", $"Icon: #{Selected.IconID} {selinfo?.Name}", ImGuiComboFlags.HeightLargest))
+                if(ImGui.BeginCombo("##sel", $"Icon: #{Selected.IconID} {selinfo?.Name}", ImGuiComboFlags.HeightLargest))
                 {
                     var cursor = ImGui.GetCursorPos();
                     ImGui.Dummy(new Vector2(100, ImGuiHelpers.MainViewport.Size.Y * C.SelectorHeight / 100));
@@ -115,34 +117,34 @@ public static class TabMoodles
                     ImGui.EndCombo();
                 }
                 // post update to IPC if a new icon is selected.
-                if (Utils.GetIconInfo((uint)Selected.IconID)?.Name != selinfo?.Name)
+                if(Utils.GetIconInfo((uint)Selected.IconID)?.Name != selinfo?.Name)
                 {
-                     P.IPCProcessor.StatusModified(Selected.GUID);
+                    P.IPCProcessor.StatusModified(Selected.GUID);
                 }
-                ImGui.TableNextRow(); 
-                
+                ImGui.TableNextRow();
+
                 ImGui.TableNextColumn();
                 ImGuiEx.TextV($"Stacks:");
                 ImGuiEx.HelpMarker("Where the game data contains information about sequential status effect stacks you can select the desired number here. Not all status effects that have stacks follow the same logic due to inconsistencies so the icon you're looking for may be elsewhere.");
                 ImGui.TableNextColumn();
                 ImGuiEx.SetNextItemFullWidth();
                 var maxStacks = 1;
-                if (P.CommonProcessor.IconStackCounts.TryGetValue((uint)Selected.IconID, out var count))
+                if(P.CommonProcessor.IconStackCounts.TryGetValue((uint)Selected.IconID, out var count))
                 {
                     maxStacks = (int)count;
                 }
                 if(maxStacks <= 1) ImGui.BeginDisabled();
-                if (ImGui.BeginCombo("##stk", $"{Selected.Stacks}"))
+                if(ImGui.BeginCombo("##stk", $"{Selected.Stacks}"))
                 {
-                    for (int i = 1; i <= maxStacks; i++)
+                    for(var i = 1; i <= maxStacks; i++)
                     {
-                        if (ImGui.Selectable($"{i}")) Selected.Stacks = i;
+                        if(ImGui.Selectable($"{i}")) Selected.Stacks = i;
                     }
                     ImGui.EndCombo();
                 }
-                if (maxStacks <= 1) ImGui.EndDisabled();
-                if (Selected.Stacks > maxStacks) Selected.Stacks = maxStacks;
-                if (Selected.Stacks < 1) Selected.Stacks = 1;
+                if(maxStacks <= 1) ImGui.EndDisabled();
+                if(Selected.Stacks > maxStacks) Selected.Stacks = maxStacks;
+                if(Selected.Stacks < 1) Selected.Stacks = 1;
                 ImGui.TableNextRow();
 
                 ImGui.TableNextColumn();
@@ -152,7 +154,7 @@ public static class TabMoodles
                 Formatting();
                 {
                     Utils.ParseBBSeString(Selected.Description, out var error);
-                    if (error != null)
+                    if(error != null)
                     {
                         ImGuiEx.HelpMarker(error, EColor.RedBright, FontAwesomeIcon.ExclamationTriangle.ToIconString());
                     }
@@ -172,9 +174,9 @@ public static class TabMoodles
                 ImGui.TableNextColumn();
                 ImGuiEx.SetNextItemFullWidth();
                 ImGui.InputTextWithHint("##applier", "Player Name@World", ref Selected.Applier, 150, C.Censor ? ImGuiInputTextFlags.Password : ImGuiInputTextFlags.None);
-                if (ImGui.IsItemDeactivatedAfterEdit())
+                if(ImGui.IsItemDeactivatedAfterEdit())
                 {
-                     P.IPCProcessor.StatusModified(Selected.GUID);
+                    P.IPCProcessor.StatusModified(Selected.GUID);
                 }
                 ImGui.TableNextRow();
 
@@ -184,11 +186,11 @@ public static class TabMoodles
                 ImGuiEx.SetNextItemFullWidth();
                 if(ImGuiEx.EnumRadio(ref Selected.Type, true))
                 {
-                     P.IPCProcessor.StatusModified(Selected.GUID);
+                    P.IPCProcessor.StatusModified(Selected.GUID);
                 }
 
 
-                if (P.CommonProcessor.DispelableIcons.Contains((uint)Selected.IconID))
+                if(P.CommonProcessor.DispelableIcons.Contains((uint)Selected.IconID))
                 {
                     ImGui.TableNextRow();
 
@@ -197,9 +199,9 @@ public static class TabMoodles
                     ImGuiEx.HelpMarker("Applies the dispellable indicator to this Moodle implying it can be removed via the use of Esuna. Only available for icons representing negative status effects.");
                     ImGui.TableNextColumn();
                     ImGuiEx.SetNextItemFullWidth();
-                    if (ImGui.Checkbox("##dispel", ref Selected.Dispelable))
+                    if(ImGui.Checkbox("##dispel", ref Selected.Dispelable))
                     {
-                         P.IPCProcessor.StatusModified(Selected.GUID);
+                        P.IPCProcessor.StatusModified(Selected.GUID);
                     }
                 }
 
@@ -215,7 +217,7 @@ public static class TabMoodles
 
                 if(Utils.DurationSelector("Permanent", ref Selected.NoExpire, ref Selected.Days, ref Selected.Hours, ref Selected.Minutes, ref Selected.Seconds))
                 {
-                   P.IPCProcessor.StatusModified(Selected.GUID);
+                    P.IPCProcessor.StatusModified(Selected.GUID);
                 }
 
                 ImGui.TableNextRow();
@@ -240,7 +242,7 @@ public static class TabMoodles
                 ImGui.EndTable();
             }
 
-            if (Selected.IconID != 0 && ThreadLoadImageHandler.TryGetIconTextureWrap(Selected.AdjustedIconID, true, out var image))
+            if(Selected.IconID != 0 && ThreadLoadImageHandler.TryGetIconTextureWrap(Selected.AdjustedIconID, true, out var image))
             {
                 ImGui.SetCursorPos(cur);
                 ImGui.Image(image.ImGuiHandle, UI.StatusIconSize * 2);

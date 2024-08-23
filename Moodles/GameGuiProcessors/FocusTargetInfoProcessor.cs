@@ -1,22 +1,22 @@
-﻿using Dalamud.Game.Addon.Lifecycle.AddonArgTypes;
-using Dalamud.Game.Addon.Lifecycle;
+﻿using Dalamud.Game.Addon.Lifecycle;
+using Dalamud.Game.Addon.Lifecycle.AddonArgTypes;
+using Dalamud.Game.ClientState.Objects.SubKinds;
 using ECommons.GameHelpers;
 using FFXIVClientStructs.FFXIV.Component.GUI;
-using Dalamud.Game.ClientState.Objects.SubKinds;
 using Moodles.Data;
 
 namespace Moodles.GameGuiProcessors;
 public unsafe class FocusTargetInfoProcessor
 {
-    int NumStatuses = 0;
+    private int NumStatuses = 0;
 
     public FocusTargetInfoProcessor()
     {
         Svc.AddonLifecycle.RegisterListener(AddonEvent.PostUpdate, "_FocusTargetInfo", OnFocusTargetInfoUpdate);
         Svc.AddonLifecycle.RegisterListener(AddonEvent.PostRequestedUpdate, "_FocusTargetInfo", OnFocusTargetInfoRequestedUpdate);
-        if (Player.Available && TryGetAddonByName<AtkUnitBase>("_FocusTargetInfo", out var addon) && IsAddonReady(addon))
+        if(Player.Available && TryGetAddonByName<AtkUnitBase>("_FocusTargetInfo", out var addon) && IsAddonReady(addon))
         {
-            this.OnFocusTargetInfoRequestedUpdate(AddonEvent.PostRequestedUpdate, new ArtificialAddonArgs(addon));
+            OnFocusTargetInfoRequestedUpdate(AddonEvent.PostRequestedUpdate, new ArtificialAddonArgs(addon));
         }
     }
 
@@ -28,23 +28,23 @@ public unsafe class FocusTargetInfoProcessor
 
     public void HideAll()
     {
-        if (TryGetAddonByName<AtkUnitBase>("_FocusTargetInfo", out var addon) && IsAddonReady(addon))
+        if(TryGetAddonByName<AtkUnitBase>("_FocusTargetInfo", out var addon) && IsAddonReady(addon))
         {
-            this.UpdateAddon(addon, true);
+            UpdateAddon(addon, true);
         }
     }
 
     private void OnFocusTargetInfoRequestedUpdate(AddonEvent type, AddonArgs args)
     {
-        if (P == null) return;
+        if(P == null) return;
         var addon = (AtkUnitBase*)args.Addon;
-        if (addon != null && IsAddonReady(addon))
+        if(addon != null && IsAddonReady(addon))
         {
             NumStatuses = 0;
-            for (int i = 8; i >= 4; i--)
+            for(var i = 8; i >= 4; i--)
             {
                 var c = addon->UldManager.NodeList[i];
-                if (c->IsVisible())
+                if(c->IsVisible())
                 {
                     NumStatuses++;
                 }
@@ -55,9 +55,9 @@ public unsafe class FocusTargetInfoProcessor
 
     private void OnFocusTargetInfoUpdate(AddonEvent type, AddonArgs args)
     {
-        if (P == null) return;
-        if (!Player.Available) return;
-        if (P.CanModifyUI())
+        if(P == null) return;
+        if(!Player.Available) return;
+        if(P.CanModifyUI())
         {
             UpdateAddon((AtkUnitBase*)args.Addon);
         }
@@ -65,10 +65,10 @@ public unsafe class FocusTargetInfoProcessor
 
     public void UpdateAddon(AtkUnitBase* addon, bool hideAll = false)
     {
-        if (addon != null && IsAddonReady(addon) && Svc.Targets.FocusTarget is IPlayerCharacter pc)
+        if(addon != null && IsAddonReady(addon) && Svc.Targets.FocusTarget is IPlayerCharacter pc)
         {
             int baseCnt;
-            if (P.CommonProcessor.NewMethod)
+            if(P.CommonProcessor.NewMethod)
             {
                 baseCnt = 8 - NumStatuses;
             }
@@ -76,19 +76,19 @@ public unsafe class FocusTargetInfoProcessor
             {
                 baseCnt = 8 - Player.Object.StatusList.Count(x => x.StatusId != 0 && !P.CommonProcessor.SpecialStatuses.Contains(x.StatusId));
             }
-            for (int i = baseCnt; i >= 4; i--)
+            for(var i = baseCnt; i >= 4; i--)
             {
                 var c = addon->UldManager.NodeList[i];
-                if (c->IsVisible()) c->NodeFlags ^= NodeFlags.Visible;
+                if(c->IsVisible()) c->NodeFlags ^= NodeFlags.Visible;
             }
-            if (!hideAll)
+            if(!hideAll)
             {
-                foreach (var x in pc.GetMyStatusManager().Statuses)
+                foreach(var x in pc.GetMyStatusManager().Statuses)
                 {
-                    if (x.Type == StatusType.Special) continue;
-                    if (baseCnt < 4) break;
+                    if(x.Type == StatusType.Special) continue;
+                    if(baseCnt < 4) break;
                     var rem = x.ExpiresAt - Utils.Time;
-                    if (rem > 0)
+                    if(rem > 0)
                     {
                         SetIcon(addon, baseCnt, x);
                         baseCnt--;
@@ -98,7 +98,7 @@ public unsafe class FocusTargetInfoProcessor
         }
     }
 
-    void SetIcon(AtkUnitBase* addon, int index, MyStatus status)
+    private void SetIcon(AtkUnitBase* addon, int index, MyStatus status)
     {
         var container = addon->UldManager.NodeList[index];
         P.CommonProcessor.SetIcon(addon, container, status);

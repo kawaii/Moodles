@@ -10,14 +10,14 @@ using Moodles.GameGuiProcessors;
 namespace Moodles.Processors;
 public unsafe class PartyListProcessor : IDisposable
 {
-    int[] NumStatuses = [0, 0, 0, 0, 0, 0, 0, 0];
+    private int[] NumStatuses = [0, 0, 0, 0, 0, 0, 0, 0];
     public PartyListProcessor()
     {
         Svc.AddonLifecycle.RegisterListener(AddonEvent.PostUpdate, "_PartyList", OnPartyListUpdate);
         Svc.AddonLifecycle.RegisterListener(AddonEvent.PostRequestedUpdate, "_PartyList", OnPartyListRequestedUpdate);
-        if (Player.Available && TryGetAddonByName<AtkUnitBase>("_PartyList", out var addon) && IsAddonReady(addon))
+        if(Player.Available && TryGetAddonByName<AtkUnitBase>("_PartyList", out var addon) && IsAddonReady(addon))
         {
-            this.OnPartyListRequestedUpdate(AddonEvent.PostRequestedUpdate, new ArtificialAddonArgs(addon));
+            OnPartyListRequestedUpdate(AddonEvent.PostRequestedUpdate, new ArtificialAddonArgs(addon));
         }
     }
 
@@ -29,29 +29,29 @@ public unsafe class PartyListProcessor : IDisposable
 
     public void HideAll()
     {
-        if (TryGetAddonByName<AtkUnitBase>("_PartyList", out var addon) && IsAddonReady(addon))
+        if(TryGetAddonByName<AtkUnitBase>("_PartyList", out var addon) && IsAddonReady(addon))
         {
-            this.UpdatePartyList(addon, true);
+            UpdatePartyList(addon, true);
         }
     }
 
     private void OnPartyListRequestedUpdate(AddonEvent type, AddonArgs args)
     {
-        if (P == null) return;
-        if (!Player.Available) return;
+        if(P == null) return;
+        if(!Player.Available) return;
         var addon = (AtkUnitBase*)args.Addon;
-        if (addon != null && IsAddonReady(addon) && P.CanModifyUI())
+        if(addon != null && IsAddonReady(addon) && P.CanModifyUI())
         {
-            for (int i = 0; i < NumStatuses.Length; i++)
+            for(var i = 0; i < NumStatuses.Length; i++)
             {
                 NumStatuses[i] = 0;
             }
             var index = 22;
-            int storeIndex = 0;
-            foreach (var player in GetVisibleParty())
+            var storeIndex = 0;
+            foreach(var player in GetVisibleParty())
             {
                 //InternalLog.Verbose($"  Now checking {index} for {player}");
-                if (player != null)
+                if(player != null)
                 {
                     var iconArray = Utils.GetNodeIconArray(addon->UldManager.NodeList[index]);
                     foreach(var x in iconArray)
@@ -66,41 +66,41 @@ public unsafe class PartyListProcessor : IDisposable
         InternalLog.Verbose($"PartyList Requested update: {NumStatuses.Print()}");
     }
 
-    void OnPartyListUpdate(AddonEvent type, AddonArgs args)
+    private void OnPartyListUpdate(AddonEvent type, AddonArgs args)
     {
-        if (P == null) return;
+        if(P == null) return;
         UpdatePartyList((AtkUnitBase*)args.Addon);
     }
 
     public void UpdatePartyList(AtkUnitBase* addon, bool hideAll = false)
     {
-        if (!Player.Available) return;
-        if (!P.CanModifyUI()) return;
-        if (addon != null && IsAddonReady(addon))
+        if(!Player.Available) return;
+        if(!P.CanModifyUI()) return;
+        if(addon != null && IsAddonReady(addon))
         {
             var partyMemberNodeIndex = 22;
             var party = GetVisibleParty();
-            for (int n = 0; n < party.Count; n++)
+            for(var n = 0; n < party.Count; n++)
             {
                 var player = party[n];
-                if (player != null)
+                if(player != null)
                 {
                     var iconArray = Utils.GetNodeIconArray(addon->UldManager.NodeList[partyMemberNodeIndex]);
                     //InternalLog.Information($"Icon array length for {player} is {iconArray.Length}");
-                    for (int i = this.NumStatuses[n]; i < iconArray.Length; i++)
+                    for(var i = NumStatuses[n]; i < iconArray.Length; i++)
                     {
                         var c = iconArray[i];
-                        if (c->IsVisible()) c->NodeFlags ^= NodeFlags.Visible;
+                        if(c->IsVisible()) c->NodeFlags ^= NodeFlags.Visible;
                     }
-                    if (!hideAll)
+                    if(!hideAll)
                     {
-                        int curIndex = this.NumStatuses[n];
-                        foreach (var status in player.GetMyStatusManager().Statuses)
+                        var curIndex = NumStatuses[n];
+                        foreach(var status in player.GetMyStatusManager().Statuses)
                         {
-                            if (status.Type == StatusType.Special) continue;
-                            if (curIndex >= iconArray.Length) break;
+                            if(status.Type == StatusType.Special) continue;
+                            if(curIndex >= iconArray.Length) break;
                             var rem = status.ExpiresAt - Utils.Time;
-                            if (rem > 0)
+                            if(rem > 0)
                             {
                                 SetIcon(addon, iconArray[curIndex], status);
                                 curIndex++;
@@ -115,17 +115,17 @@ public unsafe class PartyListProcessor : IDisposable
 
     public List<IPlayerCharacter> GetVisibleParty()
     {
-        if (Svc.Party.Length < 2)
+        if(Svc.Party.Length < 2)
         {
             return [Svc.ClientState.LocalPlayer];
         }
         else
         {
             List<IPlayerCharacter> ret = [Svc.ClientState.LocalPlayer];
-            for (int i = 1; i < Math.Min(8, Svc.Party.Length); i++)
+            for(var i = 1; i < Math.Min(8, Svc.Party.Length); i++)
             {
                 var obj = FakePronoun.Resolve($"<{i + 1}>");
-                if (Svc.Objects.CreateObjectReference((nint)obj) is IPlayerCharacter pc)
+                if(Svc.Objects.CreateObjectReference((nint)obj) is IPlayerCharacter pc)
                 {
                     ret.Add(pc);
                 }
@@ -138,7 +138,7 @@ public unsafe class PartyListProcessor : IDisposable
         }
     }
 
-    void SetIcon(AtkUnitBase* addon, AtkResNode* container, MyStatus status)
+    private void SetIcon(AtkUnitBase* addon, AtkResNode* container, MyStatus status)
     {
         P.CommonProcessor.SetIcon(addon, container, status);
     }

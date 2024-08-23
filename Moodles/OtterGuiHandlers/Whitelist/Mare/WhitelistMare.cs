@@ -10,7 +10,7 @@ public class WhitelistMare : WhitelistItemSelectorMare<WhitelistEntryMare>
 
     protected override bool OnAdd(string name)
     {
-        if (name == "") return false;
+        if(name == "") return false;
         C.WhitelistMare.Add(new() { PlayerName = name });
         return true;
     }
@@ -18,7 +18,7 @@ public class WhitelistMare : WhitelistItemSelectorMare<WhitelistEntryMare>
     protected override bool OnDraw(int i)
     {
         var p = C.WhitelistMare[i];
-        var ret = ImGui.Selectable($"{p.PlayerName.Censor($"WhitelistEntry {i + 1}")}##{i}", this.CurrentIdx == i);
+        var ret = ImGui.Selectable($"{p.PlayerName.Censor($"WhitelistEntry {i + 1}")}##{i}", CurrentIdx == i);
         return ret;
     }
 
@@ -31,6 +31,6 @@ public class WhitelistMare : WhitelistItemSelectorMare<WhitelistEntryMare>
     protected override bool Filtered(int idx)
     {
         var p = C.WhitelistMare[idx];
-        return !p.PlayerName.Contains(this.Filter, StringComparison.OrdinalIgnoreCase);
+        return !p.PlayerName.Contains(Filter, StringComparison.OrdinalIgnoreCase);
     }
 }

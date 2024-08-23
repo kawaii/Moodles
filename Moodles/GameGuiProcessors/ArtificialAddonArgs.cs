@@ -12,7 +12,7 @@ public unsafe class ArtificialAddonArgs : AddonArgs
 {
     public ArtificialAddonArgs(AtkUnitBase* addon)
     {
-        this.Addon = (nint)addon;
+        Addon = (nint)addon;
     }
 
     public override AddonArgsType Type => AddonArgsType.RequestedUpdate;

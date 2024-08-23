@@ -9,11 +9,10 @@ namespace Moodles.Commands;
 
 public static class MoodleCommandProcessor
 {
-    const string CUSTOM_TAG = "[custom]";
-
-    static string lastCommandPart;
-    static List<string> matchedArguments = new List<string>();
-    static int customCounter = 0;
+    private const string CUSTOM_TAG = "[custom]";
+    private static string lastCommandPart;
+    private static List<string> matchedArguments = [];
+    private static int customCounter = 0;
 
     public static void Process(string _, string arguments)
     {
@@ -22,21 +21,21 @@ public static class MoodleCommandProcessor
         var args = arguments.ToLower().Split(' ');
         try
         {
-            if (arguments.Length == 0) ThrowArgumentException();
+            if(arguments.Length == 0) ThrowArgumentException();
             ProcessMoodleCommand(args);
         }
-        catch (MoodleChatException moodleChatException)
+        catch(MoodleChatException moodleChatException)
         {
-            if (C.DisplayCommandFeedback)
+            if(C.DisplayCommandFeedback)
             {
                 Svc.Chat.PrintError(moodleChatException.Message);
             }
         }
     }
 
-    static void PrepareArguments(ref string arguments)
+    private static void PrepareArguments(ref string arguments)
     {
-        foreach (Match match in Regex.Matches(arguments, "(\".+?\")"))
+        foreach(Match match in Regex.Matches(arguments, "(\".+?\")"))
         {
             var matchString = match.Value;
             matchedArguments.Add(matchString.Replace("\"", ""));
@@ -44,7 +43,7 @@ public static class MoodleCommandProcessor
         }
     }
 
-    static void ClearLast()
+    private static void ClearLast()
     {
         lastCommandPart = string.Empty;
         matchedArguments.Clear();
@@ -55,15 +54,15 @@ public static class MoodleCommandProcessor
     // /moodle apply|remove|toggle self|target|"Firstname Lastname"|"Firstname Lastname@world" moodle|preset|automation "moodleName"|"presetName"|"automationName"|"GUID"
     // /moodle help
 
-    static void ProcessMoodleCommand(string[] commandArgs)
+    private static void ProcessMoodleCommand(string[] commandArgs)
     {
         var moodleState = ParseMoodleState(commandArgs);
 
-        if (moodleState == MoodleState.INVALID)
+        if(moodleState == MoodleState.INVALID)
         {
             throw new MoodleChatException($"'{lastCommandPart}' is invalid syntax. Use: apply|remove|toggle|help");
         }
-        else if (moodleState == MoodleState.Help)
+        else if(moodleState == MoodleState.Help)
         {
             HandleHelp();
             return;
@@ -71,25 +70,25 @@ public static class MoodleCommandProcessor
 
         var targetState = ParseTargetState(commandArgs);
 
-        if (targetState == TargetState.INVALID)
+        if(targetState == TargetState.INVALID)
         {
             throw new MoodleChatException($"'{lastCommandPart}' is invalid syntax. Use: self|target|\"Firstname Lastname\"|\"Firstname Lastname@world\"");
         }
-        else if (targetState == TargetState.Custom)
+        else if(targetState == TargetState.Custom)
         {
             customCounter++;
         }
 
         var moodleType = ParseMoodleType(commandArgs);
 
-        if (moodleType == MoodleType.INVALID)
+        if(moodleType == MoodleType.INVALID)
         {
             throw new MoodleChatException($"'{lastCommandPart}' is invalid syntax. Use: moodle|preset|automation");
         }
 
         var moodleNameType = ParseMoodleNameType(commandArgs);
 
-        if (moodleNameType == MoodleNameType.INVALID)
+        if(moodleNameType == MoodleNameType.INVALID)
         {
             throw new MoodleChatException($"'{lastCommandPart}' is invalid syntax. Use: \"GUID\"|\"ELEMENT NAME\"");
         }
@@ -99,9 +98,9 @@ public static class MoodleCommandProcessor
         MoveCommand(moodleState, targetState, moodleType, moodleNameType);
     }
 
-    static void MoveCommand(MoodleState moodleState, TargetState targetState, MoodleType moodleType, MoodleNameType moodleNameType)
+    private static void MoveCommand(MoodleState moodleState, TargetState targetState, MoodleType moodleType, MoodleNameType moodleNameType)
     {
-        switch (moodleType)
+        switch(moodleType)
         {
             case MoodleType.Moodle:
                 HandleAsMoodle(targetState, moodleState, moodleNameType); break;
@@ -115,14 +114,14 @@ public static class MoodleCommandProcessor
         }
     }
 
-    static void HandleAsMoodle(TargetState targetState, MoodleState moodleState, MoodleNameType moodleNameType)
+    private static void HandleAsMoodle(TargetState targetState, MoodleState moodleState, MoodleNameType moodleNameType)
     {
         var statusManager = GetStatusManager(targetState);
         var myStatus = GetMyStatus(moodleNameType);
 
-        if (moodleState == MoodleState.Toggle)
+        if(moodleState == MoodleState.Toggle)
         {
-            if (statusManager.ContainsStatus(myStatus))
+            if(statusManager.ContainsStatus(myStatus))
             {
                 moodleState = MoodleState.Remove;
             }
@@ -132,7 +131,7 @@ public static class MoodleCommandProcessor
             }
         }
 
-        if (moodleState == MoodleState.Apply)
+        if(moodleState == MoodleState.Apply)
         {
             if(Utils.GetMarePlayers().Contains(statusManager.Owner?.Address ?? -1))
             {
@@ -143,9 +142,9 @@ public static class MoodleCommandProcessor
                 statusManager.AddOrUpdate(myStatus.PrepareToApply(myStatus.Persistent ? PrepareOptions.Persistent : PrepareOptions.NoOption));
             }
         }
-        else if (moodleState == MoodleState.Remove)
+        else if(moodleState == MoodleState.Remove)
         {
-            if (Utils.GetMarePlayers().Contains(statusManager.Owner?.Address ?? -1))
+            if(Utils.GetMarePlayers().Contains(statusManager.Owner?.Address ?? -1))
             {
                 var newStatus = myStatus.JSONClone();
                 newStatus.ExpiresAt = 0;
@@ -158,14 +157,14 @@ public static class MoodleCommandProcessor
         }
     }
 
-    static void HandleAsPreset(TargetState targetState, MoodleState moodleState, MoodleNameType moodleNameType)
+    private static void HandleAsPreset(TargetState targetState, MoodleState moodleState, MoodleNameType moodleNameType)
     {
         var statusManager = GetStatusManager(targetState);
         var myPreset = GetMyPreset(moodleNameType);
 
-        if (moodleState == MoodleState.Toggle)
+        if(moodleState == MoodleState.Toggle)
         {
-            if (statusManager.ContainsPreset(myPreset))
+            if(statusManager.ContainsPreset(myPreset))
             {
                 moodleState = MoodleState.Remove;
             }
@@ -175,38 +174,38 @@ public static class MoodleCommandProcessor
             }
         }
 
-        if (moodleState == MoodleState.Apply)
+        if(moodleState == MoodleState.Apply)
         {
             statusManager.ApplyPreset(myPreset);
         }
-        else if (moodleState == MoodleState.Remove)
+        else if(moodleState == MoodleState.Remove)
         {
             statusManager.RemovePreset(myPreset);
         }
     }
 
-    static void HandleAsAutomation(TargetState targetState, MoodleState moodleState, MoodleNameType moodleNameType)
+    private static void HandleAsAutomation(TargetState targetState, MoodleState moodleState, MoodleNameType moodleNameType)
     {
-        if (moodleNameType == MoodleNameType.GUID)
+        if(moodleNameType == MoodleNameType.GUID)
         {
             throw new MoodleChatException("GUID is an invalid parameter type for automation.");
         }
 
         IPlayerCharacter playerCharacter = null;
-        
-        if (targetState == TargetState.Self)
+
+        if(targetState == TargetState.Self)
         {
             playerCharacter = Svc.ClientState.LocalPlayer;
         }
-        else if (targetState == TargetState.Target)
+        else if(targetState == TargetState.Target)
         {
-            if (Svc.Targets.Target is IPlayerCharacter pCharacter)
+            if(Svc.Targets.Target is IPlayerCharacter pCharacter)
             {
                 playerCharacter = pCharacter;
             }
             else
             {
-                if (Svc.Targets.Target == null)
+                if(Svc.Targets.Target == null)
                 {
                     throw new MoodleChatException("No target selected.");
                 }
@@ -216,12 +215,12 @@ public static class MoodleCommandProcessor
                 }
             }
         }
-        else if (targetState == TargetState.Custom)
+        else if(targetState == TargetState.Custom)
         {
             playerCharacter = PlayerFromString(GetCustomString());
         }
 
-        if (playerCharacter == null)
+        if(playerCharacter == null)
         {
             throw new MoodleChatException("An error occured whilst obtaining the selected target.");
         }
@@ -231,44 +230,44 @@ public static class MoodleCommandProcessor
 
         var hasWorld = customString.Split('@').Length == 2 || targetState != TargetState.Custom;
 
-        foreach(AutomationProfile profile in C.AutomationProfiles)
+        foreach(var profile in C.AutomationProfiles)
         {
-            if (profile.Name == customString)
+            if(profile.Name == customString)
             {
                 selectedProfile = profile;
                 break;
             }
         }
 
-        if (selectedProfile == null)
+        if(selectedProfile == null)
         {
             throw new MoodleChatException($"Automation with the name '{customString}' does not exist.");
         }
 
-        if (moodleState == MoodleState.Toggle)
+        if(moodleState == MoodleState.Toggle)
         {
             var nameIsCorrect = selectedProfile.Character == playerCharacter.Name.TextValue;
             var worldIsCorrect = true;
 
-            if (hasWorld)
+            if(hasWorld)
             {
                 worldIsCorrect = selectedProfile.World == playerCharacter.HomeWorld.Id;
             }
 
-            if (nameIsCorrect && worldIsCorrect)
+            if(nameIsCorrect && worldIsCorrect)
             {
                 moodleState = MoodleState.Remove;
             }
-            else 
-            { 
-                moodleState = MoodleState.Apply; 
+            else
+            {
+                moodleState = MoodleState.Apply;
             }
         }
 
-        if (moodleState == MoodleState.Apply)
+        if(moodleState == MoodleState.Apply)
         {
             selectedProfile.Character = playerCharacter.Name.TextValue;
-            if (hasWorld)
+            if(hasWorld)
             {
                 selectedProfile.World = playerCharacter.HomeWorld.Id;
             }
@@ -276,15 +275,15 @@ public static class MoodleCommandProcessor
             {
                 selectedProfile.World = 0;
             }
-        } 
-        else if (moodleState == MoodleState.Remove)
+        }
+        else if(moodleState == MoodleState.Remove)
         {
             selectedProfile.Character = string.Empty;
             selectedProfile.World = 0;
         }
     }
 
-    static void HandleHelp()
+    private static void HandleHelp()
     {
         Svc.Chat.Print("Moodles Help: ");
         Svc.Chat.Print("");
@@ -324,14 +323,14 @@ public static class MoodleCommandProcessor
         Svc.Chat.Print("        The EXACT name of the element you want to target.");
     }
 
-    static Preset GetMyPreset(MoodleNameType moodleNameType)
+    private static Preset GetMyPreset(MoodleNameType moodleNameType)
     {
         var cString = GetCustomString();
         var match = C.SavedPresets.SingleOrDefault(x => PresetMatch(x, moodleNameType, cString));
 
-        if (match == null)
+        if(match == null)
         {
-            if (moodleNameType == MoodleNameType.Name)
+            if(moodleNameType == MoodleNameType.Name)
             {
                 throw new MoodleChatException($"Preset with the name '{cString}' could not be found.");
             }
@@ -344,17 +343,17 @@ public static class MoodleCommandProcessor
         return match;
     }
 
-    static bool PresetMatch(Preset preset, MoodleNameType moodleNameType, string customString)
+    private static bool PresetMatch(Preset preset, MoodleNameType moodleNameType, string customString)
     {
-        if (moodleNameType == MoodleNameType.GUID) 
-        { 
-            return preset.GUID == Guid.Parse(customString); 
+        if(moodleNameType == MoodleNameType.GUID)
+        {
+            return preset.GUID == Guid.Parse(customString);
         }
         else
         {
-            if (P.OtterGuiHandler.PresetFileSystem.FindLeaf(preset, out var l))
+            if(P.OtterGuiHandler.PresetFileSystem.FindLeaf(preset, out var l))
             {
-                if (l != null)
+                if(l != null)
                 {
                     return l.FullName() == customString;
                 }
@@ -364,14 +363,14 @@ public static class MoodleCommandProcessor
         return false;
     }
 
-    static MyStatus GetMyStatus(MoodleNameType moodleNameType)
+    private static MyStatus GetMyStatus(MoodleNameType moodleNameType)
     {
         var cString = GetCustomString();
         var match = C.SavedStatuses.SingleOrDefault(x => StatusMatch(x, moodleNameType, cString));
 
-        if (match == null)
+        if(match == null)
         {
-            if (moodleNameType == MoodleNameType.Name)
+            if(moodleNameType == MoodleNameType.Name)
             {
                 throw new MoodleChatException($"Moodle with the name '{cString}' could not be found.");
             }
@@ -384,17 +383,17 @@ public static class MoodleCommandProcessor
         return match;
     }
 
-    static bool StatusMatch(MyStatus myStatus, MoodleNameType moodleNameType, string customString)
+    private static bool StatusMatch(MyStatus myStatus, MoodleNameType moodleNameType, string customString)
     {
-        if (moodleNameType == MoodleNameType.GUID)
+        if(moodleNameType == MoodleNameType.GUID)
         {
             return myStatus.GUID == Guid.Parse(customString);
         }
         else
         {
-            if (P.OtterGuiHandler.MoodleFileSystem.FindLeaf(myStatus, out var l))
+            if(P.OtterGuiHandler.MoodleFileSystem.FindLeaf(myStatus, out var l))
             {
-                if (l != null)
+                if(l != null)
                 {
                     return l.FullName() == customString;
                 }
@@ -404,23 +403,23 @@ public static class MoodleCommandProcessor
         return false;
     }
 
-    static MyStatusManager GetStatusManager(TargetState targetState)
+    private static MyStatusManager GetStatusManager(TargetState targetState)
     {
         MyStatusManager statusManager = null;
 
-        if (targetState == TargetState.Self)
+        if(targetState == TargetState.Self)
         {
             statusManager = Utils.GetMyStatusManager(Player.NameWithWorld);
         }
-        else if (targetState == TargetState.Target)
+        else if(targetState == TargetState.Target)
         {
-            if (Svc.Targets.Target is IPlayerCharacter pCharacter)
+            if(Svc.Targets.Target is IPlayerCharacter pCharacter)
             {
                 statusManager = Utils.GetMyStatusManager(Player.GetNameWithWorld(pCharacter));
             }
             else
             {
-                if (Svc.Targets.Target == null)
+                if(Svc.Targets.Target == null)
                 {
                     throw new MoodleChatException("No target selected.");
                 }
@@ -430,10 +429,10 @@ public static class MoodleCommandProcessor
                 }
             }
         }
-        else if (targetState == TargetState.Custom)
+        else if(targetState == TargetState.Custom)
         {
             var pCharacter = PlayerFromString(GetCustomString());
-            if (pCharacter != null)
+            if(pCharacter != null)
             {
                 statusManager = Utils.GetMyStatusManager(Player.GetNameWithWorld(pCharacter));
             }
@@ -442,24 +441,24 @@ public static class MoodleCommandProcessor
         return statusManager;
     }
 
-    unsafe static IPlayerCharacter PlayerFromString(string playerString)
+    private static unsafe IPlayerCharacter PlayerFromString(string playerString)
     {
         var splitString = playerString.Split('@');
         var hasWorld = false;
 
-        if (splitString.Length == 2) 
-        { 
-            hasWorld = true; 
+        if(splitString.Length == 2)
+        {
+            hasWorld = true;
         }
 
         var userName = splitString[0];
         var homeworld = -1;
 
-        if (hasWorld)
+        if(hasWorld)
         {
-            foreach(World world in Svc.Data.GetExcelSheet<World>())
+            foreach(var world in Svc.Data.GetExcelSheet<World>())
             {
-                if (world.Name == splitString[1])
+                if(world.Name == splitString[1])
                 {
                     homeworld = (int)world.RowId;
                     break;
@@ -467,8 +466,8 @@ public static class MoodleCommandProcessor
             }
         }
 
-        BattleChara* battleChara = CharacterManager.Instance()->LookupBattleCharaByName(userName, true, (short)homeworld);
-        if (battleChara == null)
+        var battleChara = CharacterManager.Instance()->LookupBattleCharaByName(userName, true, (short)homeworld);
+        if(battleChara == null)
         {
             throw new MoodleChatException($"Specified Target Selector '{playerString}' could not be found.");
         }
@@ -476,14 +475,14 @@ public static class MoodleCommandProcessor
         return (IPlayerCharacter)Svc.Objects.CreateObjectReference((nint)battleChara);
     }
 
-    static string GetCustomString(bool applyCounter = true)
+    private static string GetCustomString(bool applyCounter = true)
     {
         var customString = matchedArguments[customCounter];
-        if (applyCounter) customCounter++;
+        if(applyCounter) customCounter++;
         return customString;
     }
 
-    static MoodleState ParseMoodleState(string[] commandArgs) => GetCommandPart(commandArgs, 0) switch
+    private static MoodleState ParseMoodleState(string[] commandArgs) => GetCommandPart(commandArgs, 0) switch
     {
         "apply" => MoodleState.Apply,
         "remove" => MoodleState.Remove,
@@ -492,7 +491,7 @@ public static class MoodleCommandProcessor
         _ => MoodleState.INVALID
     };
 
-    static TargetState ParseTargetState(string[] commandArgs) => GetCommandPart(commandArgs, 1) switch
+    private static TargetState ParseTargetState(string[] commandArgs) => GetCommandPart(commandArgs, 1) switch
     {
         "self" => TargetState.Self,
         "target" => TargetState.Target,
@@ -500,7 +499,7 @@ public static class MoodleCommandProcessor
         _ => TargetState.INVALID
     };
 
-    static MoodleType ParseMoodleType(string[] commandArgs) => GetCommandPart(commandArgs, 2) switch
+    private static MoodleType ParseMoodleType(string[] commandArgs) => GetCommandPart(commandArgs, 2) switch
     {
         "moodle" => MoodleType.Moodle,
         "preset" => MoodleType.Preset,
@@ -508,16 +507,16 @@ public static class MoodleCommandProcessor
         _ => MoodleType.INVALID
     };
 
-    static MoodleNameType ParseMoodleNameType(string[] commandArgs)
+    private static MoodleNameType ParseMoodleNameType(string[] commandArgs)
     {
         var commandString = GetCommandPart(commandArgs, 3);
-        if (commandString != CUSTOM_TAG)
+        if(commandString != CUSTOM_TAG)
         {
             return MoodleNameType.INVALID;
         }
 
-        string customString = GetCustomString(false);
-        if (Guid.TryParse(customString, out _))
+        var customString = GetCustomString(false);
+        if(Guid.TryParse(customString, out _))
         {
             return MoodleNameType.GUID;
         }
@@ -527,15 +526,15 @@ public static class MoodleCommandProcessor
         }
     }
 
-    static void ThrowArgumentException() => throw new MoodleChatException("Missing arguments. Use \"/moodle help\" for more information.");
+    private static void ThrowArgumentException() => throw new MoodleChatException("Missing arguments. Use \"/moodle help\" for more information.");
 
-    static string GetCommandPart(string[] commandArgs, int location)
+    private static string GetCommandPart(string[] commandArgs, int location)
     {
-        if (commandArgs.Length <= location) ThrowArgumentException();
+        if(commandArgs.Length <= location) ThrowArgumentException();
         return lastCommandPart = commandArgs[location];
     }
 
-    enum MoodleState
+    private enum MoodleState
     {
         INVALID,
         Apply,
@@ -545,7 +544,7 @@ public static class MoodleCommandProcessor
         Settings
     }
 
-    enum TargetState
+    private enum TargetState
     {
         INVALID,
         Self,
@@ -553,7 +552,7 @@ public static class MoodleCommandProcessor
         Custom
     }
 
-    enum MoodleType
+    private enum MoodleType
     {
         INVALID,
         Moodle,
@@ -561,14 +560,14 @@ public static class MoodleCommandProcessor
         Automation
     }
 
-    enum MoodleNameType
+    private enum MoodleNameType
     {
         INVALID,
         Name,
         GUID
     }
 
-    class MoodleChatException : Exception
+    private class MoodleChatException : Exception
     {
         public MoodleChatException(string message) : base(message) { }
     }

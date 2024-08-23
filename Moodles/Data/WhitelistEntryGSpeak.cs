@@ -17,24 +17,24 @@ public class WhitelistEntryGSpeak
 
     public MoodlesGSpeakPairPerms PairPermsForClient = new();
 
-    internal long TotalMaxDurationSecondsClient => this.ClientPermsForPair.MaxDuration.Seconds * 1000 + this.ClientPermsForPair.MaxDuration.Minutes * 1000 * 60
-                                                 + this.ClientPermsForPair.MaxDuration.Hours * 1000 * 60 * 60 + this.ClientPermsForPair.MaxDuration.Days * 1000 * 60 * 60 * 24;
-    internal long MaxExpirationUnixTimeSecondsClient => this.ClientPermsForPair.AllowPermanent ? long.MaxValue : Utils.Time + TotalMaxDurationSecondsClient;
+    internal long TotalMaxDurationSecondsClient => ClientPermsForPair.MaxDuration.Seconds * 1000 + ClientPermsForPair.MaxDuration.Minutes * 1000 * 60
+                                                 + ClientPermsForPair.MaxDuration.Hours * 1000 * 60 * 60 + ClientPermsForPair.MaxDuration.Days * 1000 * 60 * 60 * 24;
+    internal long MaxExpirationUnixTimeSecondsClient => ClientPermsForPair.AllowPermanent ? long.MaxValue : Utils.Time + TotalMaxDurationSecondsClient;
 
-    internal long TotalMaxDurationSecondsPair => this.PairPermsForClient.MaxDuration.Seconds * 1000 + this.PairPermsForClient.MaxDuration.Minutes * 1000 * 60
-                                               + this.PairPermsForClient.MaxDuration.Hours * 1000 * 60 * 60 + this.PairPermsForClient.MaxDuration.Days * 1000 * 60 * 60 * 24;
-    internal long MaxExpirationUnixTimeSecondsPair => this.PairPermsForClient.AllowPermanent ? long.MaxValue : Utils.Time + TotalMaxDurationSecondsPair;
+    internal long TotalMaxDurationSecondsPair => PairPermsForClient.MaxDuration.Seconds * 1000 + PairPermsForClient.MaxDuration.Minutes * 1000 * 60
+                                               + PairPermsForClient.MaxDuration.Hours * 1000 * 60 * 60 + PairPermsForClient.MaxDuration.Days * 1000 * 60 * 60 * 24;
+    internal long MaxExpirationUnixTimeSecondsPair => PairPermsForClient.AllowPermanent ? long.MaxValue : Utils.Time + TotalMaxDurationSecondsPair;
 
     // checks if when applying incoming moodles, that we have the permission to apply them.
     public bool CheckStatus(MoodlesGSpeakPairPerms status, bool statusIsPerminant)
     {
-        if (status.AllowPositive != ClientPermsForPair.AllowPositive) return false;
-        if (status.AllowNegative != ClientPermsForPair.AllowNegative) return false;
-        if (status.AllowSpecial != ClientPermsForPair.AllowSpecial) return false;
-        if (status.AllowApplyingPairsMoodles != ClientPermsForPair.AllowApplyingPairsMoodles) return false;
-        if (status.AllowPermanent != ClientPermsForPair.AllowPermanent) return false;
-        if (status.MaxDuration > ClientPermsForPair.MaxDuration && !statusIsPerminant) return false;
-        if (status.AllowRemoval != ClientPermsForPair.AllowRemoval) return false;
+        if(status.AllowPositive != ClientPermsForPair.AllowPositive) return false;
+        if(status.AllowNegative != ClientPermsForPair.AllowNegative) return false;
+        if(status.AllowSpecial != ClientPermsForPair.AllowSpecial) return false;
+        if(status.AllowApplyingPairsMoodles != ClientPermsForPair.AllowApplyingPairsMoodles) return false;
+        if(status.AllowPermanent != ClientPermsForPair.AllowPermanent) return false;
+        if(status.MaxDuration > ClientPermsForPair.MaxDuration && !statusIsPerminant) return false;
+        if(status.AllowRemoval != ClientPermsForPair.AllowRemoval) return false;
         return true;
     }
 

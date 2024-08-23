@@ -7,20 +7,20 @@ using OtterGui.Raii;
 namespace Moodles.Gui;
 public static class TabPresets
 {
-    static bool IsMoodleSelection = false;
-    static Guid CurrentDrag = Guid.Empty;
+    private static bool IsMoodleSelection = false;
+    private static Guid CurrentDrag = Guid.Empty;
     private static Dictionary<PresetApplicationType, string> ApplicationTypes = new()
     {
         [PresetApplicationType.ReplaceAll] = "Replace all current statuses",
         [PresetApplicationType.UpdateExisting] = "Update duration of existing",
         [PresetApplicationType.IgnoreExisting] = "Ignore existing",
     };
-    static string Filter = "";
+    private static string Filter = "";
 
-    static Preset Selected => P.OtterGuiHandler.PresetFileSystem.Selector.Selected;
+    private static Preset Selected => P.OtterGuiHandler.PresetFileSystem.Selector.Selected;
     public static void Draw()
     {
-        if (IsMoodleSelection)
+        if(IsMoodleSelection)
         {
             P.OtterGuiHandler.MoodleFileSystem.Selector.Draw(200f);
         }
@@ -36,16 +36,16 @@ public static class TabPresets
 
     private static void DrawHeader()
     {
-        HeaderDrawer.Draw(P.OtterGuiHandler.PresetFileSystem.FindLeaf(Selected, out var l)?l.FullName():"", 0, ImGui.GetColorU32(ImGuiCol.FrameBg), 0, HeaderDrawer.Button.IncognitoButton(C.Censor, v => C.Censor = v));
+        HeaderDrawer.Draw(P.OtterGuiHandler.PresetFileSystem.FindLeaf(Selected, out var l) ? l.FullName() : "", 0, ImGui.GetColorU32(ImGuiCol.FrameBg), 0, HeaderDrawer.Button.IncognitoButton(C.Censor, v => C.Censor = v));
     }
 
     public static void DrawSelected()
     {
         using var child = ImRaii.Child("##Panel", -Vector2.One, true);
-        if (!child || Selected == null)
+        if(!child || Selected == null)
             return;
         {
-            if (ImGui.Button("Apply to Yourself"))
+            if(ImGui.Button("Apply to Yourself"))
             {
                 Utils.GetMyStatusManager(Player.NameWithWorld).ApplyPreset(Selected);
             }
@@ -54,16 +54,16 @@ public static class TabPresets
             var isMare = Utils.GetMarePlayers().Contains(Svc.Targets.Target?.Address ?? -1);
             var isGSpeak = Svc.Targets.Target is IPlayerCharacter pc && Utils.GSpeakPlayers.Any(player => player.Item1 == pc.GetNameWithWorld());
             var dis = Svc.Targets.Target is not IPlayerCharacter || (isMare && !isGSpeak);
-            if (dis) ImGui.BeginDisabled();
-            string buttonText = Svc.Targets.Target is not IPlayerCharacter
+            if(dis) ImGui.BeginDisabled();
+            var buttonText = Svc.Targets.Target is not IPlayerCharacter
                 ? "No Target Selected" : isMare && !isGSpeak
                     ? "Cannot Apply To Mare User" : $"Apply to Target ({(isGSpeak ? "via GagSpeak" : "Locally")})";
-            if (ImGui.Button(buttonText))
+            if(ImGui.Button(buttonText))
             {
                 try
                 {
                     var target = (IPlayerCharacter)Svc.Targets.Target;
-                    if (!isMare)
+                    if(!isMare)
                     {
                         Utils.GetMyStatusManager(target.GetNameWithWorld()).ApplyPreset(Selected);
                     }
@@ -72,12 +72,12 @@ public static class TabPresets
                         Selected.SendGSpeakMessage(target);
                     }
                 }
-                catch (Exception e)
+                catch(Exception e)
                 {
                     e.Log();
                 }
             }
-            if (dis) ImGui.EndDisabled();
+            if(dis) ImGui.EndDisabled();
 
             ImGuiEx.TextV("On application:");
             ImGui.SameLine();
@@ -91,26 +91,26 @@ public static class TabPresets
             {
                 ImGuiEx.SetNextItemFullWidth();
                 ImGui.InputTextWithHint("##search", "Filter", ref Filter, 50);
-                foreach (var x in C.SavedStatuses)
+                foreach(var x in C.SavedStatuses)
                 {
-                    if (!x.IsValid(out _)) continue;
-                    if (!Selected.Statuses.Contains(x.GUID) && P.OtterGuiHandler.MoodleFileSystem.TryGetPathByID(x.GUID, out var path))
+                    if(!x.IsValid(out _)) continue;
+                    if(!Selected.Statuses.Contains(x.GUID) && P.OtterGuiHandler.MoodleFileSystem.TryGetPathByID(x.GUID, out var path))
                     {
-                        if (Filter == "" || path.Contains(Filter, StringComparison.OrdinalIgnoreCase))
+                        if(Filter == "" || path.Contains(Filter, StringComparison.OrdinalIgnoreCase))
                         {
                             var split = path.Split(@"/");
                             var name = split[^1];
                             var directory = split[0..^1].Join(@"/");
-                            if (directory != name)
+                            if(directory != name)
                             {
                                 ImGuiEx.RightFloat($"Selector{x.ID}", () => ImGuiEx.Text(ImGuiColors.DalamudGrey, directory));
                             }
-                            if (ThreadLoadImageHandler.TryGetIconTextureWrap(x.AdjustedIconID, false, out var tex))
+                            if(ThreadLoadImageHandler.TryGetIconTextureWrap(x.AdjustedIconID, false, out var tex))
                             {
                                 ImGui.Image(tex.ImGuiHandle, UI.StatusIconSize * 0.5f);
                                 ImGui.SameLine();
                             }
-                            if (ImGui.Selectable($"{name}##{x.ID}", false, ImGuiSelectableFlags.DontClosePopups))
+                            if(ImGui.Selectable($"{name}##{x.ID}", false, ImGuiSelectableFlags.DontClosePopups))
                             {
                                 Selected.Statuses.Add(x.GUID);
                                 P.IPCProcessor.PresetModified(Selected.GUID);
@@ -123,14 +123,14 @@ public static class TabPresets
 
             ImGui.Separator();
 
-            if (ImGui.BeginTable("##presets", 3, ImGuiTableFlags.Borders | ImGuiTableFlags.RowBg | ImGuiTableFlags.SizingFixedFit))
+            if(ImGui.BeginTable("##presets", 3, ImGuiTableFlags.Borders | ImGuiTableFlags.RowBg | ImGuiTableFlags.SizingFixedFit))
             {
                 ImGui.TableSetupColumn("Controls");
                 ImGui.TableSetupColumn("Name", ImGuiTableColumnFlags.WidthStretch);
                 ImGui.TableSetupColumn(" ");
 
                 List<(Vector2 RowPos, Action AcceptDraw)> MoveCommands = [];
-                for (var i = 0;i< Selected.Statuses.Count;i++) 
+                for(var i = 0; i < Selected.Statuses.Count; i++)
                 {
                     var statusId = Selected.Statuses[i];
                     var statusPath = P.OtterGuiHandler.MoodleFileSystem.TryGetPathByID(statusId, out var path) ? path : statusId.ToString();
@@ -140,7 +140,7 @@ public static class TabPresets
                         ImGui.PushID(status.ID);
                         ImGui.TableNextRow();
 
-                        if (CurrentDrag == statusId)
+                        if(CurrentDrag == statusId)
                         {
                             var color = GradientColor.Get(EColor.Green, EColor.Green with { W = EColor.Green.W / 4 }, 500).ToUint();
                             ImGui.TableSetBgColor(ImGuiTableBgTarget.RowBg0, color);
@@ -152,35 +152,36 @@ public static class TabPresets
                         ImGui.PushFont(UiBuilder.IconFont);
                         ImGui.Button($"{FontAwesomeIcon.ArrowsUpDownLeftRight.ToIconString()}##Move{status.GUID}");
                         ImGui.PopFont();
-                        if (ImGui.IsItemHovered())
+                        if(ImGui.IsItemHovered())
                         {
                             ImGui.SetMouseCursor(ImGuiMouseCursor.ResizeAll);
                         }
-                        if (ImGui.BeginDragDropSource(ImGuiDragDropFlags.SourceNoPreviewTooltip))
+                        if(ImGui.BeginDragDropSource(ImGuiDragDropFlags.SourceNoPreviewTooltip))
                         {
                             ImGuiDragDrop.SetDragDropPayload("MoveRule", status.GUID);
                             CurrentDrag = status.GUID;
                             InternalLog.Verbose($"DragDropSource = {status.GUID}");
                             ImGui.EndDragDropSource();
                         }
-                        else if (CurrentDrag == status.GUID)
+                        else if(CurrentDrag == status.GUID)
                         {
                             InternalLog.Verbose($"Current drag reset!");
                             CurrentDrag = Guid.Empty;
                         }
 
                         var moveItemIndex = i;
-                        MoveCommands.Add((rowPos, () => 
+                        MoveCommands.Add((rowPos, () =>
                         {
-                            if (ImGui.BeginDragDropTarget())
+                            if(ImGui.BeginDragDropTarget())
                             {
-                                if (ImGuiDragDrop.AcceptDragDropPayload("MoveRule", out Guid payload, ImGuiDragDropFlags.AcceptBeforeDelivery | ImGuiDragDropFlags.AcceptNoDrawDefaultRect))
+                                if(ImGuiDragDrop.AcceptDragDropPayload("MoveRule", out Guid payload, ImGuiDragDropFlags.AcceptBeforeDelivery | ImGuiDragDropFlags.AcceptNoDrawDefaultRect))
                                 {
                                     MoveItemToPosition(Selected.Statuses, (x) => x == payload, moveItemIndex);
                                 }
                                 ImGui.EndDragDropTarget();
                             }
-                        }));
+                        }
+                        ));
 
                         ImGui.TableNextColumn();
 
@@ -194,12 +195,12 @@ public static class TabPresets
 
                         ImGui.TableNextColumn();
 
-                        if (ImGuiEx.IconButton(FontAwesomeIcon.Trash))
+                        if(ImGuiEx.IconButton(FontAwesomeIcon.Trash))
                         {
                             new TickScheduler(() =>
                             {
-                                 Selected.Statuses.Remove(statusId);
-                                 P.IPCProcessor.PresetModified(Selected.GUID);
+                                Selected.Statuses.Remove(statusId);
+                                P.IPCProcessor.PresetModified(Selected.GUID);
                             });
                         }
 
@@ -223,7 +224,7 @@ public static class TabPresets
                 ImGui.InputText($"##id-text", Encoding.UTF8.GetBytes(Selected.ID), 36, ImGuiInputTextFlags.ReadOnly);
 
                 ImGui.EndTable();
-                foreach (var x in MoveCommands)
+                foreach(var x in MoveCommands)
                 {
                     ImGui.SetCursorPos(x.RowPos);
                     ImGui.Dummy(new Vector2(ImGui.GetContentRegionAvail().X, ImGuiHelpers.GetButtonSize(" ").Y));

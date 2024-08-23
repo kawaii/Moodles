@@ -1,10 +1,10 @@
-﻿using Dalamud.Game.Addon.Lifecycle.AddonArgTypes;
-using Dalamud.Game.Addon.Lifecycle;
+﻿using Dalamud.Game.Addon.Lifecycle;
+using Dalamud.Game.Addon.Lifecycle.AddonArgTypes;
+using Dalamud.Game.ClientState.Objects.SubKinds;
+using Dalamud.Game.ClientState.Objects.Types;
 using ECommons.GameHelpers;
 using FFXIVClientStructs.FFXIV.Component.GUI;
-using Dalamud.Game.ClientState.Objects.SubKinds;
 using Moodles.Data;
-using Dalamud.Game.ClientState.Objects.Types;
 
 namespace Moodles.GameGuiProcessors;
 public unsafe class TargetInfoProcessor
@@ -14,9 +14,9 @@ public unsafe class TargetInfoProcessor
     {
         Svc.AddonLifecycle.RegisterListener(AddonEvent.PostUpdate, "_TargetInfo", OnTargetInfoUpdate);
         Svc.AddonLifecycle.RegisterListener(AddonEvent.PostRequestedUpdate, "_TargetInfo", OnTargetInfoRequestedUpdate);
-        if (Player.Available && TryGetAddonByName<AtkUnitBase>("_TargetInfo", out var addon) && IsAddonReady(addon))
+        if(Player.Available && TryGetAddonByName<AtkUnitBase>("_TargetInfo", out var addon) && IsAddonReady(addon))
         {
-            this.OnTargetInfoRequestedUpdate(AddonEvent.PostRequestedUpdate, new ArtificialAddonArgs(addon));
+            OnTargetInfoRequestedUpdate(AddonEvent.PostRequestedUpdate, new ArtificialAddonArgs(addon));
         }
     }
 
@@ -30,21 +30,21 @@ public unsafe class TargetInfoProcessor
     {
         if(TryGetAddonByName<AtkUnitBase>("_TargetInfo", out var addon) && IsAddonReady(addon))
         {
-            this.UpdateAddon(addon, true);
+            UpdateAddon(addon, true);
         }
     }
 
     private void OnTargetInfoRequestedUpdate(AddonEvent type, AddonArgs args)
     {
-        if (P == null) return;
+        if(P == null) return;
         var addon = (AtkUnitBase*)args.Addon;
-        if (addon != null && IsAddonReady(addon))
+        if(addon != null && IsAddonReady(addon))
         {
             NumStatuses = 0;
-            for (int i = 32; i >= 3; i--)
+            for(var i = 32; i >= 3; i--)
             {
                 var c = addon->UldManager.NodeList[i];
-                if (c->IsVisible())
+                if(c->IsVisible())
                 {
                     NumStatuses++;
                 }
@@ -55,21 +55,21 @@ public unsafe class TargetInfoProcessor
 
     private void OnTargetInfoUpdate(AddonEvent type, AddonArgs args)
     {
-        if (P == null) return;
-        if (!Player.Available) return;
-        if (!P.CanModifyUI()) return;
+        if(P == null) return;
+        if(!Player.Available) return;
+        if(!P.CanModifyUI()) return;
         UpdateAddon((AtkUnitBase*)args.Addon);
     }
 
     public void UpdateAddon(AtkUnitBase* addon, bool hideAll = false)
     {
-        IGameObject target = Svc.Targets.SoftTarget! ?? Svc.Targets.Target!;
-        if (target is IPlayerCharacter pc)
+        var target = Svc.Targets.SoftTarget! ?? Svc.Targets.Target!;
+        if(target is IPlayerCharacter pc)
         {
-            if (addon != null && IsAddonReady(addon))
+            if(addon != null && IsAddonReady(addon))
             {
                 int baseCnt;
-                if (P.CommonProcessor.NewMethod)
+                if(P.CommonProcessor.NewMethod)
                 {
                     baseCnt = 32 - NumStatuses;
                 }
@@ -77,18 +77,18 @@ public unsafe class TargetInfoProcessor
                 {
                     baseCnt = 32 - pc.StatusList.Count(x => x.StatusId != 0);
                 }
-                for (int i = baseCnt; i >= 3; i--)
+                for(var i = baseCnt; i >= 3; i--)
                 {
                     var c = addon->UldManager.NodeList[i];
-                    if (c->IsVisible()) c->NodeFlags ^= NodeFlags.Visible;
+                    if(c->IsVisible()) c->NodeFlags ^= NodeFlags.Visible;
                 }
-                if (!hideAll)
+                if(!hideAll)
                 {
-                    foreach (var x in pc.GetMyStatusManager().Statuses)
+                    foreach(var x in pc.GetMyStatusManager().Statuses)
                     {
-                        if (baseCnt < 3) break;
+                        if(baseCnt < 3) break;
                         var rem = x.ExpiresAt - Utils.Time;
-                        if (rem > 0)
+                        if(rem > 0)
                         {
                             SetIcon(addon, baseCnt, x);
                             baseCnt--;
@@ -99,7 +99,7 @@ public unsafe class TargetInfoProcessor
         }
     }
 
-    void SetIcon(AtkUnitBase* addon, int index, MyStatus status)
+    private void SetIcon(AtkUnitBase* addon, int index, MyStatus status)
     {
         var container = addon->UldManager.NodeList[index];
         P.CommonProcessor.SetIcon(addon, container, status);
