@@ -504,9 +504,12 @@ public class IPCProcessor : IDisposable
                var sm = pc.GetMyStatusManager();
                if (!sm.Ephemeral)
                {
-                    if (!status.Persistent)
+                    foreach (var s in sm.Statuses)
                     {
-                         sm.Cancel(guid);
+                         if (s.GUID == guid)
+                         {
+                              s.ExpiresAt = 0;
+                         }
                     }
                }
           }
@@ -539,9 +542,12 @@ public class IPCProcessor : IDisposable
                     var sm = pc.GetMyStatusManager();
                     if (!sm.Ephemeral)
                     {
-                         if (!status.Persistent)
+                         foreach (var s in sm.Statuses)
                          {
-                              sm.Cancel(guid);
+                              if (s.GUID == guid)
+                              {
+                                   s.ExpiresAt = 0;
+                              }
                          }
                     }
                }
@@ -560,11 +566,14 @@ public class IPCProcessor : IDisposable
                var sm = pc.GetMyStatusManager();
                if (!sm.Ephemeral)
                {
-                    foreach (var ps in preset.Statuses)
+                    foreach (var presetStatus in preset.Statuses)
                     {
-                         if (!ps.Persistent)
+                         foreach (var s in sm.Statuses)
                          {
-                              sm.Cancel(ps);
+                              if (s.GUID == presetStatus)
+                              {
+                                   s.ExpiresAt = 0;
+                              }
                          }
                     }
                }
