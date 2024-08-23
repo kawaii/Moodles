@@ -499,9 +499,9 @@ public class IPCProcessor : IDisposable
     [EzIPC]
     private void RemoveMoodleByGUID(Guid guid, IPlayerCharacter pc)
     {
-        if(C.SavedStatuses.TryGetFirst(x => x.GUID == guid, out var status))
+        var sm = pc.GetMyStatusManager();
+        if (sm.Statuses.TryGetFirst(x => x.GUID == guid, out var status))
         {
-            var sm = pc.GetMyStatusManager();
             if(!sm.Ephemeral)
             {
                 if(!status.Persistent)
@@ -532,11 +532,11 @@ public class IPCProcessor : IDisposable
     [EzIPC]
     private void RemoveMoodlesByGUID(List<Guid> guids, IPlayerCharacter pc)
     {
+        var sm = pc.GetMyStatusManager();
         foreach(var guid in guids)
         {
-            if(C.SavedStatuses.TryGetFirst(x => x.GUID == guid, out var status))
+            if(sm.Statuses.TryGetFirst(x => x.GUID == guid, out var status))
             {
-                var sm = pc.GetMyStatusManager();
                 if(!sm.Ephemeral)
                 {
                      if (!status.Persistent)
@@ -555,6 +555,7 @@ public class IPCProcessor : IDisposable
     [EzIPC]
     private void RemovePresetByGUID(Guid guid, IPlayerCharacter pc)
     {
+        // preset must exist in our saved presets since presets are not stored in the Status Manager
         if(C.SavedPresets.TryGetFirst(x => x.GUID == guid, out var preset))
         {
             var sm = pc.GetMyStatusManager();
@@ -562,7 +563,7 @@ public class IPCProcessor : IDisposable
             {
                 foreach (var ps in preset.Statuses)
                 {
-                     var s = C.SavedStatuses.FirstOrDefault(x => x.GUID == ps);
+                     var s = sm.Statuses.FirstOrDefault(x => x.GUID == ps);
                      if (!s.Persistent)
                      {
                          sm.Cancel(ps);
