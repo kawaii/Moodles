@@ -42,11 +42,7 @@ internal class MareWhitelist : PluginWhitelist
             P.OtterGuiHandler.WhitelistMare.EnsureCurrent();
         }
 
-        if(Selected == null)
-        {
-            ImGuiEx.Text($"No GagSpeak Pairs are visible to view the permissions of. Select one to view permissions!");
-        }
-        else
+        if(Selected != null)
         {
             if(ImGui.BeginTable("##wl", 2, ImGuiTableFlags.RowBg | ImGuiTableFlags.SizingFixedFit | ImGuiTableFlags.Borders))
             {
