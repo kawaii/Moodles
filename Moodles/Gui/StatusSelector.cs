@@ -1,6 +1,6 @@
 ﻿using ECommons.ExcelServices;
 using ECommons.SimpleGui;
-using Lumina.Excel.GeneratedSheets;
+using Lumina.Excel.Sheets;
 using Moodles.Data;
 
 namespace Moodles.Gui;

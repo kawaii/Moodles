@@ -5,7 +5,7 @@ using Dalamud.Memory;
 using Dalamud.Plugin.Services;
 using ECommons.GameHelpers;
 using FFXIVClientStructs.FFXIV.Component.GUI;
-using Lumina.Excel.GeneratedSheets;
+using Lumina.Excel.Sheets;
 using Moodles.Data;
 
 namespace Moodles.GameGuiProcessors;

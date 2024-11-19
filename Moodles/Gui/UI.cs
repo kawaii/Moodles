@@ -5,7 +5,7 @@ using ECommons.EzIpcManager;
 using ECommons.GameHelpers;
 using ECommons.Throttlers;
 using FFXIVClientStructs.FFXIV.Client.Game.Object;
-using Lumina.Excel.GeneratedSheets;
+using Lumina.Excel.Sheets;
 using Moodles.Data;
 
 namespace Moodles.Gui;
@@ -77,42 +77,6 @@ public static unsafe class UI
                         P.Memory.ApplyStatusHitEffectHook.Original((StatusHitEffectKind)ID, addr, addr, sa4, (byte)sa5, (short)sa6, (byte)sa7);
                     }
                 }
-            }
-            if(ImGui.BeginCombo("From StatusHitEffect", "From StatusHitEffect"))
-            {
-                foreach(var x in Svc.Data.GetExcelSheet<StatusHitEffect>())
-                {
-                    if(ImGui.Selectable($"{x.Location.Value.Location} / {(StatusHitEffectKind)x.Location.Row}", false, ImGuiSelectableFlags.DontClosePopups))
-                    {
-                        var addr = Svc.Targets.Target?.Address ?? Player.Object.Address;
-                        P.Memory.ApplyStatusHitEffectHook.Original((StatusHitEffectKind)x.Location.Row, addr, addr, sa4, (byte)sa5, (short)sa6, (byte)sa7);
-                    }
-                }
-                ImGui.EndCombo();
-            }
-            if(ImGui.BeginCombo("From ActionCastVFX", "From ActionCastVFX"))
-            {
-                foreach(var x in Svc.Data.GetExcelSheet<ActionCastVFX>())
-                {
-                    if(ImGui.Selectable($"{x.VFX.Value.Location} / {(StatusHitEffectKind)x.VFX.Row}", false, ImGuiSelectableFlags.DontClosePopups))
-                    {
-                        var addr = Svc.Targets.Target?.Address ?? Player.Object.Address;
-                        P.Memory.ApplyStatusHitEffectHook.Original((StatusHitEffectKind)x.VFX.Row, addr, addr, sa4, (byte)sa5, (short)sa6, (byte)sa7);
-                    }
-                }
-                ImGui.EndCombo();
-            }
-            if(ImGui.BeginCombo("From StatusLoopVFX", "From StatusLoopVFX"))
-            {
-                foreach(var x in Svc.Data.GetExcelSheet<StatusLoopVFX>())
-                {
-                    if(ImGui.Selectable($"{x.VFX.Value.Location} / {(StatusHitEffectKind)x.VFX.Row}", false, ImGuiSelectableFlags.DontClosePopups))
-                    {
-                        var addr = Svc.Targets.Target?.Address ?? Player.Object.Address;
-                        P.Memory.ApplyStatusHitEffectHook.Original((StatusHitEffectKind)x.VFX.Row, addr, addr, sa4, (byte)sa5, (short)sa6, (byte)sa7);
-                    }
-                }
-                ImGui.EndCombo();
             }
         }
         if(ImGui.CollapsingHeader("Actor control hook"))
@@ -235,7 +199,7 @@ public static unsafe class UI
             {
                 if(x.StatusId != 0)
                 {
-                    ImGuiEx.Text($"{x.StatusId}, {x.GameData.Name}, permanent: {x.GameData.IsPermanent}, category: {x.GameData.StatusCategory}");
+                    ImGuiEx.Text($"{x.StatusId}, {x.GameData.ValueNullable?.Name}, permanent: {x.GameData.ValueNullable?.IsPermanent}, category: {x.GameData.ValueNullable?.StatusCategory}");
                 }
             }
             if(Svc.Targets.Target is IPlayerCharacter pc)

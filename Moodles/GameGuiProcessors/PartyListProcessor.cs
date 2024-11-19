@@ -46,7 +46,7 @@ public unsafe class PartyListProcessor : IDisposable
             {
                 NumStatuses[i] = 0;
             }
-            var index = 22;
+            var index = 23;
             var storeIndex = 0;
             foreach(var player in GetVisibleParty())
             {
@@ -78,7 +78,7 @@ public unsafe class PartyListProcessor : IDisposable
         if(!P.CanModifyUI()) return;
         if(addon != null && IsAddonReady(addon))
         {
-            var partyMemberNodeIndex = 22;
+            var partyMemberNodeIndex = 23;
             var party = GetVisibleParty();
             for(var n = 0; n < party.Count; n++)
             {

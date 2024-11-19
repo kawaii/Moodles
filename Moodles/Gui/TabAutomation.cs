@@ -60,7 +60,7 @@ public static class TabAutomation
                 if(ImGui.Selectable("Any world")) Selected.World = 0;
                 foreach(var x in ExcelWorldHelper.GetPublicWorlds(null).OrderBy(z => z.Name.ToString()))
                 {
-                    if(ImGui.Selectable(x.Name)) Selected.World = x.RowId;
+                    if(ImGui.Selectable(x.Name.ToString())) Selected.World = x.RowId;
                 }
                 ImGui.EndCombo();
             }
@@ -75,7 +75,7 @@ public static class TabAutomation
                 if(dis) ImGui.BeginDisabled();
                 if(ImGui.Button("Set to Character", buttonSize))
                 {
-                    Selected.World = Player.Object.HomeWorld.Id;
+                    Selected.World = Player.Object.HomeWorld.RowId;
                     Selected.Character = Player.Name;
                 }
                 if(dis) ImGui.EndDisabled();
@@ -86,7 +86,7 @@ public static class TabAutomation
                 if(dis) ImGui.BeginDisabled();
                 if(ImGui.Button("Set to Target", buttonSize))
                 {
-                    Selected.World = ((IPlayerCharacter)Svc.Targets.Target).HomeWorld.Id;
+                    Selected.World = ((IPlayerCharacter)Svc.Targets.Target).HomeWorld.RowId;
                     Selected.Character = ((IPlayerCharacter)Svc.Targets.Target).Name.ToString();
                 }
                 if(dis) ImGui.EndDisabled();
