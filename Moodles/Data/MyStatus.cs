@@ -15,9 +15,7 @@ public partial class MyStatus
     public string Applier = "";
     public bool Dispelable = false;
     public int Stacks = 1;
-    //public string TextOverride = null;
-    //public uint? TextColorOverride = null;
-    //public uint? EdgeColorOverride = null;
+    public Guid StatusOnDispell;
 
     [MemoryPackIgnore] public bool Persistent = false;
 
@@ -75,7 +73,7 @@ public partial class MyStatus
     }
 
     public MoodlesStatusInfo ToStatusInfoTuple()
-        => (GUID, IconID, Title, Description, Type, Applier, Dispelable, Stacks, Persistent, Days, Hours, Minutes, Seconds, NoExpire, AsPermanent);
+        => (GUID, IconID, Title, Description, Type, Applier, Dispelable, Stacks, Persistent, Days, Hours, Minutes, Seconds, NoExpire, AsPermanent, StatusOnDispell);
 
     public static MyStatus FromStatusInfoTuple(MoodlesStatusInfo statusInfo)
     {
@@ -95,7 +93,8 @@ public partial class MyStatus
             Minutes = statusInfo.Minutes,
             Seconds = statusInfo.Seconds,
             NoExpire = statusInfo.NoExpire,
-            AsPermanent = statusInfo.AsPermanent
+            AsPermanent = statusInfo.AsPermanent,
+            StatusOnDispell = statusInfo.StatusOnDispell,
         };
     }
 }

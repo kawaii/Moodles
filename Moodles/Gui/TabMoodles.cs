@@ -3,6 +3,7 @@ using ECommons.GameHelpers;
 using Moodles.Data;
 using Moodles.OtterGuiHandlers;
 using OtterGui.Raii;
+using System.Xml.Linq;
 
 namespace Moodles.Gui;
 public static class TabMoodles
@@ -238,6 +239,74 @@ public static class TabMoodles
                 ImGui.TableNextColumn();
                 ImGuiEx.SetNextItemFullWidth();
                 ImGui.InputText($"##id-text", Encoding.UTF8.GetBytes(Selected.ID), 36, ImGuiInputTextFlags.ReadOnly);
+
+                ImGui.TableNextRow();
+
+                ImGui.TableNextColumn();
+                ImGuiEx.SetNextItemFullWidth();
+                
+                if (ImGui.BeginCombo("##addnew", "Apply Moodle On Dispell..."))
+                {
+                    ImGuiEx.HelpMarker("The selected Moodle gets applied automatically upon ANY dispell of the current Moodle.");
+                    ImGuiEx.SetNextItemFullWidth();
+                    ImGui.InputTextWithHint("##search", "Filter", ref Filter, 50);
+
+                    if (ImGui.Selectable($"Clear", false, ImGuiSelectableFlags.None))
+                    {
+                        Selected.StatusOnDispell = Guid.Empty;
+                        P.IPCProcessor.StatusModified(Selected.GUID);
+                    }
+
+                    foreach (var x in C.SavedStatuses)
+                    {
+                        if (!x.IsValid(out _)) continue;
+                        if (Selected.GUID != x.GUID && P.OtterGuiHandler.MoodleFileSystem.TryGetPathByID(x.GUID, out var path))
+                        {
+                            if (Filter == "" || path.Contains(Filter, StringComparison.OrdinalIgnoreCase))
+                            {
+                                var split = path.Split(@"/");
+                                var name = split[^1];
+                                var directory = split[0..^1].Join(@"/");
+                                if (directory != name)
+                                {
+                                    ImGuiEx.RightFloat($"Selector{x.ID}", () => ImGuiEx.Text(ImGuiColors.DalamudGrey, directory));
+                                }
+                                if (ThreadLoadImageHandler.TryGetIconTextureWrap(x.AdjustedIconID, false, out var tex))
+                                {
+                                    ImGui.Image(tex.ImGuiHandle, UI.StatusIconSize * 0.5f);
+                                    ImGui.SameLine();
+                                }
+                                if (ImGui.Selectable($"{name}##{x.ID}", false, ImGuiSelectableFlags.None))
+                                {
+                                    Selected.StatusOnDispell = x.GUID;
+                                    P.IPCProcessor.StatusModified(Selected.GUID);
+                                }
+                            }
+                        }
+                    }
+                    ImGui.EndCombo();
+                }
+
+                ImGui.TableNextColumn();
+
+                if (Selected.StatusOnDispell != Guid.Empty)
+                {
+                    foreach (var status in C.SavedStatuses)
+                    {
+                        if (status.GUID != Selected.StatusOnDispell) continue;
+
+                        var statusId = Selected.StatusOnDispell;
+                        var statusPath = P.OtterGuiHandler.MoodleFileSystem.TryGetPathByID(statusId, out var path) ? path : statusId.ToString();
+
+                        if (ThreadLoadImageHandler.TryGetIconTextureWrap(status.AdjustedIconID, false, out var tex))
+                        {
+                            ImGui.Image(tex.ImGuiHandle, UI.StatusIconSize * 0.75f);
+                            ImGui.SameLine();
+                        }
+                        ImGuiEx.TextV($"{statusPath}");
+                        ImGuiEx.Tooltip($"{status.Title}\n\n{status.Description}");
+                    }
+                }
 
                 ImGui.EndTable();
             }

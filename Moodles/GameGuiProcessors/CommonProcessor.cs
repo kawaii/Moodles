@@ -116,6 +116,15 @@ public unsafe class CommonProcessor : IDisposable
             x.StatusManager.AddTextShown.Remove(x.Status.GUID);
             x.StatusManager.RemTextShown.Remove(x.Status.GUID);
             x.StatusManager.Statuses.Remove(x.Status);
+            if (x.StatusManager.Owner.ObjectIndex == 0 && x.Status.StatusOnDispell != Guid.Empty)
+            {
+                foreach (var status in C.SavedStatuses)
+                {
+                    if (status.GUID != x.Status.StatusOnDispell) continue;
+
+                    x.StatusManager.AddOrUpdate(status.PrepareToApply(status.Persistent ? PrepareOptions.Persistent : PrepareOptions.NoOption));
+                }
+            }
         }
         CleanupQueue.Clear();
         foreach(var statusManager in C.StatusManagers)
