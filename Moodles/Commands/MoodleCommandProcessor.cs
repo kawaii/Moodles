@@ -292,44 +292,45 @@ public static class MoodleCommandProcessor
 
     private static void HandleHelp()
     {
-        Svc.Chat.Print("Moodles Help: ");
-        Svc.Chat.Print("");
-        Svc.Chat.Print("A Moodles command is build as followed:");
-        Svc.Chat.Print("    /moodle [action] [target selector] [element type] [element name]");
-        Svc.Chat.Print("");
-        Svc.Chat.Print("[action]");
-        Svc.Chat.Print("    apply");
-        Svc.Chat.Print("        Applies the specified element to the specified target selector.");
-        Svc.Chat.Print("    remove");
-        Svc.Chat.Print("        Removes the specified element to the specified target selector.");
-        Svc.Chat.Print("    toggle");
-        Svc.Chat.Print("        Toggles the specified element to the specified target selector.");
-        Svc.Chat.Print("");
-        Svc.Chat.Print("[target selector]");
-        Svc.Chat.Print("    self");
-        Svc.Chat.Print("        Selects yourself as the designated target.");
-        Svc.Chat.Print("    target");
-        Svc.Chat.Print("        Selects your target as the designated target.");
-        Svc.Chat.Print("    \"Firstname Lastname\"");
-        Svc.Chat.Print("        Selects your specified character as the designated target.");
-        Svc.Chat.Print("    \"Firstname Lastname@Homeworld\"");
-        Svc.Chat.Print("        Selects your specified character with the given homeworld as the designated target.");
-        Svc.Chat.Print("");
-        Svc.Chat.Print("[element type]");
-        Svc.Chat.Print("    moodle");
-        Svc.Chat.Print("        Specifies that this command applies to Moodles.");
-        Svc.Chat.Print("    preset");
-        Svc.Chat.Print("        Specifies that this command applies to Presets.");
-        Svc.Chat.Print("    automation");
-        Svc.Chat.Print("        Specifies that this command applies to Automation.");
-        Svc.Chat.Print("");
-        Svc.Chat.Print("[element name]");
-        Svc.Chat.Print("    \"GUID\"");
-        Svc.Chat.Print("        The GUID of the element you want target.");
-        Svc.Chat.Print("    \"ELEMENT NAME\"");
-        Svc.Chat.Print("        The EXACT name of the element you want to target.");
-        Svc.Chat.Print("    \"all\"");
-        Svc.Chat.Print("        Every element of the selected type.");
+        Svc.Chat.Print(
+            "Moodles Help: \n" +
+            "\n" +
+            "A Moodles command is build as followed:\n" +
+            "    /moodle [action] [target selector] [element type] [element name]\n" +
+            "\n" +
+            "[action]\n" +
+            "    apply\n" +
+            "        Applies the specified element to the specified target selector.\n" +
+            "    remove\n" +
+            "        Removes the specified element to the specified target selector.\n" +
+            "    toggle\n" +
+            "        Toggles the specified element to the specified target selector.\n" +
+            "\n" +
+            "[target selector]\n" +
+            "    self\n" +
+            "        Selects yourself as the designated target.\n" +
+            "    target\n" +
+            "        Selects your target as the designated target.\n" +
+            "    \"Firstname Lastname\"\n" +
+            "        Selects your specified character as the designated target.\n" +
+            "    \"Firstname Lastname@Homeworld\"\n" +
+            "        Selects your specified character with the given homeworld as the designated target.\n" +
+            "\n" +
+            "[element type]\n" +
+            "    moodle\n" +
+            "        Specifies that this command applies to Moodles.\n" +
+            "    preset\n" +
+            "        Specifies that this command applies to Presets.\n" +
+            "    automation\n" +
+            "        Specifies that this command applies to Automation.\n" +
+            "\n" +
+            "[element name]\n" +
+            "    \"GUID\"\n" +
+            "        The GUID of the element you want target.\n" +
+            "    \"ELEMENT NAME\"\n" +
+            "        The EXACT name of the element you want to target.\n" +
+            "    \"all\"\n" +
+            "        Every element of the selected type.\n");
     }
 
     private static Preset[] GetMyPreset(MoodleNameType moodleNameType)
