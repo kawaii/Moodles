@@ -51,7 +51,7 @@ public static class MoodleCommandProcessor
     }
 
     // Commands should look like this:
-    // /moodle apply|remove|toggle self|target|"Firstname Lastname"|"Firstname Lastname@world" moodle|preset|automation "moodleName"|"presetName"|"automationName"|"GUID"
+    // /moodle apply|remove|toggle self|target|"Firstname Lastname"|"Firstname Lastname@world" moodle|preset|automation "moodleName"|"presetName"|"automationName"|"GUID"|all
     // /moodle help
 
     private static void ProcessMoodleCommand(string[] commandArgs)
@@ -90,7 +90,7 @@ public static class MoodleCommandProcessor
 
         if(moodleNameType == MoodleNameType.INVALID)
         {
-            throw new MoodleChatException($"'{lastCommandPart}' is invalid syntax. Use: \"GUID\"|\"ELEMENT NAME\"");
+            throw new MoodleChatException($"'{lastCommandPart}' is invalid syntax. Use: \"GUID\"|\"ELEMENT NAME\"|\"automationName\"|all");
         }
 
         customCounter = 0;
@@ -117,42 +117,46 @@ public static class MoodleCommandProcessor
     private static void HandleAsMoodle(TargetState targetState, MoodleState moodleState, MoodleNameType moodleNameType)
     {
         var statusManager = GetStatusManager(targetState);
-        var myStatus = GetMyStatus(moodleNameType);
+        var myStatuses = GetMyStatus(moodleNameType);
 
-        if(moodleState == MoodleState.Toggle)
+        foreach (var myStatus in myStatuses)
         {
-            if(statusManager.ContainsStatus(myStatus))
-            {
-                moodleState = MoodleState.Remove;
-            }
-            else
-            {
-                moodleState = MoodleState.Apply;
-            }
-        }
 
-        if(moodleState == MoodleState.Apply)
-        {
-            if(Utils.GetMarePlayers().Contains(statusManager.Owner?.Address ?? -1))
+            if (moodleState == MoodleState.Toggle)
             {
-                myStatus.SendGSpeakMessage(statusManager.Owner);
+                if (statusManager.ContainsStatus(myStatus))
+                {
+                    moodleState = MoodleState.Remove;
+                }
+                else
+                {
+                    moodleState = MoodleState.Apply;
+                }
             }
-            else
+
+            if (moodleState == MoodleState.Apply)
             {
-                statusManager.AddOrUpdate(myStatus.PrepareToApply(myStatus.Persistent ? PrepareOptions.Persistent : PrepareOptions.NoOption));
+                if (Utils.GetMarePlayers().Contains(statusManager.Owner?.Address ?? -1))
+                {
+                    myStatus.SendGSpeakMessage(statusManager.Owner);
+                }
+                else
+                {
+                    statusManager.AddOrUpdate(myStatus.PrepareToApply(myStatus.Persistent ? PrepareOptions.Persistent : PrepareOptions.NoOption));
+                }
             }
-        }
-        else if(moodleState == MoodleState.Remove)
-        {
-            if(Utils.GetMarePlayers().Contains(statusManager.Owner?.Address ?? -1))
+            else if (moodleState == MoodleState.Remove)
             {
-                var newStatus = myStatus.JSONClone();
-                newStatus.ExpiresAt = 0;
-                newStatus.SendGSpeakMessage(statusManager.Owner);
-            }
-            else
-            {
-                statusManager.Cancel(myStatus);
+                if (Utils.GetMarePlayers().Contains(statusManager.Owner?.Address ?? -1))
+                {
+                    var newStatus = myStatus.JSONClone();
+                    newStatus.ExpiresAt = 0;
+                    newStatus.SendGSpeakMessage(statusManager.Owner);
+                }
+                else
+                {
+                    statusManager.Cancel(myStatus);
+                }
             }
         }
     }
@@ -160,27 +164,30 @@ public static class MoodleCommandProcessor
     private static void HandleAsPreset(TargetState targetState, MoodleState moodleState, MoodleNameType moodleNameType)
     {
         var statusManager = GetStatusManager(targetState);
-        var myPreset = GetMyPreset(moodleNameType);
+        var myPresets = GetMyPreset(moodleNameType);
 
-        if(moodleState == MoodleState.Toggle)
+        foreach (var myPreset in myPresets)
         {
-            if(statusManager.ContainsPreset(myPreset))
+            if (moodleState == MoodleState.Toggle)
             {
-                moodleState = MoodleState.Remove;
+                if (statusManager.ContainsPreset(myPreset))
+                {
+                    moodleState = MoodleState.Remove;
+                }
+                else
+                {
+                    moodleState = MoodleState.Apply;
+                }
             }
-            else
-            {
-                moodleState = MoodleState.Apply;
-            }
-        }
 
-        if(moodleState == MoodleState.Apply)
-        {
-            statusManager.ApplyPreset(myPreset);
-        }
-        else if(moodleState == MoodleState.Remove)
-        {
-            statusManager.RemovePreset(myPreset);
+            if (moodleState == MoodleState.Apply)
+            {
+                statusManager.ApplyPreset(myPreset);
+            }
+            else if (moodleState == MoodleState.Remove)
+            {
+                statusManager.RemovePreset(myPreset);
+            }
         }
     }
 
@@ -321,10 +328,17 @@ public static class MoodleCommandProcessor
         Svc.Chat.Print("        The GUID of the element you want target.");
         Svc.Chat.Print("    \"ELEMENT NAME\"");
         Svc.Chat.Print("        The EXACT name of the element you want to target.");
+        Svc.Chat.Print("    \"all\"");
+        Svc.Chat.Print("        Every element of the selected type.");
     }
 
-    private static Preset GetMyPreset(MoodleNameType moodleNameType)
+    private static Preset[] GetMyPreset(MoodleNameType moodleNameType)
     {
+        if (moodleNameType == MoodleNameType.All)
+        {
+            return C.SavedPresets.ToArray();
+        }
+
         var cString = GetCustomString();
         var match = C.SavedPresets.SingleOrDefault(x => PresetMatch(x, moodleNameType, cString));
 
@@ -340,7 +354,7 @@ public static class MoodleCommandProcessor
             }
         }
 
-        return match;
+        return [match];
     }
 
     private static bool PresetMatch(Preset preset, MoodleNameType moodleNameType, string customString)
@@ -363,8 +377,13 @@ public static class MoodleCommandProcessor
         return false;
     }
 
-    private static MyStatus GetMyStatus(MoodleNameType moodleNameType)
+    private static MyStatus[] GetMyStatus(MoodleNameType moodleNameType)
     {
+        if (moodleNameType == MoodleNameType.All)
+        {
+            return C.SavedStatuses.ToArray();
+        }
+
         var cString = GetCustomString();
         var match = C.SavedStatuses.SingleOrDefault(x => StatusMatch(x, moodleNameType, cString));
 
@@ -380,7 +399,7 @@ public static class MoodleCommandProcessor
             }
         }
 
-        return match;
+        return [match];
     }
 
     private static bool StatusMatch(MyStatus myStatus, MoodleNameType moodleNameType, string customString)
@@ -510,7 +529,12 @@ public static class MoodleCommandProcessor
     private static MoodleNameType ParseMoodleNameType(string[] commandArgs)
     {
         var commandString = GetCommandPart(commandArgs, 3);
-        if(commandString != CUSTOM_TAG)
+
+        if (commandString == "all")
+        {
+            return MoodleNameType.All;
+        }
+        else if (commandString != CUSTOM_TAG)
         {
             return MoodleNameType.INVALID;
         }
@@ -564,7 +588,8 @@ public static class MoodleCommandProcessor
     {
         INVALID,
         Name,
-        GUID
+        GUID,
+        All
     }
 
     private class MoodleChatException : Exception
