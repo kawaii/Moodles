@@ -194,11 +194,11 @@ public unsafe class CommonProcessor : IDisposable
                 PluginLog.Debug($"StatusHitEffect on: {x.Player} / {x.statusIcon}");
                 if (x.statusIcon == uint.MaxValue)
                 {
-                    P.Memory.SpawnSHE("dk04ht_canc0h", x.Player.Address, x.Player.Address, -1, 0, 0, 0);
+                    P.Memory.SpawnSHE("dk04ht_canc0h", x.Player.Address, x.Player.Address, -1, char.MinValue, 0, char.MinValue);
                 }
                 else
                 {
-                    P.Memory.SpawnSHE(x.statusIcon, x.Player.Address, x.Player.Address, -1, 0, 0, 0);
+                    P.Memory.SpawnSHE(x.statusIcon, x.Player.Address, x.Player.Address, -1, char.MinValue, 0, char.MinValue);
                 }
             }
             else

@@ -1,4 +1,5 @@
-﻿using ECommons.EzHookManager;
+﻿using Dalamud.Utility;
+using ECommons.EzHookManager;
 
 namespace Moodles;
 public unsafe partial class Memory : IDisposable
@@ -42,15 +43,15 @@ public unsafe partial class Memory : IDisposable
         AtkComponentIconText_ReceiveEventHook.Original(a1, a2, a3, a4, a5);
     }
 
-    internal delegate IntPtr SheApplier(IntPtr path, IntPtr target, IntPtr target2, float speed, byte a5, short a6, byte a7);
+    internal delegate IntPtr SheApplier(string path, IntPtr target, IntPtr target2, float speed, char a5, UInt16 a6, char a7);
     [EzHook("E8 ?? ?? ?? ?? 48 8B D8 48 85 C0 74 27 B2 01", false)]
     internal EzHook<SheApplier> SheApplierHook;
 
-    private IntPtr SheApplierDetour(IntPtr path, IntPtr target, IntPtr target2, float speed, byte a5, short a6, byte a7)
+    private IntPtr SheApplierDetour(string path, IntPtr target, IntPtr target2, float speed, char a5, UInt16 a6, char a7)
     {
         try
         {
-            PluginLog.Information($"SheApplier {Marshal.PtrToStringUTF8(path)}, {target:X16}, {target2:X16}, {speed}, {a5}, {a6}, {a7}");
+            PluginLog.Information($"SheApplier {path}, {target:X16}, {target2:X16}, {speed}, {a5}, {a6}, {a7}");
         }
         catch (Exception e)
         {
@@ -59,11 +60,17 @@ public unsafe partial class Memory : IDisposable
         return SheApplierHook.Original(path, target, target2, speed, a5, a6, a7);
     }
 
-    internal void SpawnSHE(uint iconID, IntPtr target, IntPtr target2, float speed = -1.0f, byte a5 = 0, short a6 = 0, byte a7 = 0)
+    internal void SpawnSHE(uint iconID, IntPtr target, IntPtr target2, float speed = -1.0f, char a5 = char.MinValue, UInt16 a6 = 0, char a7 = char.MinValue)
     {
         try
         {
             string smallPath = Utils.FindVFXPathByIconID(iconID);
+            if (smallPath.IsNullOrWhitespace())
+            {
+                PluginLog.Information($"Path for IconID: {iconID} is empty");
+                return;
+            }
+            PluginLog.Verbose($"Path for IconID: {iconID} is: {smallPath}");
             SpawnSHE(smallPath, target, target2, speed, a5, a6, a7);
         }
         catch (Exception e)
@@ -72,15 +79,21 @@ public unsafe partial class Memory : IDisposable
         }
     }
 
-    internal void SpawnSHE(string path, IntPtr target, IntPtr target2, float speed = -1.0f, byte a5 = 0, short a6 = 0, byte a7 = 0)
+    internal void SpawnSHE(string path, IntPtr target, IntPtr target2, float speed = -1.0f, char a5 = char.MinValue, UInt16 a6 = 0, char a7 = char.MinValue)
     {
         try
         {
-            string fullPath = Utils.GetVfxPath(path);
-            fixed (byte* pPath = Encoding.UTF8.GetBytes(fullPath))
+            if (path.IsNullOrWhitespace())
             {
-                SheApplierHook.Original((IntPtr)pPath, target, target2, speed, a5, a6, a7);
+                PluginLog.Information($"Path for SHE is empty");
+                return;
             }
+
+            string fullPath = Utils.GetVfxPath(path);
+
+            PluginLog.Verbose($"Path for SHE is: {fullPath}");
+
+            SheApplierHook.Original(fullPath, target, target2, speed, a5, a6, a7);
         }
         catch (Exception e)
         {
