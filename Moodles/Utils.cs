@@ -412,8 +412,8 @@ public static unsafe partial class Utils
     {
         foreach (var x in Svc.Data.GetExcelSheet<Status>())
         {
-            if (x.Icon == iconID) return GetVfxPath(x.HitEffect.ValueNullable?.Location.ValueNullable?.Location.ExtractText());
-            if (x.MaxStacks > 1 && iconID >= x.Icon + 1 && iconID < x.Icon + x.MaxStacks) return GetVfxPath(x.HitEffect.ValueNullable?.Location.ValueNullable?.Location.ExtractText());
+            if (x.Icon == iconID) return x.HitEffect.ValueNullable?.Location.ValueNullable?.Location.ExtractText();
+            if (x.MaxStacks > 1 && iconID >= x.Icon + 1 && iconID < x.Icon + x.MaxStacks) return x.HitEffect.ValueNullable?.Location.ValueNullable?.Location.ExtractText();
         }
         return string.Empty;
     }

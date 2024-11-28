@@ -43,7 +43,7 @@ public unsafe partial class Memory : IDisposable
     }
 
     internal delegate IntPtr SheApplier(IntPtr path, IntPtr target, IntPtr target2, float speed, byte a5, short a6, byte a7);
-    [EzHook("E8 ?? ?? ?? ?? 48 8B D8 48 85 C0 74 27 B2 01", true)]
+    [EzHook("E8 ?? ?? ?? ?? 48 8B D8 48 85 C0 74 27 B2 01", false)]
     internal EzHook<SheApplier> SheApplierHook;
 
     private IntPtr SheApplierDetour(IntPtr path, IntPtr target, IntPtr target2, float speed, byte a5, short a6, byte a7)
