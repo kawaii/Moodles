@@ -2,6 +2,7 @@
 using ECommons.GameHelpers;
 using Moodles.Data;
 using Moodles.OtterGuiHandlers;
+using Moodles.Processors;
 using OtterGui.Raii;
 using System.Xml.Linq;
 
@@ -122,6 +123,31 @@ public static class TabMoodles
                 {
                     P.IPCProcessor.StatusModified(Selected.GUID);
                 }
+
+
+                ImGui.TableNextRow();
+
+                ImGui.TableNextColumn();
+                ImGuiEx.TextV($"Custom VFX path:");
+                ImGuiEx.HelpMarker("You may select a custom VFX to play upon application.");
+                ImGui.TableNextColumn();
+                ImGuiEx.SetNextItemFullWidth();
+                var currentPath = Selected.CustomFXPath;
+                if (ImGui.BeginCombo("##vfx", $"VFX: {currentPath}", ImGuiComboFlags.HeightLargest))
+                {
+                    for (var i = 0; i < P.CommonProcessor.StatusEffectPaths.Count; i++)
+                    {
+                        if (ImGui.Selectable(P.CommonProcessor.StatusEffectPaths[i])) Selected.CustomFXPath = P.CommonProcessor.StatusEffectPaths[i];
+                    }
+
+                    if (Selected.CustomFXPath == "Clear")
+                    {
+                        Selected.CustomFXPath = string.Empty;
+                    }
+
+                    ImGui.EndCombo();
+                }
+              
                 ImGui.TableNextRow();
 
                 ImGui.TableNextColumn();

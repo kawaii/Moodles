@@ -15,7 +15,8 @@ public partial class MyStatus
     public string Applier = "";
     public bool Dispelable = false;
     public int Stacks = 1;
-    public Guid StatusOnDispell;
+    public Guid StatusOnDispell = Guid.Empty;
+    public string CustomFXPath = "";
 
     [MemoryPackIgnore] public bool Persistent = false;
 

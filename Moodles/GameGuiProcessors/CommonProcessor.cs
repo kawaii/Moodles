@@ -1,7 +1,7 @@
 ﻿using Dalamud.Game.ClientState.Objects.SubKinds;
 using Dalamud.Game.Text.SeStringHandling;
 using Dalamud.Memory;
-using ECommons;
+using Dalamud.Utility;
 using ECommons.EzEventManager;
 using ECommons.GameHelpers;
 using ECommons.Interop;
@@ -23,6 +23,7 @@ public unsafe class CommonProcessor : IDisposable
     public StatusProcessor StatusProcessor;
     public TargetInfoBuffDebuffProcessor TargetInfoBuffDebuffProcessor;
     public FlyPopupTextProcessor FlyPopupTextProcessor;
+    public readonly List<string> StatusEffectPaths = ["Clear"];
     public readonly HashSet<uint> NegativeStatuses = [];
     public readonly HashSet<uint> PositiveStatuses = [];
     public readonly HashSet<uint> SpecialStatuses = [];
@@ -51,6 +52,13 @@ public unsafe class CommonProcessor : IDisposable
             {
                 IconStackCounts[x.Icon] = x.MaxStacks;
             }
+
+            var fxpath = x.HitEffect.ValueNullable?.Location.ValueNullable?.Location.ExtractText();
+            if (!StatusEffectPaths.Contains(fxpath) && !fxpath.IsNullOrWhitespace())
+            {
+                StatusEffectPaths.Add(fxpath);
+            }
+
             if (NegativeStatuses.Contains(x.RowId) || PositiveStatuses.Contains(x.RowId) || SpecialStatuses.Contains(x.RowId)) continue;
             if (x.CanIncreaseRewards == 1)
             {
@@ -70,6 +78,11 @@ public unsafe class CommonProcessor : IDisposable
                 }
             }
         }
+        foreach (var fxpath in StatusEffectPaths)
+        {
+            PluginLog.Log(fxpath);
+        }
+
         new EzFrameworkUpdate(Tick);
         PartyListProcessor = new();
         StatusCustomProcessor = new();
@@ -106,7 +119,7 @@ public unsafe class CommonProcessor : IDisposable
 
     private void Tick()
     {
-        List<(IPlayerCharacter Player, uint statusIcon)> SHECandidates = [];
+        List<(IPlayerCharacter Player, string customPath)> SHECandidates = [];
         if (HoveringOver != 0)
         {
             if (IsKeyPressed(LimitedKeys.LeftMouseButton)) WasRightMousePressed = false;
@@ -147,7 +160,14 @@ public unsafe class CommonProcessor : IDisposable
                             {
                                 if (!SHECandidates.Any(s => s.Player.AddressEquals(pc)))
                                 {
-                                    SHECandidates.Add((pc, (uint)x.IconID));
+                                    if (x.CustomFXPath.IsNullOrWhitespace())
+                                    {
+                                        SHECandidates.Add((pc, Utils.FindVFXPathByIconID((uint)x.IconID)));
+                                    }
+                                    else
+                                    {
+                                        SHECandidates.Add((pc, x.CustomFXPath));
+                                    }
                                 }
                             }
                         }
@@ -168,7 +188,7 @@ public unsafe class CommonProcessor : IDisposable
                             {
                                 if (!SHECandidates.Any(s => s.Player.AddressEquals(pc)))
                                 {
-                                    SHECandidates.Add((pc, uint.MaxValue));
+                                    SHECandidates.Add((pc, "kill"));
                                 }
                             }
                         }
@@ -191,19 +211,19 @@ public unsafe class CommonProcessor : IDisposable
         {
             if (!C.RestrictSHE || x.Player.AddressEquals(Player.Object) || Utils.GetFriendlist().Contains(x.Player.GetNameWithWorld()) || UniversalParty.Members.Any(z => z.NameWithWorld == x.Player.GetNameWithWorld()) || Vector3.Distance(Player.Object.Position, x.Player.Position) < 15f)
             {
-                PluginLog.Debug($"StatusHitEffect on: {x.Player} / {x.statusIcon}");
-                if (x.statusIcon == uint.MaxValue)
+                PluginLog.Debug($"StatusHitEffect on: {x.Player} / {x.customPath}");
+                if (x.customPath == "kill")
                 {
                     P.Memory.SpawnSHE("dk04ht_canc0h", x.Player.Address, x.Player.Address, -1, char.MinValue, 0, char.MinValue);
                 }
                 else
                 {
-                    P.Memory.SpawnSHE(x.statusIcon, x.Player.Address, x.Player.Address, -1, char.MinValue, 0, char.MinValue);
+                    P.Memory.SpawnSHE(x.customPath, x.Player.Address, x.Player.Address, -1, char.MinValue, 0, char.MinValue);
                 }
             }
             else
             {
-                PluginLog.Debug($"Skipping SHE on {x.Player} / {x.statusIcon}");
+                PluginLog.Debug($"Skipping SHE on {x.Player} / {x.customPath}");
             }
         }
     }
