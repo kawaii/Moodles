@@ -408,6 +408,18 @@ public static unsafe partial class Utils
         return 1;
     }
 
+    public static string FindVFXPathByIconID(uint iconID)
+    {
+        foreach (var x in Svc.Data.GetExcelSheet<Status>())
+        {
+            if (x.Icon == iconID) return x.HitEffect.ValueNullable?.Location.ValueNullable?.Location.ExtractText();
+            if (x.MaxStacks > 1 && iconID >= x.Icon + 1 && iconID < x.Icon + x.MaxStacks) return x.HitEffect.ValueNullable?.Location.ValueNullable?.Location.ExtractText();
+        }
+        return string.Empty;
+    }
+
+    public static string GetVfxPath(string path) => string.IsNullOrEmpty(path) ? "" : $"vfx/common/eff/{path}.avfx";
+
     public static MyStatus PrepareToApply(this MyStatus status, params PrepareOptions[] opts)
     {
         status = status.JSONClone();
