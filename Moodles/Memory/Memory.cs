@@ -21,21 +21,21 @@ public unsafe partial class Memory : IDisposable
         try
         {
             //PluginLog.Debug($"{a1:X16}, {a2}, {a3:X16}, {a4:X16}, {a5:X16}");
-            if(a2 == 6)
+            if (a2 == 6)
             {
                 P.CommonProcessor.HoveringOver = a1;
             }
-            if(a2 == 7)
+            if (a2 == 7)
             {
                 P.CommonProcessor.HoveringOver = 0;
             }
-            if(a2 == 9 && P.CommonProcessor.WasRightMousePressed)
+            if (a2 == 9 && P.CommonProcessor.WasRightMousePressed)
             {
                 P.CommonProcessor.CancelRequests.Add(a1);
                 P.CommonProcessor.HoveringOver = 0;
             }
         }
-        catch(Exception e)
+        catch (Exception e)
         {
             e.Log();
         }
@@ -61,16 +61,30 @@ public unsafe partial class Memory : IDisposable
 
     internal void SpawnSHE(uint iconID, IntPtr target, IntPtr target2, float speed = -1.0f, byte a5 = 0, short a6 = 0, byte a7 = 0)
     {
-        string smallPath = Utils.FindVFXPathByIconID(iconID);
-        SpawnSHE(smallPath, target, target2, speed, a5, a6, a7);
+        try
+        {
+            string smallPath = Utils.FindVFXPathByIconID(iconID);
+            SpawnSHE(smallPath, target, target2, speed, a5, a6, a7);
+        }
+        catch (Exception e)
+        {
+            e.Log();
+        }
     }
 
     internal void SpawnSHE(string path, IntPtr target, IntPtr target2, float speed = -1.0f, byte a5 = 0, short a6 = 0, byte a7 = 0)
     {
-        string fullPath = Utils.GetVfxPath(path);
-        fixed (byte* pPath = Encoding.UTF8.GetBytes(fullPath))
+        try
         {
-            SheApplierHook.Original((IntPtr)pPath, target, target2, speed, a5, a6, a7);
+            string fullPath = Utils.GetVfxPath(path);
+            fixed (byte* pPath = Encoding.UTF8.GetBytes(fullPath))
+            {
+                SheApplierHook.Original((IntPtr)pPath, target, target2, speed, a5, a6, a7);
+            }
+        }
+        catch (Exception e)
+        {
+            e.Log();
         }
     }
 
