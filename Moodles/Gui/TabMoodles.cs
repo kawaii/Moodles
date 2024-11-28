@@ -269,11 +269,21 @@ public static class TabMoodles
                 ImGui.TableNextRow();
 
                 ImGui.TableNextColumn();
+                ImGuiEx.TextV($"Apply on Dispell:");
+                ImGuiEx.HelpMarker("The selected Moodle gets applied automatically upon ANY dispell of the current Moodle.");
+
+                ImGui.TableNextColumn();
                 ImGuiEx.SetNextItemFullWidth();
-                
-                if (ImGui.BeginCombo("##addnew", "Apply Moodle On Dispell..."))
+
+                string information = "Apply Moodle On Dispell...";
+
+                if (C.SavedStatuses.Where(v => v.GUID == Selected.StatusOnDispell).TryGetFirst(out MyStatus myStat))
                 {
-                    ImGuiEx.HelpMarker("The selected Moodle gets applied automatically upon ANY dispell of the current Moodle.");
+                    information = P.OtterGuiHandler.MoodleFileSystem.TryGetPathByID(myStat.GUID, out var path) ? path : myStat.GUID.ToString();
+                }
+
+                if (ImGui.BeginCombo("##addnew", information, ImGuiComboFlags.HeightLargest))
+                {
                     ImGuiEx.SetNextItemFullWidth();
                     ImGui.InputTextWithHint("##search", "Filter", ref Filter, 50);
 
@@ -311,27 +321,6 @@ public static class TabMoodles
                         }
                     }
                     ImGui.EndCombo();
-                }
-
-                ImGui.TableNextColumn();
-
-                if (Selected.StatusOnDispell != Guid.Empty)
-                {
-                    foreach (var status in C.SavedStatuses)
-                    {
-                        if (status.GUID != Selected.StatusOnDispell) continue;
-
-                        var statusId = Selected.StatusOnDispell;
-                        var statusPath = P.OtterGuiHandler.MoodleFileSystem.TryGetPathByID(statusId, out var path) ? path : statusId.ToString();
-
-                        if (ThreadLoadImageHandler.TryGetIconTextureWrap(status.AdjustedIconID, false, out var tex))
-                        {
-                            ImGui.Image(tex.ImGuiHandle, UI.StatusIconSize * 0.75f);
-                            ImGui.SameLine();
-                        }
-                        ImGuiEx.TextV($"{statusPath}");
-                        ImGuiEx.Tooltip($"{status.Title}\n\n{status.Description}");
-                    }
                 }
 
                 ImGui.EndTable();
