@@ -74,7 +74,7 @@ public partial class MyStatus
     }
 
     public MoodlesStatusInfo ToStatusInfoTuple()
-        => (GUID, IconID, Title, Description, Type, Applier, Dispelable, Stacks, Persistent, Days, Hours, Minutes, Seconds, NoExpire, AsPermanent, StatusOnDispell);
+        => (GUID, IconID, Title, Description, Type, Applier, Dispelable, Stacks, Persistent, Days, Hours, Minutes, Seconds, NoExpire, AsPermanent, StatusOnDispell, CustomFXPath);
 
     public static MyStatus FromStatusInfoTuple(MoodlesStatusInfo statusInfo)
     {
@@ -96,6 +96,7 @@ public partial class MyStatus
             NoExpire = statusInfo.NoExpire,
             AsPermanent = statusInfo.AsPermanent,
             StatusOnDispell = statusInfo.StatusOnDispell,
+            CustomFXPath = statusInfo.CustomVFXPath
         };
     }
 }

@@ -30,7 +30,8 @@ global using MoodlesStatusInfo = (
     int Seconds,
     bool NoExpire,
     bool AsPermanent,
-    System.Guid StatusOnDispell
+    System.Guid StatusOnDispell,
+    string CustomVFXPath
 );
 
 
