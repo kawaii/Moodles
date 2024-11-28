@@ -65,7 +65,7 @@ public static unsafe class UI
             if(ImGui.Button("Do"))
             {
                 var addr = Svc.Targets.Target?.Address ?? Player.Object.Address;
-                P.Memory.ApplyStatusHitEffectHook.Original((StatusHitEffectKind)ID, addr, addr, sa4, (byte)sa5, (short)sa6, (byte)sa7);
+                P.Memory.SpawnSHE((uint)ID, addr, addr, sa4, (byte)sa5, (short)sa6, (byte)sa7);
             }
             if(ImGui.Button("Do (all players)"))
             {
@@ -74,7 +74,7 @@ public static unsafe class UI
                     if(x is IPlayerCharacter pc)
                     {
                         var addr = pc.Address;
-                        P.Memory.ApplyStatusHitEffectHook.Original((StatusHitEffectKind)ID, addr, addr, sa4, (byte)sa5, (short)sa6, (byte)sa7);
+                        P.Memory.SpawnSHE((uint)ID, addr, addr, sa4, (byte)sa5, (short)sa6, (byte)sa7);
                     }
                 }
             }

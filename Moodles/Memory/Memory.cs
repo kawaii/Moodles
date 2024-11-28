@@ -42,21 +42,36 @@ public unsafe partial class Memory : IDisposable
         AtkComponentIconText_ReceiveEventHook.Original(a1, a2, a3, a4, a5);
     }
 
-    internal delegate nint ApplyStatusHitEffect(StatusHitEffectKind kind, nint target, nint target2, float speed, byte a5, short a6, byte a7);
-    [EzHook("40 53 55 56 57 48 81 EC ?? ?? ?? ?? 0F 29 B4 24 ?? ?? ?? ?? 48 8B 05 ?? ?? ?? ?? 48 33 C4 48 89 84 24 ?? ?? ?? ?? 48 8B 05", false)]
-    internal EzHook<ApplyStatusHitEffect> ApplyStatusHitEffectHook;
+    internal delegate IntPtr SheApplier(IntPtr path, IntPtr target, IntPtr target2, float speed, byte a5, short a6, byte a7);
+    [EzHook("E8 ?? ?? ?? ?? 48 8B D8 48 85 C0 74 27 B2 01", true)]
+    internal EzHook<SheApplier> SheApplierHook;
 
-    private nint ApplyStatusHitEffectDetour(StatusHitEffectKind kind, nint target, nint target2, float speed, byte a5, short a6, byte a7)
+    private IntPtr SheApplierDetour(IntPtr path, IntPtr target, IntPtr target2, float speed, byte a5, short a6, byte a7)
     {
         try
         {
-            PluginLog.Information($"ApplyStatusHitEffectDetour {kind}, {target:X16}, {target2:X16}, {speed}, {a5}, {a6}, {a7}");
+            PluginLog.Information($"SheApplier {Marshal.PtrToStringUTF8(path)}, {target:X16}, {target2:X16}, {speed}, {a5}, {a6}, {a7}");
         }
-        catch(Exception e)
+        catch (Exception e)
         {
             e.Log();
         }
-        return ApplyStatusHitEffectHook.Original(kind, target, target2, speed, a5, a6, a7);
+        return SheApplierHook.Original(path, target, target2, speed, a5, a6, a7);
+    }
+
+    internal void SpawnSHE(uint iconID, IntPtr target, IntPtr target2, float speed = -1.0f, byte a5 = 0, short a6 = 0, byte a7 = 0)
+    {
+        string smallPath = Utils.FindVFXPathByIconID(iconID);
+        SpawnSHE(smallPath, target, target2, speed, a5, a6, a7);
+    }
+
+    internal void SpawnSHE(string path, IntPtr target, IntPtr target2, float speed = -1.0f, byte a5 = 0, short a6 = 0, byte a7 = 0)
+    {
+        string fullPath = Utils.GetVfxPath(path);
+        fixed (byte* pPath = Encoding.UTF8.GetBytes(fullPath))
+        {
+            SheApplierHook.Original((IntPtr)pPath, target, target2, speed, a5, a6, a7);
+        }
     }
 
     public void Dispose()
