@@ -158,8 +158,24 @@ public class IPCProcessor : IDisposable
     /// </summary>
     /// <param name="ptr"> The object address to search for in the object table. </param>
     [EzIPC("ClearStatusManagerByPtr")]
-    private void ClearStatusManager(nint ptr) => ClearStatusManager((IPlayerCharacter)Svc.Objects.CreateObjectReference(ptr));
+    private void ClearStatusManager(nint ptr)
+    {
+        if (ptr == nint.Zero)
+        {
+            PluginLog.LogWarning("[IPC] Clear Status Manager Ptr is 0");
+            return;
+        }
 
+        var gameObjectReference = Svc.Objects.CreateObjectReference(ptr);
+        if (gameObjectReference == null)
+        {
+            PluginLog.LogWarning("[IPC] Clear Status Manager Game Object Reference is NULL");
+            return;
+        }
+
+        var ipc = (IPlayerCharacter)gameObjectReference;
+        ClearStatusManager(ipc);
+    }
 
     /// <summary> 
     /// Attempts to clear the active Moodles on a player using the IPlayerCharacter object reference.
@@ -169,6 +185,12 @@ public class IPCProcessor : IDisposable
     [EzIPC("ClearStatusManagerByPC")]
     private void ClearStatusManager(IPlayerCharacter pc)
     {
+        if (pc == null)
+        {
+            PluginLog.LogWarning("[IPC] Clear Status Manager PC is NULL");
+            return;
+        }
+
         var m = pc.GetMyStatusManager();
         foreach(var s in m.Statuses)
         {
