@@ -31,7 +31,8 @@ global using MoodlesStatusInfo = (
     bool NoExpire,
     bool AsPermanent,
     System.Guid StatusOnDispell,
-    string CustomVFXPath
+    string CustomVFXPath,
+    bool StackOnReapply
 );
 
 

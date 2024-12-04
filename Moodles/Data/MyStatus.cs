@@ -17,6 +17,8 @@ public partial class MyStatus
     public int Stacks = 1;
     public Guid StatusOnDispell = Guid.Empty;
     public string CustomFXPath = "";
+    public bool StackOnReapply = false;
+
 
     [MemoryPackIgnore] public bool Persistent = false;
 
@@ -74,7 +76,7 @@ public partial class MyStatus
     }
 
     public MoodlesStatusInfo ToStatusInfoTuple()
-        => (GUID, IconID, Title, Description, Type, Applier, Dispelable, Stacks, Persistent, Days, Hours, Minutes, Seconds, NoExpire, AsPermanent, StatusOnDispell, CustomFXPath);
+        => (GUID, IconID, Title, Description, Type, Applier, Dispelable, Stacks, Persistent, Days, Hours, Minutes, Seconds, NoExpire, AsPermanent, StatusOnDispell, CustomFXPath, StackOnReapply);
 
     public static MyStatus FromStatusInfoTuple(MoodlesStatusInfo statusInfo)
     {
@@ -96,7 +98,8 @@ public partial class MyStatus
             NoExpire = statusInfo.NoExpire,
             AsPermanent = statusInfo.AsPermanent,
             StatusOnDispell = statusInfo.StatusOnDispell,
-            CustomFXPath = statusInfo.CustomVFXPath
+            CustomFXPath = statusInfo.CustomVFXPath,
+            StackOnReapply = statusInfo.StackOnReapply
         };
     }
 }
