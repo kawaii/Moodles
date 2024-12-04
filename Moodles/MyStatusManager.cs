@@ -20,12 +20,14 @@ public class MyStatusManager
 
     public void AddOrUpdate(MyStatus newStatus, bool Unchecked = false, bool triggerEvent = true)
     {
-        if(!newStatus.IsNotNull())
+        // Do not add null statuses
+        if (!newStatus.IsNotNull())
         {
             PluginLog.Error($"Status {newStatus} was not added because it is null");
             return;
         }
-        if(!Unchecked)
+        // Do not add statuses with invalid data
+        if (!Unchecked)
         {
             if(!newStatus.IsValid(out var error))
             {
@@ -33,16 +35,37 @@ public class MyStatusManager
                 return;
             }
         }
-        for(var i = 0; i < Statuses.Count; i++)
+        // check to see if the status is already present.
+        for (var i = 0; i < Statuses.Count; i++)
         {
             if(Statuses[i].GUID == newStatus.GUID)
             {
+                // use newStatus to check, in case we changed the setting between applications. Performs stack count updating.
+                if (newStatus.StackOnReapply)
+                {
+                    var newStackCount = Statuses[i].Stacks;
+                    // if this is valid, altar the newStatus stack count on reapplication to be current stack count + 1, if possible.
+                    if (P.CommonProcessor.IconStackCounts.TryGetValue((uint)newStatus.IconID, out var maxStacks) && maxStacks > 1)
+                    {
+                        if (Statuses[i].Stacks + 1 <= maxStacks)
+                        {
+                            newStackCount++;
+                            // remove status GUID from addTextShown so it can be shown again with the new stack on the next tick.
+                            AddTextShown.Remove(newStatus.GUID);
+                        }
+                    }
+                    // update stack count.
+                    newStatus.Stacks = newStackCount;
+                }
+                // then update the status with the new status.
                 Statuses[i] = newStatus;
+                // fire trigger if needed and then early return.
                 if(triggerEvent) NeedFireEvent = true;
                 return;
             }
         }
-        if(triggerEvent) NeedFireEvent = true;
+        // if it was new, fire event if needed and add it.
+        if (triggerEvent) NeedFireEvent = true;
         Statuses.Add(newStatus);
     }
 

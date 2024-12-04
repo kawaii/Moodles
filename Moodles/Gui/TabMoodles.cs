@@ -165,13 +165,22 @@ public static class TabMoodles
                 {
                     for(var i = 1; i <= maxStacks; i++)
                     {
-                        if(ImGui.Selectable($"{i}")) Selected.Stacks = i;
+                        if (ImGui.Selectable($"{i}"))
+                        {
+                            Selected.Stacks = i;
+                            // Inform IPC of change after adjusting stack count.
+                            P.IPCProcessor.StatusModified(Selected.GUID);
+                        }
                     }
                     ImGui.EndCombo();
                 }
                 if(maxStacks <= 1) ImGui.EndDisabled();
                 if(Selected.Stacks > maxStacks) Selected.Stacks = maxStacks;
-                if(Selected.Stacks < 1) Selected.Stacks = 1;
+                if (Selected.Stacks < 1)
+                {
+                    Selected.Stacks = 1;
+                    Selected.StackOnReapply = false;
+                }
                 ImGui.TableNextRow();
 
                 ImGui.TableNextColumn();
@@ -196,57 +205,27 @@ public static class TabMoodles
                 ImGui.TableNextRow();
 
                 ImGui.TableNextColumn();
-                ImGuiEx.TextV($"Applicant:");
-                ImGuiEx.HelpMarker("Indicates who applied the Moodle. Changes the colour of the duration counter to be green if the character name and world resolve to yourself.");
-                ImGui.TableNextColumn();
-                ImGuiEx.SetNextItemFullWidth();
-                ImGui.InputTextWithHint("##applier", "Player Name@World", ref Selected.Applier, 150, C.Censor ? ImGuiInputTextFlags.Password : ImGuiInputTextFlags.None);
-                if(ImGui.IsItemDeactivatedAfterEdit())
-                {
-                    P.IPCProcessor.StatusModified(Selected.GUID);
-                }
-                ImGui.TableNextRow();
-
-                ImGui.TableNextColumn();
                 ImGuiEx.TextV($"Category:");
                 ImGui.TableNextColumn();
                 ImGuiEx.SetNextItemFullWidth();
-                if(ImGuiEx.EnumRadio(ref Selected.Type, true))
+                if (ImGuiEx.EnumRadio(ref Selected.Type, true))
                 {
                     P.IPCProcessor.StatusModified(Selected.GUID);
                 }
-
-
-                if(P.CommonProcessor.DispelableIcons.Contains((uint)Selected.IconID))
-                {
-                    ImGui.TableNextRow();
-
-                    ImGui.TableNextColumn();
-                    ImGuiEx.TextV($"Dispellable:");
-                    ImGuiEx.HelpMarker("Applies the dispellable indicator to this Moodle implying it can be removed via the use of Esuna. Only available for icons representing negative status effects.");
-                    ImGui.TableNextColumn();
-                    ImGuiEx.SetNextItemFullWidth();
-                    if(ImGui.Checkbox("##dispel", ref Selected.Dispelable))
-                    {
-                        P.IPCProcessor.StatusModified(Selected.GUID);
-                    }
-                }
-
                 ImGui.TableNextRow();
 
                 ImGui.TableNextColumn();
                 ImGuiEx.TextV($"Duration:");
-                if(Selected.TotalDurationSeconds < 1 && !Selected.NoExpire)
+                if (Selected.TotalDurationSeconds < 1 && !Selected.NoExpire)
                 {
                     ImGuiEx.HelpMarker("Duration must be at least 1 second", EColor.RedBright, FontAwesomeIcon.ExclamationTriangle.ToIconString());
                 }
                 ImGui.TableNextColumn();
 
-                if(Utils.DurationSelector("Permanent", ref Selected.NoExpire, ref Selected.Days, ref Selected.Hours, ref Selected.Minutes, ref Selected.Seconds))
+                if (Utils.DurationSelector("Permanent", ref Selected.NoExpire, ref Selected.Days, ref Selected.Hours, ref Selected.Minutes, ref Selected.Seconds))
                 {
                     P.IPCProcessor.StatusModified(Selected.GUID);
                 }
-
                 ImGui.TableNextRow();
 
                 ImGui.TableNextColumn();
@@ -254,18 +233,38 @@ public static class TabMoodles
                 ImGuiEx.HelpMarker("When manually applied outside the scope of an automation preset, this Moodle will not be removed or overridden unless you right-click it off.");
                 ImGui.TableNextColumn();
                 ImGuiEx.SetNextItemFullWidth();
-                if(ImGui.Checkbox($"##sticky", ref Selected.AsPermanent))
+                if (ImGui.Checkbox($"##sticky", ref Selected.AsPermanent))
                 {
                     P.IPCProcessor.StatusModified(Selected.GUID);
                 }
 
-                ImGui.TableNextColumn();
-                ImGuiEx.TextV($"ID:");
-                ImGuiEx.HelpMarker("Used in commands to apply moodle.");
-                ImGui.TableNextColumn();
-                ImGuiEx.SetNextItemFullWidth();
-                ImGui.InputText($"##id-text", Encoding.UTF8.GetBytes(Selected.ID), 36, ImGuiInputTextFlags.ReadOnly);
+                if (P.CommonProcessor.DispelableIcons.Contains((uint)Selected.IconID))
+                {
+                    ImGui.TableNextRow();
 
+                    ImGui.TableNextColumn();
+                    ImGuiEx.TextV($"Imply Dispellable:");
+                    ImGuiEx.HelpMarker("Applies the dispellable indicator to this Moodle implying it can be removed via the use of Esuna. Only available for icons representing negative status effects.");
+                    ImGui.TableNextColumn();
+                    ImGuiEx.SetNextItemFullWidth();
+                    if (ImGui.Checkbox("##dispel", ref Selected.Dispelable))
+                    {
+                        P.IPCProcessor.StatusModified(Selected.GUID);
+                    }
+                }
+
+                if (maxStacks > 1)
+                {
+                    ImGui.TableNextColumn();
+                    ImGuiEx.TextV($"Stack on Reapply:");
+                    ImGuiEx.HelpMarker("When reapplying this Moodle, the stack count will increase by the number of stacks applied.");
+                    ImGui.TableNextColumn();
+                    ImGuiEx.SetNextItemFullWidth();
+                    if (ImGui.Checkbox("##stackonreapply", ref Selected.StackOnReapply))
+                    {
+                        P.IPCProcessor.StatusModified(Selected.GUID);
+                    }
+                }
                 ImGui.TableNextRow();
 
                 ImGui.TableNextColumn();
@@ -323,10 +322,28 @@ public static class TabMoodles
                     ImGui.EndCombo();
                 }
 
+                ImGui.TableNextColumn();
+                ImGuiEx.TextV($"Applicant:");
+                ImGuiEx.HelpMarker("Indicates who applied the Moodle. Changes the colour of the duration counter to be green if the character name and world resolve to yourself.");
+                ImGui.TableNextColumn();
+                ImGuiEx.SetNextItemFullWidth();
+                ImGui.InputTextWithHint("##applier", "Player Name@World", ref Selected.Applier, 150, C.Censor ? ImGuiInputTextFlags.Password : ImGuiInputTextFlags.None);
+                if (ImGui.IsItemDeactivatedAfterEdit())
+                {
+                    P.IPCProcessor.StatusModified(Selected.GUID);
+                }
+
+                ImGui.TableNextColumn();
+                ImGuiEx.TextV($"ID:");
+                ImGuiEx.HelpMarker("Used in commands to apply moodle.");
+                ImGui.TableNextColumn();
+                ImGuiEx.SetNextItemFullWidth();
+                ImGui.InputText($"##id-text", Encoding.UTF8.GetBytes(Selected.ID), 36, ImGuiInputTextFlags.ReadOnly);
+
                 ImGui.EndTable();
             }
 
-            if(Selected.IconID != 0 && ThreadLoadImageHandler.TryGetIconTextureWrap(Selected.AdjustedIconID, true, out var image))
+            if (Selected.IconID != 0 && ThreadLoadImageHandler.TryGetIconTextureWrap(Selected.AdjustedIconID, true, out var image))
             {
                 ImGui.SetCursorPos(cur);
                 ImGui.Image(image.ImGuiHandle, UI.StatusIconSize * 2);
