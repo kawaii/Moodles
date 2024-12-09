@@ -142,7 +142,7 @@ public static class MoodleCommandProcessor
                 }
                 else
                 {
-                    statusManager.AddOrUpdate(myStatus.PrepareToApply(myStatus.Persistent ? PrepareOptions.Persistent : PrepareOptions.NoOption));
+                    statusManager.AddOrUpdate(myStatus.PrepareToApply(myStatus.Persistent ? PrepareOptions.Persistent : PrepareOptions.NoOption), UpdateSource.StatusTuple);
                 }
             }
             else if (moodleState == MoodleState.Remove)

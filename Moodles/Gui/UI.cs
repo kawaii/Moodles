@@ -320,7 +320,7 @@ public static unsafe class UI
                     Status.GUID = Guid.NewGuid();
                     Status.ExpiresAt = Utils.Time + Duration * 1000;
                     if(Duration == 0) Status.ExpiresAt = long.MaxValue;
-                    manager.AddOrUpdate(Status.JSONClone());
+                    manager.AddOrUpdate(Status.JSONClone(), UpdateSource.StatusTuple);
                 }
                 ImGui.SameLine();
                 if(ImGui.Button("Randomize and add"))
@@ -333,7 +333,7 @@ public static unsafe class UI
                     Status.Seconds = Random.Shared.Next(5, 60);
                     if(Random.Shared.Next(20) == 0) Status.Minutes = Random.Shared.Next(5, 60);
                     if(Random.Shared.Next(100) == 0) Status.Hours = Random.Shared.Next(5, 60);
-                    manager.AddOrUpdate(Status.JSONClone().PrepareToApply());
+                    manager.AddOrUpdate(Status.JSONClone().PrepareToApply(), UpdateSource.StatusTuple);
                 }
                 ImGui.SameLine();
                 ImGui.SetNextItemWidth(100f);
@@ -355,7 +355,7 @@ public static unsafe class UI
                         if(Random.Shared.Next(20) == 0) Status.Minutes = Random.Shared.Next(5, 60);
                         if(Random.Shared.Next(100) == 0) Status.Hours = Random.Shared.Next(5, 60);
                         var array = Svc.Objects.Where(x => x is IPlayerCharacter pc && pc.IsTargetable).Cast<IPlayerCharacter>().ToArray();
-                        Utils.GetMyStatusManager(array[Random.Shared.Next(array.Length)]).AddOrUpdate(Status.JSONClone().PrepareToApply());
+                        Utils.GetMyStatusManager(array[Random.Shared.Next(array.Length)]).AddOrUpdate(Status.JSONClone().PrepareToApply(), UpdateSource.StatusTuple);
                     }
                 }
                 ImGui.SameLine();
@@ -366,7 +366,7 @@ public static unsafe class UI
                 ImGui.SameLine();
                 if(ImGui.Button("Apply bin") && TryParseByteArray(Paste(), out var a))
                 {
-                    manager.Apply(a);
+                    manager.Apply(a, UpdateSource.DataString);
                 }
                 ImGui.Separator();
             }

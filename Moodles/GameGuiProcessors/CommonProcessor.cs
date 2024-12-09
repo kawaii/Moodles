@@ -138,7 +138,7 @@ public unsafe class CommonProcessor : IDisposable
                     {
                         if (status.GUID != x.Status.StatusOnDispell) continue;
 
-                        x.StatusManager.AddOrUpdate(status.PrepareToApply(status.Persistent ? PrepareOptions.Persistent : PrepareOptions.NoOption));
+                        x.StatusManager.AddOrUpdate(status.PrepareToApply(status.Persistent ? PrepareOptions.Persistent : PrepareOptions.NoOption), UpdateSource.StatusTuple);
                     }
                 }
             }
