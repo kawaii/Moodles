@@ -18,7 +18,7 @@ public class MyStatusManager
     internal IPlayerCharacter Owner => (IPlayerCharacter)Svc.Objects.FirstOrDefault(x => x is IPlayerCharacter pc && pc.GetNameWithWorld() == C.StatusManagers.FirstOrDefault(s => s.Value == this).Key);
     [NonSerialized] internal bool NeedFireEvent = false;
 
-    public void AddOrUpdate(MyStatus newStatus, bool Unchecked = false, bool triggerEvent = true)
+    public void AddOrUpdate(MyStatus newStatus, UpdateSource source, bool Unchecked = false, bool triggerEvent = true)
     {
         // Do not add null statuses
         if (!newStatus.IsNotNull())
@@ -43,11 +43,13 @@ public class MyStatusManager
                 // use newStatus to check, in case we changed the setting between applications. Performs stack count updating.
                 if (newStatus.StackOnReapply)
                 {
+                    // Keep the current stack count set to the status.
                     var newStackCount = Statuses[i].Stacks;
-                    // if this is valid, altar the newStatus stack count on reapplication to be current stack count + 1, if possible.
-                    if (P.CommonProcessor.IconStackCounts.TryGetValue((uint)newStatus.IconID, out var maxStacks) && maxStacks > 1)
+
+                    // If valid, increase the stack count by 1 on reapplication is source is StatusTuple.
+                    if (source is UpdateSource.StatusTuple && P.CommonProcessor.IconStackCounts.TryGetValue((uint)newStatus.IconID, out var max) && max > 1)
                     {
-                        if (Statuses[i].Stacks + 1 <= maxStacks)
+                        if (Statuses[i].Stacks + 1 <= max)
                         {
                             newStackCount++;
                             // remove status GUID from addTextShown so it can be shown again with the new stack on the next tick.
@@ -112,7 +114,7 @@ public class MyStatusManager
             {
                 if(!Ignore.Contains(status.GUID))
                 {
-                    AddOrUpdate(Utils.PrepareToApply(status));
+                    AddOrUpdate(Utils.PrepareToApply(status), UpdateSource.StatusTuple);
                 }
             }
         }
@@ -147,21 +149,21 @@ public class MyStatusManager
         return Statuses.Select(x => x.ToStatusInfoTuple()).ToList();
     }
 
-    public void Apply(byte[] data) => SetStatusesAsEphemeral(MemoryPackSerializer.Deserialize<List<MyStatus>>(data));
+    public void Apply(byte[] data, UpdateSource source) => SetStatusesAsEphemeral(MemoryPackSerializer.Deserialize<List<MyStatus>>(data), source);
 
-    public void Apply(string base64string)
+    public void Apply(string base64string, UpdateSource source = UpdateSource.DataString)
     {
         if(base64string.IsNullOrEmpty())
         {
-            SetStatusesAsEphemeral(Array.Empty<MyStatus>());
+            SetStatusesAsEphemeral(Array.Empty<MyStatus>(), source);
         }
         else
         {
-            Apply(Convert.FromBase64String(base64string));
+            Apply(Convert.FromBase64String(base64string), source);
         }
     }
 
-    public void SetStatusesAsEphemeral(IEnumerable<MyStatus> newStatusList)
+    public void SetStatusesAsEphemeral(IEnumerable<MyStatus> newStatusList, UpdateSource source)
     {
         try
         {
@@ -176,7 +178,7 @@ public class MyStatusManager
             {
                 if(x.ExpiresAt > Utils.Time)
                 {
-                    AddOrUpdate(x, true, false);
+                    AddOrUpdate(x, source, true, false);
                 }
             }
             Ephemeral = true;

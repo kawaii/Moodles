@@ -122,7 +122,7 @@ public class IPCProcessor : IDisposable
                 {
                     if(C.WhitelistGSpeak.Any(w => w.CheckStatus(perms, x.NoExpire)))
                     {
-                        sm.AddOrUpdate(MyStatus.FromStatusInfoTuple(x).PrepareToApply(), false, true);
+                        sm.AddOrUpdate(MyStatus.FromStatusInfoTuple(x).PrepareToApply(), UpdateSource.StatusTuple, false, true);
                     }
                 }
             }
@@ -374,21 +374,16 @@ public class IPCProcessor : IDisposable
     /// <param name="guid"> The Identifier for the existing Profile. </param>
     /// <returns> The profile info tuple of the profile if it exists, otherwise a default tuple. </returns>
     [EzIPC("GetRegisteredPresetInfo")]
-    private (Guid, List<Guid>) GetRegisteredPresetInfo(Guid guid)
+    private MoodlePresetInfo GetRegisteredPresetInfo(Guid guid)
     {
+        // Return the preset info tuple if invalid.
         if(C.SavedPresets.TryGetFirst(x => x.GUID == guid, out var preset))
         {
-            var ret = new List<Guid>();
-            foreach(var x in preset.Statuses)
-            {
-                if(C.SavedStatuses.TryGetFirst(z => z.GUID == x, out var status))
-                {
-                    ret.Add(status.GUID);
-                }
-            }
-            return (guid, ret);
+            return preset.ToPresetInfoTuple();
         }
-        return (Guid.Empty, null);
+
+        // return empty preset if invalid.
+        return new MoodlePresetInfo(Guid.Empty, new List<Guid>(), PresetApplicationType.UpdateExisting, "");
     }
 
     /// <summary>
@@ -400,20 +395,12 @@ public class IPCProcessor : IDisposable
     /// </summary>
     /// <returns> A list of profile info tuples containing the profile information. </returns>
     [EzIPC("GetRegisteredPresetsInfo")]
-    private List<(Guid, List<Guid>)> GetRegisteredPresetsInfo()
+    private List<MoodlePresetInfo> GetRegisteredPresetsInfo()
     {
-        var ret = new List<(Guid, List<Guid>)>();
+        var ret = new List<MoodlePresetInfo>();
         foreach(var x in C.SavedPresets)
         {
-            var statusList = new List<Guid>();
-            foreach(var y in x.Statuses)
-            {
-                if(C.SavedStatuses.TryGetFirst(z => z.GUID == y, out var status))
-                {
-                    statusList.Add(status.GUID);
-                }
-            }
-            ret.Add((x.GUID, statusList));
+            ret.Add(x.ToPresetInfoTuple());
         }
         return ret;
     }
@@ -478,7 +465,7 @@ public class IPCProcessor : IDisposable
             if(!sm.Ephemeral)
             {
                 PluginLog.LogDebug($"Adding or Updating Moodle {status.Title} to {pc.GetNameWithWorld()}");
-                sm.AddOrUpdate(status.PrepareToApply(), false, true);
+                sm.AddOrUpdate(status.PrepareToApply(), UpdateSource.StatusTuple, false, true);
             }
         }
     }

@@ -79,10 +79,17 @@ public static class TabPresets
             }
             if(dis) ImGui.EndDisabled();
 
-            ImGuiEx.TextV("On application:");
-            ImGui.SameLine();
-            ImGuiEx.SetNextItemFullWidth();
-            if(ImGuiEx.EnumCombo("##on", ref Selected.ApplicationType, ApplicationTypes))
+            ImGui.Separator();
+
+            ImGui.SetNextItemWidth(ImGui.GetContentRegionAvail().X - 150);
+            ImGui.InputTextWithHint("Rename Preset", "Give preset a name", ref Selected.Title, 100, C.Censor ? ImGuiInputTextFlags.Password : ImGuiInputTextFlags.None);
+            if(ImGui.IsItemDeactivatedAfterEdit())
+            {
+                P.IPCProcessor.PresetModified(Selected.GUID);
+            }
+
+            ImGui.SetNextItemWidth(ImGui.GetContentRegionAvail().X - 150);
+            if (ImGuiEx.EnumCombo("Application Effect##on", ref Selected.ApplicationType, ApplicationTypes))
             {
                 P.IPCProcessor.PresetModified(Selected.GUID);
             }

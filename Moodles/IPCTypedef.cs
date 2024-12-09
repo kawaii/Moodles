@@ -35,4 +35,11 @@ global using MoodlesStatusInfo = (
     bool StackOnReapply
 );
 
+global using MoodlePresetInfo = (
+    System.Guid GUID,
+    System.Collections.Generic.List<System.Guid> Statuses,
+    Moodles.Data.PresetApplicationType ApplicationType,
+    string Title
+);
+
 
