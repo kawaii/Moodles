@@ -83,6 +83,26 @@ public class IPCProcessor : IDisposable
         });
     }
 
+    /// <summary>
+    /// Only called upon by GagSpeak to apply a status to the client player via a status Tuple.
+    /// This is appended as a GagSpeak. Event to prevent exploitive bypass of whitelist permissions required otherwise.
+    /// 
+    /// All calls made from this with GagSpeak are for the purpose of "trying on" Moodles downloaded 
+    /// from a database holding Moodle Statuses to share with others.
+    /// </summary>
+    [EzIPCEvent("GagSpeak.TryOnMoodleStatus", false)]
+    private void TryOnMoodleStatus(MoodlesStatusInfo status)
+    {
+        new TickScheduler(() =>
+        {
+            PluginLog.LogDebug($"GagSpeak is applying status {status.Title} to client");
+            if (Player.Object is null) return;
+            // grab our players status manager.
+            var sm = Utils.GetMyStatusManager(Player.Object);
+            sm.AddOrUpdate(MyStatus.FromStatusInfoTuple(status).PrepareToApply(), UpdateSource.StatusTuple, false, true);
+        });
+    }
+
     public IPCProcessor()
     {
         EzIPC.Init(this);
