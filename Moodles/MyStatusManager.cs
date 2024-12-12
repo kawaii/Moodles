@@ -46,12 +46,23 @@ public class MyStatusManager
                     // Keep the current stack count set to the status.
                     var newStackCount = Statuses[i].Stacks;
 
-                    // If valid, increase the stack count by 1 on reapplication is source is StatusTuple.
-                    if (source is UpdateSource.StatusTuple && P.CommonProcessor.IconStackCounts.TryGetValue((uint)newStatus.IconID, out var max) && max > 1)
+                    if (P.CommonProcessor.IconStackCounts.TryGetValue((uint)newStatus.IconID, out var max) && max > 1)
                     {
-                        if (Statuses[i].Stacks + 1 <= max)
+                        // If valid, increase the stack count by newStatus.Stacks on reapplication when source is StatusTuple (from self).
+                        if (source is UpdateSource.StatusTuple)
                         {
-                            newStackCount++;
+                            PluginLog.Error("Check");
+                            if (Statuses[i].Stacks + newStatus.Stacks <= max)
+                            {
+                                newStackCount += newStatus.Stacks;
+                                // remove status GUID from addTextShown so it can be shown again with the new stack on the next tick.
+                                AddTextShown.Remove(newStatus.GUID);
+                            }
+                        }
+                        else
+                        {
+                            // If source is DataString (other plugins), replace the stacks instead of adding it.
+                            newStackCount = newStatus.Stacks;
                             // remove status GUID from addTextShown so it can be shown again with the new stack on the next tick.
                             AddTextShown.Remove(newStatus.GUID);
                         }
