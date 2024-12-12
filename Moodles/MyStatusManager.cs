@@ -1,4 +1,5 @@
 ﻿using Dalamud.Game.ClientState.Objects.SubKinds;
+using ECommons.Configuration;
 using ECommons.GameHelpers;
 using MemoryPack;
 using Moodles.Data;
@@ -43,21 +44,30 @@ public class MyStatusManager
                 // use newStatus to check, in case we changed the setting between applications. Performs stack count updating.
                 if (newStatus.StackOnReapply)
                 {
-                    // Keep the current stack count set to the status.
-                    var newStackCount = Statuses[i].Stacks;
-
-                    // If valid, increase the stack count by 1 on reapplication is source is StatusTuple.
-                    if (source is UpdateSource.StatusTuple && P.CommonProcessor.IconStackCounts.TryGetValue((uint)newStatus.IconID, out var max) && max > 1)
+                    if (source is UpdateSource.StatusTuple)
                     {
-                        if (Statuses[i].Stacks + 1 <= max)
+                        // grab the current stack count.
+                        var newStackCount = Statuses[i].Stacks;
+                        // fetch what the max stack count for the icon is.
+                        if (P.CommonProcessor.IconStackCounts.TryGetValue((uint)newStatus.IconID, out var max))
                         {
-                            newStackCount++;
-                            // remove status GUID from addTextShown so it can be shown again with the new stack on the next tick.
-                            AddTextShown.Remove(newStatus.GUID);
+                            // if the stack count is less than the max, increase it by 1, and remove it from addTextShown to display the new stack.
+                            if (Statuses[i].Stacks + 1 <= max)
+                            {
+                                newStackCount++;
+                                newStatus.Stacks = newStackCount;
+                                AddTextShown.Remove(newStatus.GUID);
+                            }
                         }
                     }
-                    // update stack count.
-                    newStatus.Stacks = newStackCount;
+                    // Handle sources that are from status manager sets.
+                    else if (source is UpdateSource.DataString)
+                    {
+                        // if the source is the data string, we simply apply the data string.
+                        // HOWEVER, if and only if the stack count is different, we need to remove it from addTextShown to display the new stack.
+                        if (Statuses[i].Stacks != newStatus.Stacks)
+                            AddTextShown.Remove(newStatus.GUID);
+                    }
                 }
                 // then update the status with the new status.
                 Statuses[i] = newStatus;
