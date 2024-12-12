@@ -51,7 +51,6 @@ public class MyStatusManager
                         // If valid, increase the stack count by newStatus.Stacks on reapplication when source is StatusTuple (from self).
                         if (source is UpdateSource.StatusTuple)
                         {
-                            PluginLog.Error("Check");
                             if (Statuses[i].Stacks + newStatus.Stacks <= max)
                             {
                                 newStackCount += newStatus.Stacks;
