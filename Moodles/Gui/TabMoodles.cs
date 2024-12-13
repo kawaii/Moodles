@@ -2,10 +2,7 @@
 using ECommons.GameHelpers;
 using Moodles.Data;
 using Moodles.OtterGuiHandlers;
-using Moodles.Processors;
 using OtterGui.Raii;
-using System.Windows.Forms;
-using System.Xml.Linq;
 
 namespace Moodles.Gui;
 public static class TabMoodles
@@ -32,11 +29,11 @@ public static class TabMoodles
     public static void DrawSelected()
     {
         using var child = ImRaii.Child("##Panel", -Vector2.One, true);
-        if(!child || Selected == null)
+        if (!child || Selected == null)
             return;
         {
             var cur = new Vector2(ImGui.GetCursorPosX() + ImGui.GetContentRegionAvail().X - UI.StatusIconSize.X * 2, ImGui.GetCursorPosY()) - new Vector2(10, 0);
-            if(ImGui.Button("Apply to Yourself"))
+            if (ImGui.Button("Apply to Yourself"))
             {
                 Utils.GetMyStatusManager(Player.NameWithWorld).AddOrUpdate(Selected.PrepareToApply(AsPermanent ? PrepareOptions.Persistent : PrepareOptions.NoOption), UpdateSource.StatusTuple);
             }
@@ -45,16 +42,16 @@ public static class TabMoodles
             var isMare = Utils.GetMarePlayers().Contains(Svc.Targets.Target?.Address ?? -1);
             var isGSpeak = Svc.Targets.Target is IPlayerCharacter pc && Utils.GSpeakPlayers.Any(player => player.Item1 == pc.GetNameWithWorld());
             var dis = Svc.Targets.Target is not IPlayerCharacter || (isMare && !isGSpeak);
-            if(dis) ImGui.BeginDisabled();
+            if (dis) ImGui.BeginDisabled();
             var buttonText = Svc.Targets.Target is not IPlayerCharacter
                 ? "No Target Selected" : isMare && !isGSpeak
                     ? "Cannot Apply To Mare User" : $"Apply to Target ({(isGSpeak ? "via GagSpeak" : "Locally")})";
-            if(ImGui.Button(buttonText))
+            if (ImGui.Button(buttonText))
             {
                 try
                 {
                     var target = (IPlayerCharacter)Svc.Targets.Target;
-                    if(!isMare)
+                    if (!isMare)
                     {
                         Utils.GetMyStatusManager(target.GetNameWithWorld()).AddOrUpdate(Selected.PrepareToApply(AsPermanent ? PrepareOptions.Persistent : PrepareOptions.NoOption), UpdateSource.StatusTuple);
                     }
@@ -63,14 +60,14 @@ public static class TabMoodles
                         Selected.SendGSpeakMessage(target);
                     }
                 }
-                catch(Exception e)
+                catch (Exception e)
                 {
                     e.Log();
                 }
             }
-            if(dis) ImGui.EndDisabled();
+            if (dis) ImGui.EndDisabled();
 
-            if(ImGui.BeginTable("##moodles", 2, ImGuiTableFlags.Borders | ImGuiTableFlags.RowBg | ImGuiTableFlags.SizingStretchSame))
+            if (ImGui.BeginTable("##moodles", 2, ImGuiTableFlags.Borders | ImGuiTableFlags.RowBg | ImGuiTableFlags.SizingStretchSame))
             {
                 ImGui.TableSetupColumn("Name", ImGuiTableColumnFlags.WidthFixed, 175f);
                 ImGui.TableSetupColumn("Field", ImGuiTableColumnFlags.WidthStretch);
@@ -82,19 +79,19 @@ public static class TabMoodles
                 Formatting();
                 {
                     Utils.ParseBBSeString(Selected.Title, out var error);
-                    if(error != null)
+                    if (error != null)
                     {
                         ImGuiEx.HelpMarker(error, EColor.RedBright, FontAwesomeIcon.ExclamationTriangle.ToIconString());
                     }
                 }
-                if(Selected.Title.Length == 0)
+                if (Selected.Title.Length == 0)
                 {
                     ImGuiEx.HelpMarker("Title can not be empty", EColor.RedBright, FontAwesomeIcon.ExclamationTriangle.ToIconString());
                 }
                 ImGui.TableNextColumn();
                 ImGuiEx.SetNextItemFullWidth();
                 ImGui.InputText("##name", ref Selected.Title, 150);
-                if(ImGui.IsItemDeactivatedAfterEdit())
+                if (ImGui.IsItemDeactivatedAfterEdit())
                 {
                     P.IPCProcessor.StatusModified(Selected.GUID);
                 }
@@ -103,14 +100,14 @@ public static class TabMoodles
                 ImGui.TableNextRow();
                 ImGui.TableNextColumn();
                 ImGuiEx.TextV($"Icon:");
-                if(Selected.IconID == 0)
+                if (Selected.IconID == 0)
                 {
                     ImGuiEx.HelpMarker("You must select an icon", EColor.RedBright, FontAwesomeIcon.ExclamationTriangle.ToIconString());
                 }
                 ImGui.TableNextColumn();
                 ImGuiEx.SetNextItemFullWidth();
                 var selinfo = Utils.GetIconInfo((uint)Selected.IconID);
-                if(ImGui.BeginCombo("##sel", $"Icon: #{Selected.IconID} {selinfo?.Name}", ImGuiComboFlags.HeightLargest))
+                if (ImGui.BeginCombo("##sel", $"Icon: #{Selected.IconID} {selinfo?.Name}", ImGuiComboFlags.HeightLargest))
                 {
                     var cursor = ImGui.GetCursorPos();
                     ImGui.Dummy(new Vector2(100, ImGuiHelpers.MainViewport.Size.Y * C.SelectorHeight / 100));
@@ -122,7 +119,7 @@ public static class TabMoodles
                     ImGui.EndCombo();
                 }
                 // post update to IPC if a new icon is selected.
-                if(Utils.GetIconInfo((uint)Selected.IconID)?.Name != selinfo?.Name)
+                if (Utils.GetIconInfo((uint)Selected.IconID)?.Name != selinfo?.Name)
                 {
                     P.IPCProcessor.StatusModified(Selected.GUID);
                 }
@@ -150,7 +147,7 @@ public static class TabMoodles
 
                     ImGui.EndCombo();
                 }
-              
+
                 ImGui.TableNextRow();
 
                 // Stack Field
@@ -160,14 +157,14 @@ public static class TabMoodles
                 ImGui.TableNextColumn();
                 ImGuiEx.SetNextItemFullWidth();
                 var maxStacks = 1;
-                if(P.CommonProcessor.IconStackCounts.TryGetValue((uint)Selected.IconID, out var count))
+                if (P.CommonProcessor.IconStackCounts.TryGetValue((uint)Selected.IconID, out var count))
                 {
                     maxStacks = (int)count;
                 }
-                if(maxStacks <= 1) ImGui.BeginDisabled();
-                if(ImGui.BeginCombo("##stk", $"{Selected.Stacks}"))
+                if (maxStacks <= 1) ImGui.BeginDisabled();
+                if (ImGui.BeginCombo("##stk", $"{Selected.Stacks}"))
                 {
-                    for(var i = 1; i <= maxStacks; i++)
+                    for (var i = 1; i <= maxStacks; i++)
                     {
                         if (ImGui.Selectable($"{i}"))
                         {
@@ -178,8 +175,8 @@ public static class TabMoodles
                     }
                     ImGui.EndCombo();
                 }
-                if(maxStacks <= 1) ImGui.EndDisabled();
-                if(Selected.Stacks > maxStacks) Selected.Stacks = maxStacks;
+                if (maxStacks <= 1) ImGui.EndDisabled();
+                if (Selected.Stacks > maxStacks) Selected.Stacks = maxStacks;
                 if (Selected.Stacks < 1)
                 {
                     Selected.Stacks = 1;
@@ -196,7 +193,7 @@ public static class TabMoodles
                 Formatting();
                 {
                     Utils.ParseBBSeString(Selected.Description, out var error);
-                    if(error != null)
+                    if (error != null)
                     {
                         ImGuiEx.HelpMarker(error, EColor.RedBright, FontAwesomeIcon.ExclamationTriangle.ToIconString());
                     }
@@ -204,7 +201,7 @@ public static class TabMoodles
                 ImGui.TableNextColumn();
                 ImGuiEx.SetNextItemFullWidth();
                 ImGuiEx.InputTextMultilineExpanding("##desc", ref Selected.Description, 500);
-                if(ImGui.IsItemDeactivatedAfterEdit())
+                if (ImGui.IsItemDeactivatedAfterEdit())
                 {
                     P.IPCProcessor.StatusModified(Selected.GUID);
                 }
@@ -268,7 +265,7 @@ public static class TabMoodles
                     ImGui.TableNextColumn();
                     ImGuiEx.TextV($"Increasing Stacks:");
                     ImGuiEx.HelpMarker("Applying a Moodle already active will increase its stack count.\nYou can set how many stacks increase on reapplication.");
-                    
+
                     ImGui.TableNextColumn();
                     ImGuiEx.SetNextItemFullWidth();
                     if (ImGui.Checkbox("##stackonreapply", ref Selected.StackOnReapply))
