@@ -51,8 +51,9 @@ public class MyStatusManager
                         // fetch what the max stack count for the icon is.
                         if (P.CommonProcessor.IconStackCounts.TryGetValue((uint)newStatus.IconID, out var max))
                         {
-                            // if the stack count is less than the max, increase it by 1, and remove it from addTextShown to display the new stack.
-                            if (Statuses[i].Stacks + 1 <= max)
+                            // if the stack count is less than the max, increase it by newStatus.StacksIncOnReapply.
+                            // After, remove it from addTextShown to display the new stack.
+                            if (Statuses[i].Stacks + newStatus.StacksIncOnReapply <= max)
                             {
                                 newStackCount += newStatus.StacksIncOnReapply;
                                 newStatus.Stacks = newStackCount;
