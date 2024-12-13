@@ -29,7 +29,7 @@ public class MyStatusManager
         // Do not add statuses with invalid data
         if (!Unchecked)
         {
-            if(!newStatus.IsValid(out var error))
+            if (!newStatus.IsValid(out var error))
             {
                 Notify.Error(error);
                 return;
@@ -38,31 +38,41 @@ public class MyStatusManager
         // check to see if the status is already present.
         for (var i = 0; i < Statuses.Count; i++)
         {
-            if(Statuses[i].GUID == newStatus.GUID)
+            if (Statuses[i].GUID == newStatus.GUID)
             {
                 // use newStatus to check, in case we changed the setting between applications. Performs stack count updating.
                 if (newStatus.StackOnReapply)
                 {
-                    // Keep the current stack count set to the status.
-                    var newStackCount = Statuses[i].Stacks;
-
-                    // If valid, increase the stack count by 1 on reapplication is source is StatusTuple.
-                    if (source is UpdateSource.StatusTuple && P.CommonProcessor.IconStackCounts.TryGetValue((uint)newStatus.IconID, out var max) && max > 1)
+                    if (source is UpdateSource.StatusTuple)
                     {
-                        if (Statuses[i].Stacks + 1 <= max)
+                        // grab the current stack count.
+                        var newStackCount = Statuses[i].Stacks;
+                        // fetch what the max stack count for the icon is.
+                        if (P.CommonProcessor.IconStackCounts.TryGetValue((uint)newStatus.IconID, out var max))
                         {
-                            newStackCount++;
-                            // remove status GUID from addTextShown so it can be shown again with the new stack on the next tick.
-                            AddTextShown.Remove(newStatus.GUID);
+                            // if the stack count is less than the max, increase it by newStatus.StacksIncOnReapply.
+                            // After, remove it from addTextShown to display the new stack.
+                            if (Statuses[i].Stacks + newStatus.StacksIncOnReapply <= max)
+                            {
+                                newStackCount += newStatus.StacksIncOnReapply;
+                                newStatus.Stacks = newStackCount;
+                                AddTextShown.Remove(newStatus.GUID);
+                            }
                         }
                     }
-                    // update stack count.
-                    newStatus.Stacks = newStackCount;
+                    // Handle sources that are from status manager sets.
+                    else if (source is UpdateSource.DataString)
+                    {
+                        // if the source is the data string, we simply apply the data string.
+                        // HOWEVER, if and only if the stack count is different, we need to remove it from addTextShown to display the new stack.
+                        if (Statuses[i].Stacks != newStatus.Stacks)
+                            AddTextShown.Remove(newStatus.GUID);
+                    }
                 }
                 // then update the status with the new status.
                 Statuses[i] = newStatus;
                 // fire trigger if needed and then early return.
-                if(triggerEvent) NeedFireEvent = true;
+                if (triggerEvent) NeedFireEvent = true;
                 return;
             }
         }
@@ -73,12 +83,12 @@ public class MyStatusManager
 
     public void Cancel(Guid id, bool triggerEvent = true)
     {
-        foreach(var stat in Statuses)
+        foreach (var stat in Statuses)
         {
-            if(stat.GUID == id)
+            if (stat.GUID == id)
             {
                 stat.ExpiresAt = 0;
-                if(triggerEvent) NeedFireEvent = true;
+                if (triggerEvent) NeedFireEvent = true;
             }
         }
     }
@@ -88,11 +98,11 @@ public class MyStatusManager
     public void ApplyPreset(Preset p)
     {
         var Ignore = Statuses.Where(x => x.Persistent).Select(x => x.GUID).ToList();
-        if(p.ApplicationType == PresetApplicationType.ReplaceAll)
+        if (p.ApplicationType == PresetApplicationType.ReplaceAll)
         {
-            foreach(var x in Statuses)
+            foreach (var x in Statuses)
             {
-                if(!x.Persistent && !p.Statuses.Contains(x.GUID))
+                if (!x.Persistent && !p.Statuses.Contains(x.GUID))
                 {
                     //this.AddTextShown.Remove(x.GUID);
                     //x.GUID = Guid.NewGuid();
@@ -101,18 +111,18 @@ public class MyStatusManager
                 }
             }
         }
-        if(p.ApplicationType == PresetApplicationType.IgnoreExisting)
+        if (p.ApplicationType == PresetApplicationType.IgnoreExisting)
         {
-            foreach(var x in Statuses)
+            foreach (var x in Statuses)
             {
                 Ignore.Add(x.GUID);
             }
         }
-        foreach(var x in p.Statuses)
+        foreach (var x in p.Statuses)
         {
-            if(C.SavedStatuses.TryGetFirst(z => z.GUID == x, out var status))
+            if (C.SavedStatuses.TryGetFirst(z => z.GUID == x, out var status))
             {
-                if(!Ignore.Contains(status.GUID))
+                if (!Ignore.Contains(status.GUID))
                 {
                     AddOrUpdate(Utils.PrepareToApply(status), UpdateSource.StatusTuple);
                 }
@@ -123,9 +133,9 @@ public class MyStatusManager
 
     public void RemovePreset(Preset p)
     {
-        foreach(var x in p.Statuses)
+        foreach (var x in p.Statuses)
         {
-            if(C.SavedStatuses.TryGetFirst(z => z.GUID == x, out var status))
+            if (C.SavedStatuses.TryGetFirst(z => z.GUID == x, out var status))
             {
                 Cancel(status);
             }
@@ -139,13 +149,13 @@ public class MyStatusManager
 
     public string SerializeToBase64()
     {
-        if(Statuses.Count == 0) return string.Empty;
+        if (Statuses.Count == 0) return string.Empty;
         return Convert.ToBase64String(BinarySerialize());
     }
 
     public List<MoodlesStatusInfo> GetActiveStatusInfo()
     {
-        if(Statuses.Count == 0) return [];
+        if (Statuses.Count == 0) return [];
         return Statuses.Select(x => x.ToStatusInfoTuple()).ToList();
     }
 
@@ -153,7 +163,7 @@ public class MyStatusManager
 
     public void Apply(string base64string, UpdateSource source = UpdateSource.DataString)
     {
-        if(base64string.IsNullOrEmpty())
+        if (base64string.IsNullOrEmpty())
         {
             SetStatusesAsEphemeral(Array.Empty<MyStatus>(), source);
         }
@@ -167,23 +177,23 @@ public class MyStatusManager
     {
         try
         {
-            foreach(var x in Statuses)
+            foreach (var x in Statuses)
             {
-                if(!newStatusList.Any(n => n.GUID == x.GUID))
+                if (!newStatusList.Any(n => n.GUID == x.GUID))
                 {
                     x.ExpiresAt = 0;
                 }
             }
-            foreach(var x in newStatusList)
+            foreach (var x in newStatusList)
             {
-                if(x.ExpiresAt > Utils.Time)
+                if (x.ExpiresAt > Utils.Time)
                 {
                     AddOrUpdate(x, source, true, false);
                 }
             }
             Ephemeral = true;
         }
-        catch(Exception e)
+        catch (Exception e)
         {
             e.Log();
         }
@@ -197,10 +207,10 @@ public class MyStatusManager
     public bool ContainsStatus(Guid status)
     {
         var statusCount = Statuses.Count;
-        for(var i = 0; i < statusCount; i++)
+        for (var i = 0; i < statusCount; i++)
         {
             var curStatus = Statuses[i];
-            if(curStatus.GUID == status)
+            if (curStatus.GUID == status)
             {
                 return true;
             }
@@ -212,10 +222,10 @@ public class MyStatusManager
     public bool ContainsPreset(Preset preset)
     {
         var statusCount = preset.Statuses.Count;
-        for(var i = 0; i < statusCount; i++)
+        for (var i = 0; i < statusCount; i++)
         {
             var statusGUID = preset.Statuses[i];
-            if(!ContainsStatus(statusGUID))
+            if (!ContainsStatus(statusGUID))
             {
                 return false;
             }

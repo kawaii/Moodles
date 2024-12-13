@@ -93,7 +93,7 @@ public sealed class PresetFileSystem : FileSystem<Preset>, IDisposable
 
     private (string, bool) SaveConverter(Preset item, string arg2)
     {
-        PluginLog.Debug($"Saving {item.ID}");
+        PluginLog.LogVerbose($"Saving {item.ID}");
         return (item.ID, true);
     }
 

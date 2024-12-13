@@ -32,7 +32,8 @@ global using MoodlesStatusInfo = (
     bool AsPermanent,
     System.Guid StatusOnDispell,
     string CustomVFXPath,
-    bool StackOnReapply
+    bool StackOnReapply,
+    int StacksIncOnReapply
 );
 
 global using MoodlePresetInfo = (
