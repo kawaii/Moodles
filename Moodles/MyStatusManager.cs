@@ -54,7 +54,7 @@ public class MyStatusManager
                             // if the stack count is less than the max, increase it by 1, and remove it from addTextShown to display the new stack.
                             if (Statuses[i].Stacks + 1 <= max)
                             {
-                                newStackCount++;
+                                newStackCount += newStatus.StacksIncOnReapply;
                                 newStatus.Stacks = newStackCount;
                                 AddTextShown.Remove(newStatus.GUID);
                             }

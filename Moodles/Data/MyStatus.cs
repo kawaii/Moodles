@@ -18,6 +18,7 @@ public partial class MyStatus
     public Guid StatusOnDispell = Guid.Empty;
     public string CustomFXPath = "";
     public bool StackOnReapply = false;
+    public int StacksIncOnReapply = 1;
 
 
     [MemoryPackIgnore] public bool Persistent = false;
@@ -45,7 +46,12 @@ public partial class MyStatus
             error = ("Icon is not set");
             return false;
         }
-        if(Title.Length == 0)
+        if (IconID < 200000)
+        {
+            error = ("Icon is a Pre 7.1 Moodle!");
+            return false;
+        }
+        if (Title.Length == 0)
         {
             error = ("Title is not set");
             return false;
@@ -76,7 +82,8 @@ public partial class MyStatus
     }
 
     public MoodlesStatusInfo ToStatusInfoTuple()
-        => (GUID, IconID, Title, Description, Type, Applier, Dispelable, Stacks, Persistent, Days, Hours, Minutes, Seconds, NoExpire, AsPermanent, StatusOnDispell, CustomFXPath, StackOnReapply);
+        => (GUID, IconID, Title, Description, Type, Applier, Dispelable, Stacks, Persistent, Days, Hours, 
+        Minutes, Seconds, NoExpire, AsPermanent, StatusOnDispell, CustomFXPath, StackOnReapply, StacksIncOnReapply);
 
     public static MyStatus FromStatusInfoTuple(MoodlesStatusInfo statusInfo)
     {
@@ -99,7 +106,8 @@ public partial class MyStatus
             AsPermanent = statusInfo.AsPermanent,
             StatusOnDispell = statusInfo.StatusOnDispell,
             CustomFXPath = statusInfo.CustomVFXPath,
-            StackOnReapply = statusInfo.StackOnReapply
+            StackOnReapply = statusInfo.StackOnReapply,
+            StacksIncOnReapply = statusInfo.StacksIncOnReapply
         };
     }
 }
