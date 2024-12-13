@@ -78,10 +78,6 @@ public unsafe class CommonProcessor : IDisposable
                 }
             }
         }
-        foreach (var fxpath in StatusEffectPaths)
-        {
-            PluginLog.Log(fxpath);
-        }
 
         new EzFrameworkUpdate(Tick);
         PartyListProcessor = new();
