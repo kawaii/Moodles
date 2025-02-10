@@ -61,6 +61,8 @@ public static class HeaderDrawer
 
     public static void Draw(string text, uint textColor, uint frameColor, int leftButtons, params Button[] buttons)
     {
+        if(string.IsNullOrEmpty(text)) text = "###noneText";
+
         using var style = ImRaii.PushStyle(ImGuiStyleVar.ItemSpacing, Vector2.Zero)
             .Push(ImGuiStyleVar.FrameRounding, 0)
             .Push(ImGuiStyleVar.FrameBorderSize, ImGuiHelpers.GlobalScale);
