@@ -261,7 +261,7 @@ public class WhitelistItemSelectorMare<T>
         var newFilter = Filter;
         using var style = ImRaii.PushStyle(ImGuiStyleVar.FrameRounding, 0);
         ImGui.SetNextItemWidth(width);
-        var enterPressed = ImGui.InputTextWithHint(string.Empty, "Filter...", ref newFilter, 64, ImGuiInputTextFlags.EnterReturnsTrue);
+        var enterPressed = ImGui.InputTextWithHint($"###emptyID_{newFilter}", "Filter...", ref newFilter, 64, ImGuiInputTextFlags.EnterReturnsTrue);
         if(newFilter != Filter)
         {
             Filter = newFilter;
@@ -456,19 +456,20 @@ public class WhitelistItemSelectorMare<T>
         using var id = ImRaii.PushId(Label);
         using var style = ImRaii.PushStyle(ImGuiStyleVar.WindowPadding, Vector2.Zero);
         using var group = ImRaii.Group();
-        using var child = ImRaii.Child(string.Empty, new Vector2(width, -ImGui.GetFrameHeight()), true);
-        if(!child)
-            return;
+        using (var child = ImRaii.Child($"###emptyID_{Label}", new Vector2(width, -ImGui.GetFrameHeight()), true))
+        {
+            if (!child)
+                return;
 
-        style.Pop();
+            style.Pop();
 
-        DrawFilter(width);
-        UpdateFilteredItems();
-        ImGuiClip.ClippedDraw(FilteredItems, InternalDraw, ImGui.GetTextLineHeightWithSpacing());
-        style.Push(ImGuiStyleVar.FrameRounding, 0)
-            .Push(ImGuiStyleVar.WindowPadding, Vector2.Zero)
-            .Push(ImGuiStyleVar.ItemSpacing, Vector2.Zero);
-        child.Dispose();
+            DrawFilter(width);
+            UpdateFilteredItems();
+            ImGuiClip.ClippedDraw(FilteredItems, InternalDraw, ImGui.GetTextLineHeightWithSpacing());
+        }
+        using var style2 = ImRaii.PushStyle(ImGuiStyleVar.FrameRounding, 0);
+        using var style3 = ImRaii.PushStyle(ImGuiStyleVar.WindowPadding, Vector2.Zero);
+        using var style4 = ImRaii.PushStyle(ImGuiStyleVar.ItemSpacing, Vector2.Zero);
         DrawButtons(width);
     }
 }
@@ -480,7 +481,7 @@ public static class ItemDetailsWindow
         using var group = ImRaii.Group();
         using var style = ImRaii.PushStyle(ImGuiStyleVar.WindowPadding, Vector2.Zero);
         using var id = ImRaii.PushId(label);
-        using var child = ImRaii.Child(string.Empty, ImGui.GetContentRegionAvail(), true, ImGuiWindowFlags.MenuBar);
+        using var child = ImRaii.Child($"###emptyID_{label}", ImGui.GetContentRegionAvail(), true, ImGuiWindowFlags.MenuBar);
         if(!child)
             return;
 

@@ -259,7 +259,7 @@ public class WhitelistItemSelectorGSpeak<T>
         var newFilter = Filter;
         using var style = ImRaii.PushStyle(ImGuiStyleVar.FrameRounding, 0);
         ImGui.SetNextItemWidth(width);
-        var enterPressed = ImGui.InputTextWithHint(string.Empty, "Filter...", ref newFilter, 64, ImGuiInputTextFlags.EnterReturnsTrue);
+        var enterPressed = ImGui.InputTextWithHint($"###emptyID_{newFilter}", "Filter...", ref newFilter, 64, ImGuiInputTextFlags.EnterReturnsTrue);
         if(newFilter != Filter)
         {
             Filter = newFilter;
@@ -305,7 +305,7 @@ public class WhitelistItemSelectorGSpeak<T>
         using var id = ImRaii.PushId(Label);
         using var style = ImRaii.PushStyle(ImGuiStyleVar.WindowPadding, Vector2.Zero);
         using var group = ImRaii.Group();
-        using var child = ImRaii.Child(string.Empty, new Vector2(width, 0), true);
+        using var child = ImRaii.Child($"###emptyID_{Label}", new Vector2(width, 0), true);
         if(!child)
             return;
 
@@ -314,10 +314,6 @@ public class WhitelistItemSelectorGSpeak<T>
         DrawFilter(width);
         UpdateFilteredItems();
         ImGuiClip.ClippedDraw(FilteredItems, InternalDraw, ImGui.GetTextLineHeightWithSpacing());
-        style.Push(ImGuiStyleVar.FrameRounding, 0)
-            .Push(ImGuiStyleVar.WindowPadding, Vector2.Zero)
-            .Push(ImGuiStyleVar.ItemSpacing, Vector2.Zero);
-        child.Dispose();
     }
 }
 
@@ -328,7 +324,7 @@ public static class ItemDetailsWindow
         using var group = ImRaii.Group();
         using var style = ImRaii.PushStyle(ImGuiStyleVar.WindowPadding, Vector2.Zero);
         using var id = ImRaii.PushId(label);
-        using var child = ImRaii.Child(string.Empty, ImGui.GetContentRegionAvail(), true, ImGuiWindowFlags.MenuBar);
+        using var child = ImRaii.Child($"###emptyID_{label}", ImGui.GetContentRegionAvail(), true, ImGuiWindowFlags.MenuBar);
         if(!child)
             return;
 
