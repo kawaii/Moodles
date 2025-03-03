@@ -288,9 +288,8 @@ public unsafe class CommonProcessor : IDisposable
                 AtkStage.Instance()->TooltipManager.HideTooltip(addon->Id);
             }
         }
-        if (CancelRequests.Contains(addr))
+        if (CancelRequests.Remove(addr))
         {
-            CancelRequests.Remove(addr);
             var name = addon->NameString;
             if (name.StartsWith("_StatusCustom") || name == "_Status")
             {

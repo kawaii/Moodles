@@ -11,6 +11,9 @@ public unsafe class StatusCustomProcessor : IDisposable
     public int NumStatuses1 = 0;
     public int NumStatuses2 = 0;
 
+    int lastStatusCount = 0;
+    bool statusCountLessened = false;
+
     public StatusCustomProcessor()
     {
         Svc.AddonLifecycle.RegisterListener(AddonEvent.PostUpdate, "_StatusCustom0", OnStatusCustom0Update);
@@ -113,6 +116,15 @@ public unsafe class StatusCustomProcessor : IDisposable
                     StatusCnt++;
                 }
             }
+
+            if (lastStatusCount != StatusCnt)
+            {
+                if (StatusCnt < lastStatusCount)
+                {
+                    statusCountLessened = true;
+                }
+                lastStatusCount = StatusCnt;
+            }
         }
     }
 
@@ -176,7 +188,15 @@ public unsafe class StatusCustomProcessor : IDisposable
                     var rem = x.ExpiresAt - Utils.Time;
                     if(rem > 0)
                     {
-                        SetIcon(addon, baseCnt, x);
+                        if (statusCountLessened)
+                        {
+                            statusCountLessened = false;
+                            SetIcon(addon, baseCnt - P.CommonProcessor.CancelRequests.Count, x);
+                        }
+                        else
+                        {
+                            SetIcon(addon, baseCnt, x);
+                        }
                         baseCnt--;
                     }
                 }
