@@ -52,7 +52,7 @@ public static class TabPresets
             ImGui.SameLine();
 
             var isMare = Utils.GetMarePlayers().Contains(Svc.Targets.Target?.Address ?? -1);
-            var isGSpeak = Svc.Targets.Target is IPlayerCharacter pc && Utils.GSpeakPlayers.Any(player => player.Item1 == pc.GetNameWithWorld());
+            var isGSpeak = Svc.Targets.Target is IPlayerCharacter pc && C.WhitelistGSpeak.Any(player => player.PlayerName == pc.GetNameWithWorld());
             var dis = Svc.Targets.Target is not IPlayerCharacter || (isMare && !isGSpeak);
             if(dis) ImGui.BeginDisabled();
             var buttonText = Svc.Targets.Target is not IPlayerCharacter

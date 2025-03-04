@@ -9,6 +9,7 @@ using FFXIVClientStructs.FFXIV.Component.GUI;
 using Moodles.Data;
 using Moodles.OtterGuiHandlers.Whitelist.GSpeak;
 using System.Text.RegularExpressions;
+using static Moodles.OtterGuiHandlers.Whitelist.GSpeak.WhitelistGSpeak;
 using Status = Lumina.Excel.Sheets.Status;
 using UIColor = ECommons.ChatMethods.UIColor;
 
@@ -23,7 +24,7 @@ public static unsafe partial class Utils
     /// <param name="target"> The target player to apply the statuses to. </param>
     public static void SendGSpeakMessage(this Preset Preset, IPlayerCharacter target)
     {
-        var list = new List<MoodlesStatusInfo>();
+        var list = new List<MoodleStatus>();
         foreach(var s in C.SavedStatuses.Where(x => Preset.Statuses.Contains(x.GUID)))
         {
             var preparedStatus = s.PrepareToApply();
@@ -34,7 +35,7 @@ public static unsafe partial class Utils
             }
             else
             {
-                list.Add(preparedStatus.ToStatusInfoTuple());
+                list.Add(preparedStatus.ToStatusStruct());
             }
         }
         if(list.Count > 0)
@@ -60,7 +61,7 @@ public static unsafe partial class Utils
         }
         else
         {
-            if(P.IPCProcessor.ApplyStatusesToGSpeakPair.TryInvoke(Player.NameWithWorld, target.GetNameWithWorld(), [preparedStatus.ToStatusInfoTuple()], true))
+            if(P.IPCProcessor.ApplyStatusesToGSpeakPair.TryInvoke(Player.NameWithWorld, target.GetNameWithWorld(), [preparedStatus.ToStatusStruct()], true))
             {
                 Notify.Info($"Broadcast success");
             }
@@ -146,21 +147,17 @@ public static unsafe partial class Utils
         return MarePlayers;
     }
 
-    // TODO: Update this from nint to playername@world eventually.
-    public static List<(string, MoodlesGSpeakPairPerms, MoodlesGSpeakPairPerms)> GSpeakPlayers = [];
-    public static ulong GSpeakPlayersUpdated = 0;
-    public static List<(string, MoodlesGSpeakPairPerms, MoodlesGSpeakPairPerms)> GetGSpeakPlayers()
+    private static ulong GSpeakPlayersUpdated = 0;
+    public static void GetGSpeakPlayers()
     {
         if(Frame != GSpeakPlayersUpdated)
         {
             GSpeakPlayersUpdated = Frame;
             if(P.IPCProcessor.GetGSpeakPlayers.TryInvoke(out var ret))
             {
-                GSpeakPlayers = ret;
-                WhitelistGSpeak.SyncWithGSpeakPlayers(GSpeakPlayers);
+                WhitelistGSpeak.SyncWithGSpeakPlayers(ret);
             }
         }
-        return GSpeakPlayers;
     }
 
     public static void ClearGSpeakPlayers()
@@ -168,9 +165,8 @@ public static unsafe partial class Utils
         if(Frame != GSpeakPlayersUpdated)
         {
             GSpeakPlayersUpdated = Frame;
-            GSpeakPlayers = [];
             // update the whitelist
-            WhitelistGSpeak.SyncWithGSpeakPlayers(GSpeakPlayers);
+            WhitelistGSpeak.ClearGSpeakPlayers();
         }
     }
 

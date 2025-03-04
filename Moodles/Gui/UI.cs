@@ -121,7 +121,7 @@ public static unsafe class UI
             }
             ImGui.Separator();
             ImGui.Text("GSpeakPlayers (From Memory)");
-            ImGuiEx.Text(Utils.GSpeakPlayers.Print("\n"));
+            ImGuiEx.Text(C.WhitelistGSpeak.Print("\n"));
 
         }
         if(ImGui.CollapsingHeader("IPC"))

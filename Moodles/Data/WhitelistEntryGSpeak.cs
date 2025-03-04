@@ -3,47 +3,36 @@
 [Serializable]
 public class WhitelistEntryGSpeak
 {
-    // name of the pair that is visible and added to GSpeak
-    public string PlayerName = "Unknown-Player";
-    // Allow Positive
-    // Allow Negative
-    // Allow Special
-    // Allow Applying Pairs Moodles (pair can apply moodles to you)
-    // Allow Applying Own Moodles (pair can apply your moodles)
-    // Max Duration (max duration allowed when effect is not permanent)
-    // Allow Permanent (pair can apply permanent moodles)
-    // Allow Removal (pair can remove your moodles)
-    public MoodlesGSpeakPairPerms ClientPermsForPair = new();
+    public string PlayerName { get; init; } = "Unknown-Player";
+    public GSpeakPerms ClientPermsForPair { get; private set; } = GSpeakPerms.Invalid; // Our perms for the pair.
+    public GSpeakPerms PairPermsForClient { get; private set; } = GSpeakPerms.Invalid; // Pair Perms for us.
+    public WhitelistEntryGSpeak()
+    { }
 
-    public MoodlesGSpeakPairPerms PairPermsForClient = new();
-
-    internal long TotalMaxDurationSecondsClient => ClientPermsForPair.MaxDuration.Seconds * 1000 + ClientPermsForPair.MaxDuration.Minutes * 1000 * 60
-                                                 + ClientPermsForPair.MaxDuration.Hours * 1000 * 60 * 60 + ClientPermsForPair.MaxDuration.Days * 1000 * 60 * 60 * 24;
-    internal long MaxExpirationUnixTimeSecondsClient => ClientPermsForPair.AllowPermanent ? long.MaxValue : Utils.Time + TotalMaxDurationSecondsClient;
-
-    internal long TotalMaxDurationSecondsPair => PairPermsForClient.MaxDuration.Seconds * 1000 + PairPermsForClient.MaxDuration.Minutes * 1000 * 60
-                                               + PairPermsForClient.MaxDuration.Hours * 1000 * 60 * 60 + PairPermsForClient.MaxDuration.Days * 1000 * 60 * 60 * 24;
-    internal long MaxExpirationUnixTimeSecondsPair => PairPermsForClient.AllowPermanent ? long.MaxValue : Utils.Time + TotalMaxDurationSecondsPair;
+    public WhitelistEntryGSpeak(string playerName, GSpeakPerms cpfp, GSpeakPerms ppfc)
+    {
+        PlayerName = playerName;
+        ClientPermsForPair = cpfp;
+        PairPermsForClient = ppfc;
+    }
 
     // checks if when applying incoming moodles, that we have the permission to apply them.
-    public bool CheckStatus(MoodlesGSpeakPairPerms status, bool statusIsPerminant)
+    public bool StatusAllowed(MoodleStatus status)
     {
-        if(status.AllowPositive != ClientPermsForPair.AllowPositive) return false;
-        if(status.AllowNegative != ClientPermsForPair.AllowNegative) return false;
-        if(status.AllowSpecial != ClientPermsForPair.AllowSpecial) return false;
-        if(status.AllowApplyingPairsMoodles != ClientPermsForPair.AllowApplyingPairsMoodles) return false;
-        if(status.AllowPermanent != ClientPermsForPair.AllowPermanent) return false;
-        if(status.MaxDuration > ClientPermsForPair.MaxDuration && !statusIsPerminant) return false;
-        if(status.AllowRemoval != ClientPermsForPair.AllowRemoval) return false;
+        if(!ClientPermsForPair.PairMoodle) return false;
+        
+        // Then check permissions.
+        if(status.Type is StatusType.Positive && !ClientPermsForPair.Pos) return false;
+        if(status.Type is StatusType.Negative && !ClientPermsForPair.Neg) return false;
+        if(status.Type is StatusType.Special && !ClientPermsForPair.Special) return false;
+        if(status.IsPermanent() && !ClientPermsForPair.Permanent) return false;
+        if(status.DurationTicks > ClientPermsForPair.MaxTicks && !status.IsPermanent()) return false;
         return true;
     }
 
-    public bool ArePermissionsDifferent(MoodlesGSpeakPairPerms newClientPermsForPair, MoodlesGSpeakPairPerms newPairPermsForClient)
-        => !newClientPermsForPair.Equals(ClientPermsForPair) || !newPairPermsForClient.Equals(PairPermsForClient);
+    public bool ArePermissionsDifferent(GSpeakPerms newCPFP, GSpeakPerms newPPFC)
+        => !newCPFP.Equals(ClientPermsForPair) || !newPPFC.Equals(PairPermsForClient);
 
-    public void UpdatePermissions(MoodlesGSpeakPairPerms newPerms, MoodlesGSpeakPairPerms newPairPermsForClient)
-    {
-        ClientPermsForPair = newPerms;
-        PairPermsForClient = newPairPermsForClient;
-    }
+    public void UpdatePermissions(GSpeakPerms newCPFP, GSpeakPerms newPPFC)
+        => (ClientPermsForPair, PairPermsForClient) = (newCPFP, newPPFC);
 }
