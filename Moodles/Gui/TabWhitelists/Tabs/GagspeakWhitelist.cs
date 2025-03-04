@@ -1,7 +1,6 @@
 ﻿using Moodles.Data;
 using Moodles.OtterGuiHandlers;
 using OtterGui.Raii;
-using static System.Windows.Forms.VisualStyles.VisualStyleElement.TrackBar;
 
 namespace Moodles.Gui.TabWhitelists.Tabs;
 
@@ -31,7 +30,7 @@ internal class GagspeakWhitelist : PluginWhitelist
 
         if(Selected == null)
         {
-            using(var child = ImRaii.Child("##DefaultBox", -Vector2.One, true))
+            using(ImRaii.IEndObject child = ImRaii.Child("##DefaultBox", -Vector2.One, true))
             {
                 if(!child) return;
                 ImGuiEx.Text($"No GagSpeak Pairs are visible to view the permissions of. Select one to view permissions!");
@@ -40,7 +39,7 @@ internal class GagspeakWhitelist : PluginWhitelist
         else
         {
             HeaderDrawer.Draw("Your Permissions for " + Selected.PlayerName.Censor($"Whitelist entry {C.WhitelistGSpeak.IndexOf(Selected) + 1}"), 0, ImGui.GetColorU32(ImGuiCol.FrameBg), 0, HeaderDrawer.Button.IncognitoButton(C.Censor, v => C.Censor = v));
-            using(var child = ImRaii.Child("##Panel", new(ImGui.GetContentRegionAvail().X - 1f, ImGui.GetContentRegionAvail().Y / 2 - ImGui.GetFrameHeight()), true))
+            using(ImRaii.IEndObject child = ImRaii.Child("##Panel", new(ImGui.GetContentRegionAvail().X - 1f, ImGui.GetContentRegionAvail().Y / 2 - ImGui.GetFrameHeight()), true))
             {
                 if(!child) return;
 
@@ -48,7 +47,7 @@ internal class GagspeakWhitelist : PluginWhitelist
             }
 
             HeaderDrawer.Draw("Permissions " + Selected.PlayerName.Censor($"Whitelist entry {C.WhitelistGSpeak.IndexOf(Selected) + 1}") + " set for You", 0, ImGui.GetColorU32(ImGuiCol.FrameBg), 0, HeaderDrawer.Button.IncognitoButton(C.Censor, v => C.Censor = v));
-            using(var child2 = ImRaii.Child("##Panel2", -Vector2.One, true))
+            using(ImRaii.IEndObject child2 = ImRaii.Child("##Panel2", -Vector2.One, true))
             {
                 if(!child2) return;
                 DrawTableForPermissions(Selected.PairPermsForClient, "PairPermsForClient");
@@ -58,7 +57,7 @@ internal class GagspeakWhitelist : PluginWhitelist
 
     private void DrawTableForPermissions(GSpeakPerms perms, string id)
     {
-        var refObject = perms;
+        GSpeakPerms refObject = perms;
         if (ImGui.BeginTable("##wl" + id, 2, ImGuiTableFlags.RowBg | ImGuiTableFlags.SizingFixedFit | ImGuiTableFlags.Borders))
         {
             ImGui.TableSetupColumn("##txt" + id, ImGuiTableColumnFlags.WidthFixed, 200);
@@ -70,13 +69,13 @@ internal class GagspeakWhitelist : PluginWhitelist
             ImGui.TableNextColumn();
 
             ImGui.BeginDisabled();
-            var previewPos = perms.Pos;
+            bool previewPos = perms.Pos;
             ImGui.Checkbox("Positive##postive" + id, ref previewPos);
             ImGui.SameLine();
-            var previewNeg = perms.Neg;
+            bool previewNeg = perms.Neg;
             ImGui.Checkbox("Negative##negative" + id, ref previewNeg);
             ImGui.SameLine();
-            var previewSpecial = perms.Special;
+            bool previewSpecial = perms.Special;
             ImGui.Checkbox("Special##special" + id, ref previewSpecial);
             ImGui.EndDisabled();
 
@@ -86,12 +85,12 @@ internal class GagspeakWhitelist : PluginWhitelist
             ImGui.TableNextColumn();
 
             ImGui.BeginDisabled();
-            var tSpan = TimeSpan.FromTicks(perms.MaxTicks);
-            var perma = perms.Permanent;
-            var days = tSpan.Days;
-            var hours = tSpan.Hours;
-            var minutes = tSpan.Minutes;
-            var seconds = tSpan.Seconds;
+            TimeSpan tSpan = TimeSpan.FromTicks(perms.MaxTicks);
+            bool perma = perms.Permanent;
+            int days = tSpan.Days;
+            int hours = tSpan.Hours;
+            int minutes = tSpan.Minutes;
+            int seconds = tSpan.Seconds;
             Utils.DurationSelector("Any Duration", ref perma, ref days, ref hours, ref minutes, ref seconds);
             ImGui.EndDisabled();
 
@@ -101,9 +100,9 @@ internal class GagspeakWhitelist : PluginWhitelist
             ImGui.TableNextColumn();
 
             ImGui.BeginDisabled();
-            var applyOwn = perms.OwnMoodle;
+            bool applyOwn = perms.OwnMoodle;
             ImGui.Checkbox("Can Apply Our Moodles##" + id, ref applyOwn);
-            var applyPairs = perms.PairMoodle;
+            bool applyPairs = perms.PairMoodle;
             ImGui.Checkbox("Can Apply Their Moodles##" + id, ref applyPairs);
             ImGui.EndDisabled();
 
@@ -112,7 +111,7 @@ internal class GagspeakWhitelist : PluginWhitelist
             ImGuiEx.TextV($"Status Removal:");
             ImGui.TableNextColumn();
             ImGui.BeginDisabled();
-            var remove = perms.Remove;
+            bool remove = perms.Remove;
             ImGui.Checkbox("Can Remove Moodles##" + id, ref remove);
             ImGui.EndDisabled();
             ImGui.EndTable();

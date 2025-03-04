@@ -19,7 +19,7 @@ public partial class MyStatus
     public string CustomFXPath = "";
     public bool StackOnReapply = false;
     public int StacksIncOnReapply = 1;
-    
+
 
     [MemoryPackIgnore] public bool Persistent = false;
 

@@ -9,7 +9,6 @@ using FFXIVClientStructs.FFXIV.Component.GUI;
 using Moodles.Data;
 using Moodles.OtterGuiHandlers.Whitelist.GSpeak;
 using System.Text.RegularExpressions;
-using static Moodles.OtterGuiHandlers.Whitelist.GSpeak.WhitelistGSpeak;
 using Status = Lumina.Excel.Sheets.Status;
 using UIColor = ECommons.ChatMethods.UIColor;
 
@@ -24,12 +23,12 @@ public static unsafe partial class Utils
     /// <param name="target"> The target player to apply the statuses to. </param>
     public static void SendGSpeakMessage(this Preset Preset, IPlayerCharacter target)
     {
-        var list = new List<MoodleStatus>();
-        foreach(var s in C.SavedStatuses.Where(x => Preset.Statuses.Contains(x.GUID)))
+        List<MoodleStatus> list = new List<MoodleStatus>();
+        foreach(MyStatus s in C.SavedStatuses.Where(x => Preset.Statuses.Contains(x.GUID)))
         {
-            var preparedStatus = s.PrepareToApply();
+            MyStatus preparedStatus = s.PrepareToApply();
             preparedStatus.Applier = Player.NameWithWorld ?? "";
-            if(!preparedStatus.IsValid(out var error))
+            if(!preparedStatus.IsValid(out string error))
             {
                 PluginLog.Error($"Could not apply status: {error}");
             }
@@ -53,9 +52,9 @@ public static unsafe partial class Utils
 
     public static void SendGSpeakMessage(this MyStatus Status, IPlayerCharacter target)
     {
-        var preparedStatus = Status.PrepareToApply();
+        MyStatus preparedStatus = Status.PrepareToApply();
         preparedStatus.Applier = Player.NameWithWorld ?? "";
-        if(!preparedStatus.IsValid(out var error))
+        if(!preparedStatus.IsValid(out string error))
         {
             Notify.Error($"Could not apply status: {error}");
         }
@@ -76,7 +75,7 @@ public static unsafe partial class Utils
 
     public static bool DurationSelector(string PermanentTitle, ref bool NoExpire, ref int Days, ref int Hours, ref int Minutes, ref int Seconds)
     {
-        var modified = false;
+        bool modified = false;
 
         if(ImGui.Checkbox(PermanentTitle, ref NoExpire))
         {
@@ -118,12 +117,12 @@ public static unsafe partial class Utils
 
     public static List<string> GetFriendlist()
     {
-        var ret = new List<string>();
-        var friends = (InfoProxyFriendList*)InfoModule.Instance()->GetInfoProxyById(InfoProxyId.FriendList);
-        for(var i = 0; i < friends->InfoProxyCommonList.CharDataSpan.Length; i++)
+        List<string> ret = new List<string>();
+        InfoProxyFriendList* friends = (InfoProxyFriendList*)InfoModule.Instance()->GetInfoProxyById(InfoProxyId.FriendList);
+        for(int i = 0; i < friends->InfoProxyCommonList.CharDataSpan.Length; i++)
         {
-            var entry = friends->InfoProxyCommonList.CharDataSpan[i];
-            var name = entry.NameString;
+            InfoProxyCommonList.CharacterData entry = friends->InfoProxyCommonList.CharDataSpan[i];
+            string name = entry.NameString;
             if(name != "")
             {
                 ret.Add($"{name}@{ExcelWorldHelper.GetName(entry.HomeWorld)}");
@@ -139,7 +138,7 @@ public static unsafe partial class Utils
         if(Frame != MarePlayersUpdated)
         {
             MarePlayersUpdated = Frame;
-            if(P.IPCProcessor.GetMarePlayers.TryInvoke(out var ret))
+            if(P.IPCProcessor.GetMarePlayers.TryInvoke(out List<nint> ret))
             {
                 MarePlayers = ret;
             }
@@ -153,7 +152,7 @@ public static unsafe partial class Utils
         if(Frame != GSpeakPlayersUpdated)
         {
             GSpeakPlayersUpdated = Frame;
-            if(P.IPCProcessor.GetGSpeakPlayers.TryInvoke(out var ret))
+            if(P.IPCProcessor.GetGSpeakPlayers.TryInvoke(out List<(string, GSpeakPerms, GSpeakPerms)> ret))
             {
                 WhitelistGSpeak.SyncWithGSpeakPlayers(ret);
             }
@@ -181,13 +180,13 @@ public static unsafe partial class Utils
 
     public static AtkResNode*[] GetNodeIconArray(AtkResNode* node, bool reverse = false)
     {
-        var lst = new List<nint>();
-        var atk = node->GetAsAtkComponentNode();
+        List<nint> lst = new List<nint>();
+        AtkComponentNode* atk = node->GetAsAtkComponentNode();
         if(atk is null) return [];
-        var uldm = atk->Component->UldManager;
-        for(var i = 0; i < uldm.NodeListCount; i++)
+        AtkUldManager uldm = atk->Component->UldManager;
+        for(int i = 0; i < uldm.NodeListCount; i++)
         {
-            var next = uldm.NodeList[i];
+            AtkResNode* next = uldm.NodeList[i];
             if(next == null) continue;
             if((int)next->Type < 1000) continue;
             if(((AtkUldComponentInfo*)next->GetAsAtkComponentNode()->Component->UldManager.Objects)->ComponentType == ComponentType.IconText)
@@ -195,8 +194,8 @@ public static unsafe partial class Utils
                 lst.Add((nint)next);
             }
         }
-        var ret = new AtkResNode*[lst.Count];
-        for(var i = 0; i < lst.Count; i++)
+        AtkResNode*[] ret = new AtkResNode*[lst.Count];
+        for(int i = 0; i < lst.Count; i++)
         {
             ret[i] = (AtkResNode*)lst[reverse ? lst.Count - 1 - i : i];
         }
@@ -206,7 +205,7 @@ public static unsafe partial class Utils
     public static string PrintRange(this IEnumerable<string> s, out string FullList, string noneStr = "Any")
     {
         FullList = null;
-        var list = s.ToArray();
+        string[] list = s.ToArray();
         if(list.Length == 0) return noneStr;
         if(list.Length == 1) return list[0].ToString();
         FullList = list.Select(x => x.ToString()).Join("\n");
@@ -226,11 +225,11 @@ public static unsafe partial class Utils
     public static IEnumerable<AutomationCombo> GetSuitableAutomation(IPlayerCharacter pc = null)
     {
         pc ??= Player.Object;
-        foreach(var x in C.AutomationProfiles)
+        foreach(AutomationProfile x in C.AutomationProfiles)
         {
             if(x.Enabled && x.Character == pc.Name.ToString() && (x.World == 0 || x.World == pc.HomeWorld.RowId))
             {
-                foreach(var c in x.Combos)
+                foreach(AutomationCombo c in x.Combos)
                 {
                     if(c.Jobs.Count == 0 || c.Jobs.Contains(pc.GetJob()))
                     {
@@ -250,7 +249,7 @@ public static unsafe partial class Utils
         }
         else
         {
-            foreach(var x in Svc.Objects)
+            foreach(Dalamud.Game.ClientState.Objects.Types.IGameObject x in Svc.Objects)
             {
                 if(x is IPlayerCharacter pc && pc.GetNameWithWorld() == name)
                 {
@@ -293,7 +292,7 @@ public static unsafe partial class Utils
 
     public static MyStatusManager GetMyStatusManager(string playerName, bool create = true)
     {
-        if(!C.StatusManagers.TryGetValue(playerName, out var manager))
+        if(!C.StatusManagers.TryGetValue(playerName, out MyStatusManager manager))
         {
             if(create)
             {
@@ -315,15 +314,15 @@ public static unsafe partial class Utils
         try
         {
             error = null;
-            var result = SplitRegex().Split(text);
-            var str = new SeStringBuilder();
+            string[] result = SplitRegex().Split(text);
+            SeStringBuilder str = new SeStringBuilder();
             int[] valid = [0, 0, 0];
-            foreach(var s in result)
+            foreach(string s in result)
             {
                 if(s == string.Empty) continue;
                 if(s.StartsWith("[color=", StringComparison.OrdinalIgnoreCase))
                 {
-                    var success = ushort.TryParse(s[7..^1], out var r);
+                    bool success = ushort.TryParse(s[7..^1], out ushort r);
                     if(!success)
                     {
                         r = (ushort)Enum.GetValues<UIColor>().FirstOrDefault(x => x.ToString().EqualsIgnoreCase(s[7..^1]));
@@ -340,7 +339,7 @@ public static unsafe partial class Utils
                 }
                 else if(s.StartsWith("[glow=", StringComparison.OrdinalIgnoreCase))
                 {
-                    var success = ushort.TryParse(s[6..^1], out var r);
+                    bool success = ushort.TryParse(s[6..^1], out ushort r);
                     if(!success)
                     {
                         r = (ushort)Enum.GetValues<UIColor>().FirstOrDefault(x => x.ToString().EqualsIgnoreCase(s[6..^1]));
@@ -396,7 +395,7 @@ public static unsafe partial class Utils
 
     public static uint FindStatusByIconID(uint iconID)
     {
-        foreach(var x in Svc.Data.GetExcelSheet<Status>())
+        foreach(Status x in Svc.Data.GetExcelSheet<Status>())
         {
             if(x.Icon == iconID) return x.RowId;
             if(x.MaxStacks > 1 && iconID >= x.Icon + 1 && iconID < x.Icon + x.MaxStacks) return x.RowId;
@@ -406,7 +405,7 @@ public static unsafe partial class Utils
 
     public static string FindVFXPathByIconID(uint iconID)
     {
-        foreach (var x in Svc.Data.GetExcelSheet<Status>())
+        foreach (Status x in Svc.Data.GetExcelSheet<Status>())
         {
             if (x.Icon == iconID) return x.HitEffect.ValueNullable?.Location.ValueNullable?.Location.ExtractText();
             if (x.MaxStacks > 1 && iconID >= x.Icon + 1 && iconID < x.Icon + x.MaxStacks) return x.HitEffect.ValueNullable?.Location.ValueNullable?.Location.ExtractText();
@@ -435,18 +434,18 @@ public static unsafe partial class Utils
     private static Dictionary<uint, IconInfo?> IconInfoCache = [];
     public static IconInfo? GetIconInfo(uint iconID)
     {
-        if(IconInfoCache.TryGetValue(iconID, out var iconInfo))
+        if(IconInfoCache.TryGetValue(iconID, out IconInfo? iconInfo))
         {
             return iconInfo;
         }
         else
         {
-            if(!Svc.Data.GetExcelSheet<Status>().TryGetFirst(x => x.Icon == iconID, out var data))
+            if(!Svc.Data.GetExcelSheet<Status>().TryGetFirst(x => x.Icon == iconID, out Status data))
             {
                 IconInfoCache[iconID] = null;
                 return null;
             }
-            var info = new IconInfo()
+            IconInfo info = new IconInfo()
             {
                 Name = data.Name.ExtractText(),
                 IconID = iconID,
@@ -464,9 +463,9 @@ public static unsafe partial class Utils
 
     public static void CleanupNulls()
     {
-        for(var i = C.SavedStatuses.Count - 1; i >= 0; i--)
+        for(int i = C.SavedStatuses.Count - 1; i >= 0; i--)
         {
-            var item = C.SavedStatuses[i];
+            MyStatus item = C.SavedStatuses[i];
             if(item == null)
             {
                 PluginLog.Warning($"Cleaning up corrupted stats {i}");
@@ -478,9 +477,9 @@ public static unsafe partial class Utils
                 PluginLog.Information($"Adjusting icon id for {item.Title}");
             }
         }
-        for(var i = C.SavedPresets.Count - 1; i >= 0; i--)
+        for(int i = C.SavedPresets.Count - 1; i >= 0; i--)
         {
-            var item = C.SavedPresets[i];
+            Preset item = C.SavedPresets[i];
             if(item == null)
             {
                 PluginLog.Warning($"Cleaning up corrupted presets {i}");
