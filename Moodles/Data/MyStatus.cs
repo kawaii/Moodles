@@ -19,7 +19,7 @@ public partial class MyStatus
     public string CustomFXPath = "";
     public bool StackOnReapply = false;
     public int StacksIncOnReapply = 1;
-
+    
 
     [MemoryPackIgnore] public bool Persistent = false;
 
@@ -31,7 +31,7 @@ public partial class MyStatus
     [MemoryPackIgnore] public int Seconds = 0;
     [MemoryPackIgnore] public bool NoExpire = false;
     [MemoryPackIgnore] public bool AsPermanent = false;
-
+    
     public bool ShouldSerializeGUID() => GUID != Guid.Empty;
     public bool ShouldSerializePersistent() => ShouldSerializeGUID();
     public bool ShouldSerializeExpiresAt() => ShouldSerializeGUID();
@@ -79,35 +79,5 @@ public partial class MyStatus
         }
         error = null;
         return true;
-    }
-
-    public MoodlesStatusInfo ToStatusInfoTuple()
-        => (GUID, IconID, Title, Description, Type, Applier, Dispelable, Stacks, Persistent, Days, Hours, 
-        Minutes, Seconds, NoExpire, AsPermanent, StatusOnDispell, CustomFXPath, StackOnReapply, StacksIncOnReapply);
-
-    public static MyStatus FromStatusInfoTuple(MoodlesStatusInfo statusInfo)
-    {
-        return new MyStatus
-        {
-            GUID = statusInfo.GUID,
-            IconID = statusInfo.IconID,
-            Title = statusInfo.Title,
-            Description = statusInfo.Description,
-            Type = statusInfo.Type,
-            Applier = statusInfo.Applier,
-            Dispelable = statusInfo.Dispelable,
-            Stacks = statusInfo.Stacks,
-            Persistent = statusInfo.Persistent,
-            Days = statusInfo.Days,
-            Hours = statusInfo.Hours,
-            Minutes = statusInfo.Minutes,
-            Seconds = statusInfo.Seconds,
-            NoExpire = statusInfo.NoExpire,
-            AsPermanent = statusInfo.AsPermanent,
-            StatusOnDispell = statusInfo.StatusOnDispell,
-            CustomFXPath = statusInfo.CustomVFXPath,
-            StackOnReapply = statusInfo.StackOnReapply,
-            StacksIncOnReapply = statusInfo.StacksIncOnReapply
-        };
     }
 }
