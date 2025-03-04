@@ -27,22 +27,17 @@ public class IPCProcessor : IDisposable
     [EzIPCEvent] public readonly Action<Guid> PresetModified;
 
 
-    /// <summary>
-    /// Obtains the actively managed player object addresses by Mare Synchronos.
-    /// </summary>
+    /// <summary> Obtains the actively managed player object addresses by Mare Synchronos. </summary>
     [EzIPC("MareSynchronos.GetHandledAddresses", false)] public readonly Func<List<nint>> GetMarePlayers;
 
-    /// <summary>
-    /// Retrieves the actively managed player object addresses by Project GagSpeak
-    /// TODO: This will eventually be changed to a [ Player Name @ World ] format. Look out for it.
-    /// </summary>
-    [EzIPC("GagSpeak.GetHandledVisiblePairs", false)] public readonly Func<List<(string, MoodlesGSpeakPairPerms, MoodlesGSpeakPairPerms)>> GetGSpeakPlayers;
+    /// <summary> Retrieves the actively managed player object addresses by Project GagSpeak </summary>
+    [EzIPC("GagSpeak.GetHandledVisiblePairs", false)] public readonly Func<List<(string, GSpeakPerms, GSpeakPerms)>> GetGSpeakPlayers;
 
     /// <summary>
     /// Sends to GSpeak a serialized ApplyMoodleStatusMessage struct message to apply respective statuses to a pair.
     /// <para> It is worth noting that this will work for both Individual Statuses, and a List of them (preset) </para>
     /// </summary>
-    [EzIPC("GagSpeak.ApplyStatusesToPairRequest", false)] public readonly Action<string, string, List<MoodlesStatusInfo>, bool> ApplyStatusesToGSpeakPair;
+    [EzIPC("GagSpeak.ApplyStatusesToPairRequest", false)] public readonly Action<string, string, List<MoodleStatus>, bool> ApplyStatusesToGSpeakPair;
 
     /// <summary>
     /// Notified Moodles every time an update is made to the list it references with GetGSpeakPlayers.
@@ -91,7 +86,7 @@ public class IPCProcessor : IDisposable
     /// from a database holding Moodle Statuses to share with others.
     /// </summary>
     [EzIPCEvent("GagSpeak.TryOnMoodleStatus", false)]
-    private void TryOnMoodleStatus(MoodlesStatusInfo status)
+    private void TryOnMoodleStatus(MoodleStatus status)
     {
         new TickScheduler(() =>
         {
@@ -99,7 +94,7 @@ public class IPCProcessor : IDisposable
             if (Player.Object is null) return;
             // grab our players status manager.
             var sm = Utils.GetMyStatusManager(Player.Object);
-            sm.AddOrUpdate(MyStatus.FromStatusInfoTuple(status).PrepareToApply(), UpdateSource.StatusTuple, false, true);
+            sm.AddOrUpdate(status.ToMyStatus().PrepareToApply(), UpdateSource.StatusTuple, false, true);
         });
     }
 
@@ -114,17 +109,15 @@ public class IPCProcessor : IDisposable
         Unloading();
     }
 
-    /// <summary>
-    /// Applies the requested statuses to the client player from the sender.
-    /// </summary>
+    /// <summary> Applies the requested statuses to the client player from the sender. </summary>
     /// <param name="senderNameWorld"> The name of the sender player. </param>
     /// <param name="intendedRecipient"> The intended recipient (Should always match client player) </param>
     /// <param name="statusesToApply"> The list of statuses to apply to the client player. </param>
     /// <returns> True if the client is a mare user. False if they are not. (Us, not the sender) </returns>
     [EzIPC("ApplyStatusesFromGSpeakPair")]
-    private void ApplyStatusesFromGSpeakPair(string senderNameWorld, string intendedRecipient, List<MoodlesStatusInfo> statusesToApply)
+    private void ApplyStatusesFromGSpeakPair(string senderNameWorld, string intendedRecipient, List<MoodleStatus> statusesToApply)
     {
-        if(!(intendedRecipient == Player.NameWithWorld))
+        if(intendedRecipient != Player.NameWithWorld)
         {
             PluginLog.Warning("An update to your status was recieved, but the intended recipient was not you.");
             return;
@@ -132,26 +125,22 @@ public class IPCProcessor : IDisposable
         else
         {
             // see if the sender is in our list of GSpeak players.
-            var gSpeakPlayer = Utils.GSpeakPlayers.FirstOrDefault(w => w.Item1 == senderNameWorld);
-            if(gSpeakPlayer != default)
+            if(C.WhitelistGSpeak.FirstOrDefault(w => w.PlayerName == senderNameWorld) is { } pairMatch)
             {
-                // Fetch the status manager of our player object.
                 var sm = Utils.GetMyStatusManager(Player.Object);
-                var perms = gSpeakPlayer.Item2; // client perms for pair.
+                // Ensure they have permission to apply the status to us.
                 foreach(var x in statusesToApply)
                 {
-                    if(C.WhitelistGSpeak.Any(w => w.CheckStatus(perms, x.NoExpire)))
+                    if(pairMatch.StatusAllowed(x))
                     {
-                        sm.AddOrUpdate(MyStatus.FromStatusInfoTuple(x).PrepareToApply(), UpdateSource.StatusTuple, false, true);
+                        sm.AddOrUpdate(x.ToMyStatus().PrepareToApply(), UpdateSource.StatusTuple, false, true);
                     }
                 }
             }
         }
     }
 
-    /// <summary> 
-    /// Returns the version of Moodle's IPC. 
-    /// </summary>
+    /// <summary> Returns the version of Moodle's IPC. </summary>
     [EzIPC]
     private int Version()
     {
@@ -315,7 +304,7 @@ public class IPCProcessor : IDisposable
     /// </summary>
     /// <returns> The status info tuple of the Statuses Active in the StatusManager. </returns>
     [EzIPC("GetStatusManagerInfoLP")]
-    private List<MoodlesStatusInfo> GetStatusManagerInfo() => GetStatusManagerInfo(Player.Object);
+    private List<MoodleStatus> GetStatusManagerInfo() => GetStatusManagerInfo(Player.Object);
 
     /// <summary>
     /// Fetches the Info of the Statuses active on the StatusManager associated with the name.
@@ -324,7 +313,7 @@ public class IPCProcessor : IDisposable
     /// <param name="name"> PlayerName used to locate which StatusManager we retrieve the tuple list from. </param>
     /// <returns> The status info tuple of the Statuses Active in the StatusManager. </returns>
     [EzIPC("GetStatusManagerInfoByName")]
-    private List<MoodlesStatusInfo> GetStatusManagerInfo(string name)
+    private List<MoodleStatus> GetStatusManagerInfo(string name)
     {
         var obj = Svc.Objects.FirstOrDefault(x => x is IPlayerCharacter pc && pc.GetNameWithWorld() == name);
         obj ??= Svc.Objects.FirstOrDefault(x => x is IPlayerCharacter pc && pc.Name.ToString() == name);
@@ -340,7 +329,7 @@ public class IPCProcessor : IDisposable
     /// <param name="ptr"> Address used to locate which StatusManager we retrieve the tuple list from. </param>
     /// <returns> The status info tuple of the Statuses Active in the StatusManager. </returns>
     [EzIPC("GetStatusManagerInfoByPtr")]
-    private List<MoodlesStatusInfo> GetStatusManagerInfo(nint ptr) => GetStatusManagerInfo((IPlayerCharacter)Svc.Objects.CreateObjectReference(ptr));
+    private List<MoodleStatus> GetStatusManagerInfo(nint ptr) => GetStatusManagerInfo((IPlayerCharacter)Svc.Objects.CreateObjectReference(ptr));
 
 
     /// <summary>
@@ -350,7 +339,7 @@ public class IPCProcessor : IDisposable
     /// <returns> The base64 encoded status manager data of the player character. </returns>
     /// <param name="pc"> The PlayerCharacter object to fetch the status manager data from. </param>
     [EzIPC("GetStatusManagerInfoByPC")]
-    private List<MoodlesStatusInfo> GetStatusManagerInfo(IPlayerCharacter pc)
+    private List<MoodleStatus> GetStatusManagerInfo(IPlayerCharacter pc)
     {
         if(pc == null) return null;
         return pc.GetMyStatusManager().GetActiveStatusInfo();
@@ -364,70 +353,57 @@ public class IPCProcessor : IDisposable
     /// <param name="guid"> The Identifier for the existing Moodle. </param>
     /// <returns> The status info tuple of the moodle if it exists, otherwise a default tuple. </returns>
     [EzIPC("GetRegisteredMoodleInfo")]
-    private MoodlesStatusInfo GetRegisteredMoodleInfo(Guid guid)
+    private MoodleStatus GetRegisteredMoodleInfo(Guid guid)
     {
         if(C.SavedStatuses.TryGetFirst(x => x.GUID == guid, out var status))
         {
-            return status.ToStatusInfoTuple();
+            return status.ToStatusStruct();
         }
         return default;
     }
 
-    /// <summary>
-    /// Fetches all the clients Moodle Statuses, and compiles them into Tuple format.
-    /// </summary>
+    /// <summary> Fetches all the clients Moodle Statuses, and compiles them into Tuple format. </summary>
     /// <returns> A list of status info tuples containing the moodle information. </returns>
     [EzIPC("GetRegisteredMoodlesInfo")]
-    private List<MoodlesStatusInfo> GetRegisteredMoodlesInfo()
+    private List<MoodleStatus> GetRegisteredMoodlesInfo()
     {
-        var ret = new List<MoodlesStatusInfo>();
+        var ret = new List<MoodleStatus>();
         foreach(var x in C.SavedStatuses)
         {
-            ret.Add(x.ToStatusInfoTuple());
+            ret.Add(x.ToStatusStruct());
         }
         return ret;
     }
 
-    /// <summary>
-    /// Fetches a client's Preset Profile information by the GUID of the Profile.
-    /// </summary>
+    /// <summary> Fetches a client's Preset Profile information by the GUID of the Profile. </summary>
     /// <param name="guid"> The Identifier for the existing Profile. </param>
     /// <returns> The profile info tuple of the profile if it exists, otherwise a default tuple. </returns>
     [EzIPC("GetRegisteredPresetInfo")]
-    private MoodlePresetInfo GetRegisteredPresetInfo(Guid guid)
+    private MoodlePreset GetRegisteredPresetInfo(Guid guid)
     {
         // Return the preset info tuple if invalid.
         if(C.SavedPresets.TryGetFirst(x => x.GUID == guid, out var preset))
         {
-            return preset.ToPresetInfoTuple();
+            return preset.ToPresetStruct();
         }
-
         // return empty preset if invalid.
-        return new MoodlePresetInfo(Guid.Empty, new List<Guid>(), PresetApplicationType.UpdateExisting, "");
+        return new MoodlePreset();
     }
 
-    /// <summary>
-    /// Fetches all the clients Preset Profiles, and compiles them into Tuple format.
-    /// <para> 
-    /// Consider turning the list of status info's into simply a list of GUID, 
-    /// and require other plugins to fetch status list first.
-    /// </para>
-    /// </summary>
+    /// <summary> Fetches all the clients Preset Profiles, and compiles them into Tuple format. </summary>
     /// <returns> A list of profile info tuples containing the profile information. </returns>
     [EzIPC("GetRegisteredPresetsInfo")]
-    private List<MoodlePresetInfo> GetRegisteredPresetsInfo()
+    private List<MoodlePreset> GetRegisteredPresetsInfo()
     {
-        var ret = new List<MoodlePresetInfo>();
+        var ret = new List<MoodlePreset>();
         foreach(var x in C.SavedPresets)
         {
-            ret.Add(x.ToPresetInfoTuple());
+            ret.Add(x.ToPresetStruct());
         }
         return ret;
     }
 
-    /// <summary>
-    /// Obtains the list of registered moodles in a shorted struct with only basic information and GUID's for the moodles.
-    /// </summary>
+    /// <summary> Obtains the list of registered moodles in a shorted struct with only basic information and GUID's for the moodles. </summary>
     /// <returns> A list of MoodleInfo structs containing the GUID, IconID, Path, and Title of the moodles. </returns>
     [EzIPC]
     private List<MoodlesMoodleInfo> GetRegisteredMoodles()
@@ -441,9 +417,7 @@ public class IPCProcessor : IDisposable
         return ret;
     }
 
-    /// <summary>
-    /// Obtains the list of registered presets in a shorted struct with only basic information and GUID's for the presets.
-    /// </summary>
+    /// <summary> Obtains the list of registered presets in a shorted struct with only basic information and GUID's for the presets. </summary>
     /// <returns> A list of ProfileInfo structs containing the GUID and FullPath of the presets. </returns>
     [EzIPC]
     private List<MoodlesProfileInfo> GetRegisteredProfiles()
