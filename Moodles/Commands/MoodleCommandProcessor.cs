@@ -16,6 +16,7 @@ public static class MoodleCommandProcessor
 
     public static void Process(string _, string arguments)
     {
+        arguments += " ";
         ClearLast();
         PrepareArguments(ref arguments);
         var args = arguments.ToLower().Split(' ');
@@ -297,6 +298,9 @@ public static class MoodleCommandProcessor
             "\n" +
             "A Moodles command is build as followed:\n" +
             "    /moodle [action] [target selector] [element type] [element name]\n" +
+            "\n" +
+            "Example command: /moodle apply self moodle \"moodlename\"\n" +
+            "Or: /moodle toggle \"Firstname Lastname@Homeworldname\" automation \"automationname\"\n"  +
             "\n" +
             "[action]\n" +
             "    apply\n" +
