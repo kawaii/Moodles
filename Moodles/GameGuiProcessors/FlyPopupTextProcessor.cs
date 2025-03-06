@@ -152,7 +152,7 @@ public sealed unsafe class FlyPopupTextProcessor : IDisposable
         if(!c->UldManager.NodeList[1]->IsVisible()) return false;
         if(c->UldManager.NodeList[2]->Type != NodeType.Image) return false;
         if(!c->UldManager.NodeList[2]->IsVisible()) return false;
-        var text = MemoryHelper.ReadSeString(&c->UldManager.NodeList[1]->GetAsAtkTextNode()->NodeText)?.ExtractText();
+        var text = MemoryHelper.ReadSeString(&c->UldManager.NodeList[1]->GetAsAtkTextNode()->NodeText)?.GetText();
         if(!text.StartsWith('-') && !text.StartsWith('+')) return false;
         if(StatusData.TryGetValue((uint)CurrentElement.Status.AdjustedIconID, out var data))
         {

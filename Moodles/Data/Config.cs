@@ -24,6 +24,8 @@ public class Config : IEzConfig
     public int SelectorHeight = 33;
     public bool Debug = false;
     public bool DisplayCommandFeedback = true;
+    public bool MoodlesCanBeEsunad = true;
+    public bool OthersCanEsunaMoodles = true;
     public SortOption IconSortOption = SortOption.Numerical;
     public List<WhitelistEntryGSpeak> WhitelistGSpeak = [];
     public List<WhitelistEntryMare> WhitelistMare = [];
