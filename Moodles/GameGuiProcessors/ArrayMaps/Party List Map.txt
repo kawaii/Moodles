@@ -1,0 +1,67 @@
+-------------- Party List Number Array --------------
+
+--Offset between party players is 43
+--So once you enter the player section, if you add + 43 to the base index of the player * i you get player 2 or 3 or 4 data
+
+#6 Party Member Count
+#7 (some kind of combat indicator)
+
+--- player section ---
+#10 Player Level
+#11 Player Class Icon ID (-62100 for class ID)
+#12
+#13
+#14 Player Current Health
+#15 Player Max Health
+#16 Player Shield % of Max Health
+#17 Player Current Mana
+#18 Player Max Mana
+#19 
+#20 Player Emnity Strength
+#21 Player Emnity Level(starts at 1)
+#22
+#23
+#24 Status Count
+#25 Buff 1 icon	(start of buff icon list)
+#26 Buff 2 icon
+#27 Buff 3 icon
+#28 Buff 4 icon
+#29 Buff 5 icon
+#30 Buff 6 icon
+#31 Buff 7 icon
+#32 Buff 8 icon
+#33 Buff 9 icon
+#34 Buff 10 icon (end of buff icon list)
+#35 Buff 1 Dispellable	(start of dispell indicator list)
+#36 Buff 2 Dispellable
+#37 Buff 3 Dispellable
+#38 Buff 4 Dispellable
+#39 Buff 5 Dispellable
+#40 Buff 6 Dispellable
+#41 Buff 7 Dispellable
+#42 Buff 8 Dispellable
+#43 Buff 9 Dispellable
+#44 Buff 10 Dispellable	(end of dispell indicatorlist)
+#45 Cast Time	(-1 if not active)
+#46 Cast Id
+#48 Player Content ID
+#49 Player Targetable/Visible?
+
+
+-------------- Party List String Array --------------
+
+--Offset between party players is 27
+--So once you enter the player section, if you add + 27 to the base index of the player * i you get player 2 or 3 or 4 data
+
+#4 Party Type indicator [Solo, Group, Cross World]
+
+--- player section ---
+#6 Index Indicator
+#7 Level + Player Name
+#8 Current Cast Name
+#9 Buff 1 Time Remaining (Start list)
+...
+#18 Buff 10 Time Remaining (End list)
+#19 Buff 1 Tooltip (Start list)
+...
+#28 Buff 10 Tooltip (End List)
