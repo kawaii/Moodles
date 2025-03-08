@@ -1,4 +1,5 @@
 ﻿using Dalamud.Plugin.Services;
+using Moodles.Moodles.MoodleUsers.Interfaces;
 using Moodles.Moodles.Services.Interfaces;
 using Moodles.Moodles.StatusManaging.Interfaces;
 
@@ -47,6 +48,40 @@ internal class MoodlesStatusManager : IMoodleStatusManager
     public void Update(IFramework framework)
     {
         
+    }
+
+    public void UpdateEntry(IMoodleUser user)
+    {
+        SetName(user.Name);
+        SetHomeworld(user.Homeworld);
+
+        if (IsActive) return;
+        if (!user.IsLocalPlayer) return;
+
+        // Mark Dirty Eventually
+    }
+
+    public void UpdateEntry(IMoodlePet pet)
+    {
+        SetName(pet.Name + $" [{pet.Owner.Name}@{pet.Owner.Homeworld}]");
+        SetHomeworld(pet.Owner.Homeworld);
+
+        if (IsActive) return;
+        if (!pet.Owner.IsLocalPlayer) return;
+
+        // Mark Dirty Eventually
+    }
+
+    public void SetIdentifier(ulong contentID, int skeleton, bool removeEphemeralStatus = false)
+    {
+        ContentID = contentID;
+        SkeletonID = skeleton;
+        IsActive = true;
+
+        if (removeEphemeralStatus)
+        {
+            IsEphemeral = false;
+        }
     }
 
     public void Clear(bool isIPC)

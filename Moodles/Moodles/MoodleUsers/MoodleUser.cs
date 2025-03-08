@@ -10,7 +10,7 @@ namespace Moodles.Moodles.MoodleUsers;
 
 internal unsafe sealed class MoodleUser : IMoodleUser
 {
-    public bool IsActive { get; }
+    public bool IsActive => StatusManager.IsActive;
     public bool IsLocalPlayer { get; }
 
     public List<IMoodlePet> MoodlePets { get; } = new List<IMoodlePet>();
@@ -30,6 +30,8 @@ internal unsafe sealed class MoodleUser : IMoodleUser
     readonly IMoodlesServices MoodlesServices;
     readonly IMoodlesDatabase Database;
 
+    int __tempStatusCountPlaceholder = 0;
+
     public MoodleUser(IMoodlesServices moodlesServices, IMoodlesDatabase database, BattleChara* battleChara)
     {
         MoodlesServices = moodlesServices;
@@ -46,6 +48,9 @@ internal unsafe sealed class MoodleUser : IMoodleUser
         ShortObjectID = Self->GetGameObjectId().ObjectId;
 
         StatusManager = Database.GetPlayerStatusManager(ContentID);
+        StatusManager.UpdateEntry(this);
+
+        if (IsLocalPlayer) StatusManager.SetIdentifier(ContentID, 0, true);
     }
 
     void CreateNewPet(IMoodlePet pet, int index = -1)
@@ -145,11 +150,14 @@ internal unsafe sealed class MoodleUser : IMoodleUser
 
     public void Dispose()
     {
-        if (StatusManager == null) return;
-
         if (StatusManager.IsEphemeral)
         {
             StatusManager.Clear(true);
+        }
+
+        if (__tempStatusCountPlaceholder == 0)
+        {
+            Database.RemoveStatusManager(StatusManager);
         }
 
         if (!IsActive)

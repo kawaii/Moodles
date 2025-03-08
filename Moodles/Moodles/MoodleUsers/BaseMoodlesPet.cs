@@ -21,6 +21,8 @@ internal unsafe abstract class BaseMoodlesPet : IMoodlePet
     readonly IMoodlesServices MoodleServices;
     readonly IMoodlesDatabase Database;
 
+    int __tempStatusCountPlaceholder = 0;
+
     public BaseMoodlesPet(Character* pet, IMoodleUser owner, IMoodlesDatabase database, IMoodlesServices moodleServices, bool asBattlePet)
     {
         MoodleServices = moodleServices;
@@ -37,14 +39,20 @@ internal unsafe abstract class BaseMoodlesPet : IMoodlePet
         PetData = moodleServices.Sheets.GetPet(SkeletonID);
 
         StatusManager = Database.GetPetStatusManager(owner.ContentID, SkeletonID);
+        StatusManager.UpdateEntry(this);
+
+        if (Owner.IsLocalPlayer) StatusManager.SetIdentifier(owner.ContentID, SkeletonID, true);
     }
 
     public void Dispose()
     {
-        if (Owner == null) return;
-
         // Check if it is a companion
         if (SkeletonID > 0)
+        {
+            Database.RemoveStatusManager(StatusManager);
+        }
+
+        if (__tempStatusCountPlaceholder == 0)
         {
             Database.RemoveStatusManager(StatusManager);
         }

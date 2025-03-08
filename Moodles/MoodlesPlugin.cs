@@ -7,6 +7,7 @@ using Moodles.Moodles.Services;
 using Moodles.Moodles.Services.Interfaces;
 using Moodles.Moodles.StatusManaging;
 using Moodles.Moodles.StatusManaging.Interfaces;
+using Moodles.Moodles.TempWindowing;
 using Moodles.Moodles.Updating;
 using Moodles.Moodles.Updating.Interfaces;
 using System.Reflection;
@@ -26,6 +27,8 @@ public sealed class MoodlesPlugin : IDalamudPlugin
     readonly IUpdateHandler UpdateHandler;
     readonly IHookHandler HookHandler;
 
+    readonly WindowHandler WindowHandler;
+
     public MoodlesPlugin(IDalamudPluginInterface dalamud)
     {
         Version = Assembly.GetExecutingAssembly().GetName().Version?.ToString() ?? "Unknown Version";
@@ -38,11 +41,14 @@ public sealed class MoodlesPlugin : IDalamudPlugin
 
         HookHandler = new HookHandler(DalamudServices, MoodlesServices, UserList, Database);
         UpdateHandler = new UpdateHandler(DalamudServices, MoodlesServices);
+
+        WindowHandler = new WindowHandler(DalamudServices, Database, UserList);
     }
 
     public void Dispose()
     {
         UpdateHandler.Dispose();
         HookHandler.Dispose();
+        WindowHandler.Dispose();
     }
 }

@@ -204,12 +204,15 @@ internal unsafe class CharacterManagerHook : HookableElement
         }
     }
 
-    IMoodleUser? CreateUser(BattleChara* newBattleChara)
+    void CreateUser(BattleChara* newBattleChara)
     {
+        if (newBattleChara == null) return;
+        if (newBattleChara->HomeWorld == ushort.MaxValue) return;
+
         IMoodleUser? newUser = new MoodleUser(MoodlesServices, Database, newBattleChara);
 
         int actualIndex = CreateActualIndex(newBattleChara->ObjectIndex);
-        if (actualIndex < 0 || actualIndex >= 100) return null;
+        if (actualIndex < 0 || actualIndex >= 100) return;
 
         UserList.Users[actualIndex] = newUser;
 
@@ -219,8 +222,6 @@ internal unsafe class CharacterManagerHook : HookableElement
         {
             newUser.SetCompanion(newBattleChara->CompanionData.CompanionObject);
         }
-
-        return newUser;
     }
 
     int CreateActualIndex(ushort index) => (int)MathF.Floor(index * 0.5f);

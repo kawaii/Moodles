@@ -1,4 +1,5 @@
 ﻿using Dalamud.Plugin.Services;
+using Moodles.Moodles.MoodleUsers.Interfaces;
 
 namespace Moodles.Moodles.StatusManaging.Interfaces;
 
@@ -16,6 +17,10 @@ internal interface IMoodleStatusManager
     string HomeworldName { get; }
 
     void Update(IFramework framework);
+    void UpdateEntry(IMoodleUser user);
+    void UpdateEntry(IMoodlePet pet);
+
+    void SetIdentifier(ulong contentID, int skeletonID, bool removeEphemeralStatus = false);
 
     void Clear(bool isIPC);
 }

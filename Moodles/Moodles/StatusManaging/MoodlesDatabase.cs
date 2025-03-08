@@ -1,13 +1,16 @@
 ﻿using Dalamud.Plugin.Services;
-using FFXIVClientStructs.FFXIV.Client.Graphics.Render;
+using Moodles.Moodles.Services;
 using Moodles.Moodles.Services.Interfaces;
 using Moodles.Moodles.StatusManaging.Interfaces;
+using System;
 using System.Collections.Generic;
 
 namespace Moodles.Moodles.StatusManaging;
 
 internal class MoodlesDatabase : IMoodlesDatabase
 {
+    public IMoodleStatusManager[] StatusManagers => _statusManagers.ToArray();
+
     readonly List<IMoodleStatusManager> _statusManagers = new List<IMoodleStatusManager>();
 
     readonly IMoodlesServices Services;
@@ -51,6 +54,8 @@ internal class MoodlesDatabase : IMoodlesDatabase
         IMoodleStatusManager? statusManager = GetStatusManagerNoCreate(contentID, skeletonID);
         if (statusManager != null) return statusManager;
 
+        PluginLog.LogVerbose($"Created status manager for: {contentID} {skeletonID}");
+
         IMoodleStatusManager newStatusManager = new MoodlesStatusManager(Services, contentID, skeletonID, "[UNKNOWN]", 0, false);
         _statusManagers.Add(newStatusManager);
         return newStatusManager;
@@ -62,6 +67,8 @@ internal class MoodlesDatabase : IMoodlesDatabase
         {
             if (_statusManagers[i].ContentID != entry.ContentID) continue;
             if (_statusManagers[i].SkeletonID != entry.SkeletonID) continue;
+
+            PluginLog.LogVerbose($"Removed status manager for: {entry.Name}");
 
             _statusManagers.RemoveAt(i);
         }
