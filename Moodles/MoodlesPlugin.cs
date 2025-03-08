@@ -1,8 +1,12 @@
 ﻿using Dalamud.Plugin;
 using Moodles.Moodles.Hooking;
 using Moodles.Moodles.Hooking.Interfaces;
+using Moodles.Moodles.MoodleUsers;
+using Moodles.Moodles.MoodleUsers.Interfaces;
 using Moodles.Moodles.Services;
 using Moodles.Moodles.Services.Interfaces;
+using Moodles.Moodles.StatusManaging;
+using Moodles.Moodles.StatusManaging.Interfaces;
 using Moodles.Moodles.Updating;
 using Moodles.Moodles.Updating.Interfaces;
 using System.Reflection;
@@ -16,6 +20,9 @@ public sealed class MoodlesPlugin : IDalamudPlugin
     readonly DalamudServices DalamudServices;
     readonly IMoodlesServices MoodlesServices;
 
+    readonly IUserList UserList;
+    readonly IMoodlesDatabase Database;
+
     readonly IUpdateHandler UpdateHandler;
     readonly IHookHandler HookHandler;
 
@@ -26,7 +33,10 @@ public sealed class MoodlesPlugin : IDalamudPlugin
         DalamudServices = DalamudServices.Create(dalamud, this);
         MoodlesServices = new MoodlesServices(DalamudServices);
 
-        HookHandler = new HookHandler(DalamudServices, MoodlesServices);
+        UserList = new UserList();
+        Database = new MoodlesDatabase(MoodlesServices);
+
+        HookHandler = new HookHandler(DalamudServices, MoodlesServices, UserList, Database);
         UpdateHandler = new UpdateHandler(DalamudServices, MoodlesServices);
     }
 

@@ -1,4 +1,5 @@
 ﻿using Moodles.Moodles.Hooking.Interfaces;
+using Moodles.Moodles.MoodleUsers.Interfaces;
 using Moodles.Moodles.Services;
 using Moodles.Moodles.Services.Interfaces;
 
@@ -8,10 +9,12 @@ internal abstract class HookableElement : IHookableElement
 {
     protected readonly DalamudServices DalamudServices;
     protected readonly IMoodlesServices MoodlesServices;
+    protected readonly IUserList UserList;
 
-    public HookableElement(DalamudServices dalamudServices, IMoodlesServices moodlesServices)
+    public HookableElement(DalamudServices dalamudServices, IUserList userList, IMoodlesServices moodlesServices)
     {
         DalamudServices = dalamudServices;
+        UserList = userList;
         MoodlesServices = moodlesServices;
 
         DalamudServices.Hooking.InitializeFromAttributes(this);

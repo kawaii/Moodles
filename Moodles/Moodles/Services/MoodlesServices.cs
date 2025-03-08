@@ -1,5 +1,5 @@
 ﻿using Moodles.Moodles.Services.Interfaces;
-using OtterGui.Services;
+using Moodles.Moodles.Services.Wrappers;
 
 namespace Moodles.Moodles.Services;
 
@@ -9,6 +9,9 @@ internal class MoodlesServices : IMoodlesServices
 
     public Configuration Configuration { get; }
 
+    public IStringHelper StringHelper { get; }
+    public ISheets Sheets { get; }
+
     public MoodlesServices(DalamudServices dalamudServices)
     {
         DalamudServices = dalamudServices;
@@ -16,5 +19,7 @@ internal class MoodlesServices : IMoodlesServices
         PluginLog.Initialise(DalamudServices);
 
         Configuration = DalamudServices.DalamudPlugin.GetPluginConfig() as Configuration ?? new Configuration();
+        StringHelper = new StringHelperWrapper();
+        Sheets = new SheetsWrapper(DalamudServices);
     }
 }

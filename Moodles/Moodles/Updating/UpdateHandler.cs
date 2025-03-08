@@ -2,7 +2,6 @@
 using Moodles.Moodles.Services;
 using Moodles.Moodles.Services.Interfaces;
 using Moodles.Moodles.Updating.Interfaces;
-using Moodles.Moodles.Updating.Updatables;
 using System.Collections.Generic;
 
 namespace Moodles.Moodles.Updating;
@@ -26,7 +25,7 @@ internal class UpdateHandler : IUpdateHandler
 
     void _Register()
     {
-        Register(new TestUpdatable());
+        
     }
 
     void Register(IUpdatable updatable)

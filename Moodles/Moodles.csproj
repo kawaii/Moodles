@@ -72,4 +72,8 @@
             <Private>False</Private>
         </Reference>
     </ItemGroup>
+
+    <ItemGroup>
+      <Folder Include="Moodles\Updating\Updatables\" />
+    </ItemGroup>
 </Project>
