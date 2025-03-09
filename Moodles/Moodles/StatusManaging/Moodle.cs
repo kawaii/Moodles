@@ -33,102 +33,102 @@ internal partial class Moodle : IMoodle
 
     [MemoryPackIgnore] [JsonIgnore] public bool IsEphemeral { get; private set; } = true;
 
-    public void SetIdentifier(Guid identifier, IMoodlesMediator mediator)
+    public void SetIdentifier(Guid identifier, IMoodlesMediator? mediator = null)
     {
         Identifier = identifier;
-        mediator.Send(new MoodleChangedMessage(this));
+        mediator?.Send(new MoodleChangedMessage(this));
     }
 
-    public void SetTitle(string title, IMoodlesMediator mediator)
+    public void SetTitle(string title, IMoodlesMediator? mediator = null)
     {
         Title = title;
-        mediator.Send(new MoodleChangedMessage(this));
+        mediator?.Send(new MoodleChangedMessage(this));
     }
 
-    public void SetDescription(string description, IMoodlesMediator mediator)
+    public void SetDescription(string description, IMoodlesMediator? mediator = null)
     {
         Description = description;
-        mediator.Send(new MoodleChangedMessage(this));
+        mediator?.Send(new MoodleChangedMessage(this));
     }
 
-    public void SetDispellable(bool dispellable, IMoodlesMediator mediator)
+    public void SetDispellable(bool dispellable, IMoodlesMediator? mediator = null)
     {
         Dispellable = dispellable;
-        mediator.Send(new MoodleChangedMessage(this));
+        mediator?.Send(new MoodleChangedMessage(this));
     }
 
-    public void SetStatusType(StatusType statusType, IMoodlesMediator mediator)
+    public void SetStatusType(StatusType statusType, IMoodlesMediator? mediator = null)
     {
         StatusType = statusType;
-        mediator.Send(new MoodleChangedMessage(this));
+        mediator?.Send(new MoodleChangedMessage(this));
     }
 
-    public void SetIconID(int iconID, IMoodlesMediator mediator)
+    public void SetIconID(int iconID, IMoodlesMediator? mediator = null)
     {
         IconID = iconID;
-        mediator.Send(new MoodleChangedMessage(this));
+        mediator?.Send(new MoodleChangedMessage(this));
     }
 
-    public void SetVFXPath(string vfxPath, IMoodlesMediator mediator)
+    public void SetVFXPath(string vfxPath, IMoodlesMediator? mediator = null)
     {
         VFXPath = vfxPath;
-        mediator.Send(new MoodleChangedMessage(this));
+        mediator?.Send(new MoodleChangedMessage(this));
     }
 
-    public void SetDispellsOnDeath(bool dispellsOnDeath, IMoodlesMediator mediator)
+    public void SetDispellsOnDeath(bool dispellsOnDeath, IMoodlesMediator? mediator = null)
     {
         DispellsOnDeath = dispellsOnDeath;
-        mediator.Send(new MoodleChangedMessage(this));
+        mediator?.Send(new MoodleChangedMessage(this));
     }
 
-    public void SetCountsDownWhenOffline(bool countsDownWhenOffline, IMoodlesMediator mediator)
+    public void SetCountsDownWhenOffline(bool countsDownWhenOffline, IMoodlesMediator? mediator = null)
     {
         CountsDownWhenOffline = countsDownWhenOffline;
-        mediator.Send(new MoodleChangedMessage(this));
+        mediator?.Send(new MoodleChangedMessage(this));
     }
 
-    public void SetStartingStacks(int startingStacks, IMoodlesMediator mediator)
+    public void SetStartingStacks(int startingStacks, IMoodlesMediator? mediator = null)
     {
         StartingStacks = startingStacks;
-        mediator.Send(new MoodleChangedMessage(this));
+        mediator?.Send(new MoodleChangedMessage(this));
     }
 
-    public void SetStatusOnDispell(Guid statusOnDispell, IMoodlesMediator mediator)
+    public void SetStatusOnDispell(Guid statusOnDispell, IMoodlesMediator? mediator = null)
     {
         StatusOnDispell = statusOnDispell;
-        mediator.Send(new MoodleChangedMessage(this));
+        mediator?.Send(new MoodleChangedMessage(this));
     }
 
-    public void SetStackOnReapply(bool stackOnReapply, IMoodlesMediator mediator)
+    public void SetStackOnReapply(bool stackOnReapply, IMoodlesMediator? mediator = null)
     {
         StackOnReapply = stackOnReapply;
-        mediator.Send(new MoodleChangedMessage(this));
+        mediator?.Send(new MoodleChangedMessage(this));
     }
 
-    public void SetStackIncrementOnReapply(int stackIncrementOnReapply, IMoodlesMediator mediator)
+    public void SetStackIncrementOnReapply(int stackIncrementOnReapply, IMoodlesMediator? mediator = null)
     {
         StackIncrementOnReapply = stackIncrementOnReapply;
-        mediator.Send(new MoodleChangedMessage(this));
+        mediator?.Send(new MoodleChangedMessage(this));
     }
 
-    public void SetDuration(int days, int hours, int minutes, int seconds, IMoodlesMediator mediator)
+    public void SetDuration(int days, int hours, int minutes, int seconds, IMoodlesMediator? mediator)
     {
         Days = days;
         Hours = hours;
         Minutes = minutes;
         Seconds = seconds;
-        mediator.Send(new MoodleChangedMessage(this));
+        mediator?.Send(new MoodleChangedMessage(this));
     }
 
-    public void SetPermanent(bool permanent, IMoodlesMediator mediator)
+    public void SetPermanent(bool permanent, IMoodlesMediator? mediator = null)
     {
         Permanent = permanent;
-        mediator.Send(new MoodleChangedMessage(this));
+        mediator?.Send(new MoodleChangedMessage(this));
     }
 
-    public void SetEphemeral(bool isEphemeral, IMoodlesMediator mediator)
+    public void SetEphemeral(bool isEphemeral, IMoodlesMediator? mediator = null)
     {
         IsEphemeral = isEphemeral;
-        mediator.Send(new MoodleChangedMessage(this));
+        mediator?.Send(new MoodleChangedMessage(this));
     }
 }

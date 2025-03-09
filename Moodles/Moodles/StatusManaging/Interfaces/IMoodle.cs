@@ -32,22 +32,22 @@ internal interface IMoodle
 
     bool IsEphemeral { get; }
 
-    void SetIdentifier(Guid identifier, IMoodlesMediator mediator);
-    void SetTitle(string title, IMoodlesMediator mediator);
-    void SetDescription(string description, IMoodlesMediator mediator);
-    void SetDispellable(bool dispellable, IMoodlesMediator mediator);
-    void SetStatusType(StatusType statusType, IMoodlesMediator mediator);
-    void SetIconID(int iconID, IMoodlesMediator mediator);
-    void SetVFXPath(string vfxPath, IMoodlesMediator mediator);
-    void SetDispellsOnDeath(bool dispellsOnDeath, IMoodlesMediator mediator);
-    void SetCountsDownWhenOffline(bool countsDownWhenOffline, IMoodlesMediator mediator);
-    void SetStartingStacks(int startingStacks, IMoodlesMediator mediator);
-    void SetStatusOnDispell(Guid statusOnDispell, IMoodlesMediator mediator);
-    void SetStackOnReapply(bool stackOnReapply, IMoodlesMediator mediator);
-    void SetStackIncrementOnReapply(int stackIncrementOnReapply, IMoodlesMediator mediator);
-    void SetDuration(int days, int hours, int minutes, int seconds, IMoodlesMediator mediator);
-    void SetPermanent(bool permanent, IMoodlesMediator mediator);
-    void SetEphemeral(bool isEphemeral, IMoodlesMediator mediator);
+    void SetIdentifier(Guid identifier, IMoodlesMediator? mediator = null);
+    void SetTitle(string title, IMoodlesMediator? mediator = null);
+    void SetDescription(string description, IMoodlesMediator? mediator = null);
+    void SetDispellable(bool dispellable, IMoodlesMediator? mediator = null);
+    void SetStatusType(StatusType statusType, IMoodlesMediator? mediator = null);
+    void SetIconID(int iconID, IMoodlesMediator? mediator = null);
+    void SetVFXPath(string vfxPath, IMoodlesMediator? mediator = null);
+    void SetDispellsOnDeath(bool dispellsOnDeath, IMoodlesMediator? mediator = null);
+    void SetCountsDownWhenOffline(bool countsDownWhenOffline, IMoodlesMediator? mediator = null);
+    void SetStartingStacks(int startingStacks, IMoodlesMediator? mediator = null);
+    void SetStatusOnDispell(Guid statusOnDispell, IMoodlesMediator? mediator = null);
+    void SetStackOnReapply(bool stackOnReapply, IMoodlesMediator? mediator = null);
+    void SetStackIncrementOnReapply(int stackIncrementOnReapply, IMoodlesMediator? mediator = null);
+    void SetDuration(int days, int hours, int minutes, int seconds, IMoodlesMediator? mediator = null);
+    void SetPermanent(bool permanent, IMoodlesMediator? mediator = null);
+    void SetEphemeral(bool isEphemeral, IMoodlesMediator? mediator = null);
 
     // The actual moodle thing should hold data like
     // Current Stack

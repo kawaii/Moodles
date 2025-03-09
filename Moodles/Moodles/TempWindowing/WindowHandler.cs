@@ -1,5 +1,6 @@
 ﻿using Dalamud.Interface.Windowing;
 using Moodles.Moodles.MoodleUsers.Interfaces;
+using Moodles.Moodles.OtterGUIHandlers;
 using Moodles.Moodles.Services;
 using Moodles.Moodles.StatusManaging.Interfaces;
 using Moodles.Moodles.TempWindowing.Windows;
@@ -13,7 +14,7 @@ internal class WindowHandler : IDisposable
     static int _internalCounter = 0;
     public static int InternalCounter => _internalCounter++;
 
-    readonly WindowSystem WindowSystem;
+    readonly OtterGuiHandler OtterGuiHandler;
 
     readonly DalamudServices DalamudServices;
 
@@ -22,13 +23,15 @@ internal class WindowHandler : IDisposable
     readonly IMoodlesDatabase Database;
     readonly IUserList UserList;
 
-    public WindowHandler(DalamudServices dalamudServices, IMoodlesDatabase database, IUserList userList)
+    public WindowHandler(DalamudServices dalamudServices, IMoodlesDatabase database, IUserList userList, OtterGuiHandler otterGuiHandler)
     {
         DalamudServices = dalamudServices;
         Database = database;
         UserList = userList;
 
-        WindowSystem = new WindowSystem("KiteIsHonestlyKindOfStinkyButSuperCuteAsWell");
+        OtterGuiHandler = otterGuiHandler;
+
+        //WindowSystem = new WindowSystem("KiteIsHonestlyKindOfStinkyButSuperCuteAsWell");
 
         DalamudServices.DalamudPlugin.UiBuilder.Draw += Draw;
 
@@ -43,19 +46,23 @@ internal class WindowHandler : IDisposable
     void Register(MoodleWindow moodleWindow)
     {
         _windows.Add(moodleWindow);
-        WindowSystem.AddWindow(moodleWindow);
+
+
+        //WindowSystem.AddWindow(moodleWindow);
     }
 
     void Draw()
     {
         _internalCounter = 0;
-        WindowSystem.Draw();
+
+        OtterGuiHandler.MoodleFileSystem.Selector?.Draw(200f);
+        //WindowSystem.Draw();
     }
 
     public void Dispose()
     {
         DalamudServices.DalamudPlugin.UiBuilder.Draw -= Draw;
 
-        WindowSystem.RemoveAllWindows();
+       // WindowSystem.RemoveAllWindows();
     }
 }

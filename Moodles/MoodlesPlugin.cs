@@ -3,6 +3,7 @@ using Moodles.Moodles.Hooking;
 using Moodles.Moodles.Hooking.Interfaces;
 using Moodles.Moodles.MoodleUsers;
 using Moodles.Moodles.MoodleUsers.Interfaces;
+using Moodles.Moodles.OtterGUIHandlers;
 using Moodles.Moodles.Services;
 using Moodles.Moodles.Services.Interfaces;
 using Moodles.Moodles.StatusManaging;
@@ -27,6 +28,7 @@ public sealed class MoodlesPlugin : IDalamudPlugin
     readonly IUpdateHandler UpdateHandler;
     readonly IHookHandler HookHandler;
 
+    readonly OtterGuiHandler OtterGuiHandler;
     readonly WindowHandler WindowHandler;
 
     public MoodlesPlugin(IDalamudPluginInterface dalamud)
@@ -42,7 +44,9 @@ public sealed class MoodlesPlugin : IDalamudPlugin
         HookHandler = new HookHandler(DalamudServices, MoodlesServices, UserList, Database);
         UpdateHandler = new UpdateHandler(DalamudServices, MoodlesServices);
 
-        WindowHandler = new WindowHandler(DalamudServices, Database, UserList);
+
+        OtterGuiHandler = new OtterGuiHandler(DalamudServices, MoodlesServices, Database);
+        WindowHandler = new WindowHandler(DalamudServices, Database, UserList, OtterGuiHandler);
     }
 
     public void Dispose()
@@ -50,5 +54,6 @@ public sealed class MoodlesPlugin : IDalamudPlugin
         UpdateHandler.Dispose();
         HookHandler.Dispose();
         WindowHandler.Dispose();
+        OtterGuiHandler.Dispose();
     }
 }

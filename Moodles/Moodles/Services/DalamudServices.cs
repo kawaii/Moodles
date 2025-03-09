@@ -27,6 +27,7 @@ internal class DalamudServices
     [PluginService] internal INotificationManager            NotificationManager         { get; private set; } = null!;
     [PluginService] internal INamePlateGui                   NameplateGUI                { get; private set; } = null!;
     [PluginService] internal ITextureSubstitutionProvider    TextureSubstitutionProvider { get; private set; } = null!;
+    [PluginService] internal IKeyState                       KeyState                    { get; private set; } = null!;
 
     public static DalamudServices Create(IDalamudPluginInterface plugin, MoodlesPlugin moodles)
     {
