@@ -52,9 +52,8 @@
       "ottergui": {
         "type": "Project",
         "dependencies": {
-          "DalamudPackager": "[2.1.12, )",
           "JetBrains.Annotations": "[2024.2.0, )",
-          "Microsoft.Extensions.DependencyInjection": "[9.0.0, )"
+          "Microsoft.Extensions.DependencyInjection": "[8.0.0, )"
         }
       }
     }
