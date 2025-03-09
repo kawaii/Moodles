@@ -15,6 +15,7 @@ internal class WindowHandler : IDisposable
     public static int InternalCounter => _internalCounter++;
 
     readonly OtterGuiHandler OtterGuiHandler;
+    readonly WindowSystem WindowSystem;
 
     readonly DalamudServices DalamudServices;
 
@@ -31,7 +32,7 @@ internal class WindowHandler : IDisposable
 
         OtterGuiHandler = otterGuiHandler;
 
-        //WindowSystem = new WindowSystem("KiteIsHonestlyKindOfStinkyButSuperCuteAsWell");
+        WindowSystem = new WindowSystem("KiteIsHonestlyKindOfStinkyButSuperCuteAsWell");
 
         DalamudServices.DalamudPlugin.UiBuilder.Draw += Draw;
 
@@ -40,7 +41,7 @@ internal class WindowHandler : IDisposable
 
     void _Register()
     {
-        Register(new DebugWindow(Database, UserList));
+        Register(new MainWindow(Database, UserList));
     }
 
     void Register(MoodleWindow moodleWindow)
@@ -55,14 +56,13 @@ internal class WindowHandler : IDisposable
     {
         _internalCounter = 0;
 
-        OtterGuiHandler.MoodleFileSystem.Selector?.Draw(200f);
-        //WindowSystem.Draw();
+        WindowSystem.Draw();
     }
 
     public void Dispose()
     {
         DalamudServices.DalamudPlugin.UiBuilder.Draw -= Draw;
 
-       // WindowSystem.RemoveAllWindows();
+        WindowSystem.RemoveAllWindows();
     }
 }

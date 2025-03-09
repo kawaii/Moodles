@@ -24,6 +24,7 @@ internal class MoodlesServices : IMoodlesServices
         Mediator = new MoodleMediator();
 
         Configuration = DalamudServices.DalamudPlugin.GetPluginConfig() as Configuration ?? new Configuration();
+
         StringHelper = new StringHelperWrapper();
         Sheets = new SheetsWrapper(DalamudServices);
     }

@@ -50,7 +50,7 @@ internal class DebugWindow : MoodleWindow
 
         ImGui.LabelText(moodle.Title, "Title:");
         ImGui.LabelText(moodle.Description, "Description:");
-        ImGui.LabelText(moodle.Identifier.ToString(), "Guid:");
+        ImGui.LabelText(moodle.ID, "Guid:");
     }
 
     void DrawUserList()

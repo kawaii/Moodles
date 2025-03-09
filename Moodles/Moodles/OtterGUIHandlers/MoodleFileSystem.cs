@@ -19,7 +19,7 @@ using Moodles.Moodles.StatusManaging.Interfaces;
 
 namespace Moodles.Moodles.OtterGUIHandlers;
 
-internal sealed class MoodleFileSystem : FileSystem<Moodle>, IDisposable
+internal sealed class MoodleFileSystem : FileSystem<IMoodle>, IDisposable
 {
     readonly string FilePath;
     public readonly FileSystemSelector? Selector;
@@ -59,8 +59,10 @@ internal sealed class MoodleFileSystem : FileSystem<Moodle>, IDisposable
         
     }
 
-    public void DoDelete(Moodle moodle)
+    public void DoDelete(IMoodle status)
     {
+        if (status is not Moodle moodle) return;
+
         PluginLog.Log($"Deleting {moodle.Identifier}");
 
         Services.Configuration.SavedMoodles.Remove(moodle);
@@ -73,17 +75,17 @@ internal sealed class MoodleFileSystem : FileSystem<Moodle>, IDisposable
         Save();
     }
 
-    public bool FindLeaf(Moodle status, [NotNullWhen(true)] out Leaf? leaf)
+    public bool FindLeaf(IMoodle status, [NotNullWhen(true)] out Leaf? leaf)
     {
-        leaf = Root.GetAllDescendants(ISortMode<Moodle>.Lexicographical)
+        leaf = Root.GetAllDescendants(ISortMode<IMoodle>.Lexicographical)
             .OfType<Leaf>()
             .FirstOrDefault(l => l.Value == status);
         return leaf != null;
     }
 
-    public bool TryGetPathByID(Guid id, out string path)
+    public bool TryGetPathByID(Guid id, [NotNullWhen(true)] out string? path)
     {
-        path = string.Empty;
+        path = default;
 
         Moodle? firstMoodle = Services.Configuration.SavedMoodles.FirstOrDefault(x => x.Identifier == id);
         if (firstMoodle == null) return false;
@@ -97,16 +99,16 @@ internal sealed class MoodleFileSystem : FileSystem<Moodle>, IDisposable
         return true;
     }
 
-    string ConvertToName(Moodle status)
+    string ConvertToName(IMoodle status)
     {
         PluginLog.LogVerbose($"Request conversion of {status.Title} {status.Identifier} to name.");
-        return $"Unnamed " + status.Identifier;
+        return status.ID.FixName();
     }
 
-    string ConvertToIdentifier(Moodle status)
+    string ConvertToIdentifier(IMoodle status)
     {
         PluginLog.LogVerbose($"Request conversion of {status.Title} {status.Identifier} to identifier");
-        return status.Identifier.ToString();
+        return status.ID;
     }
 
     public void Save()
@@ -124,18 +126,18 @@ internal sealed class MoodleFileSystem : FileSystem<Moodle>, IDisposable
         }
     }
 
-    (string, bool) SaveConverter(Moodle status, string arg2)
+    (string, bool) SaveConverter(IMoodle status, string arg2)
     {
-        PluginLog.LogVerbose($"Saving {status.Title}  {status.Identifier}");
-        return (status.Identifier.ToString(), true);
+        PluginLog.LogVerbose($"Saving {arg2} {status.Title}  {status.Identifier}");
+        return (status.ID, true);
     }
 
-    public class FileSystemSelector : FileSystemSelector<Moodle, FileSystemSelector.State>
+    public class FileSystemSelector : FileSystemSelector<IMoodle, FileSystemSelector.State>
     {
         string NewName = "";
         string? ClipboardText = null;
 
-        public override ISortMode<Moodle> SortMode => ISortMode<Moodle>.FoldersFirst;
+        public override ISortMode<IMoodle> SortMode => ISortMode<IMoodle>.FoldersFirst;
 
         readonly MoodleFileSystem MoodleFileSystem;
         readonly IMoodlesServices Services;
@@ -249,8 +251,8 @@ internal sealed class MoodleFileSystem : FileSystem<Moodle>, IDisposable
 
                     if (newStatus is Moodle moodle)
                     {
-                        MoodleFileSystem.CreateLeaf(FileSystem.Root, NewName, moodle);
                         Services.Configuration.SavedMoodles.Add(moodle);
+                        MoodleFileSystem.CreateLeaf(FileSystem.Root, NewName, moodle);
                         MoodleFileSystem.Save();
                     }
                 }

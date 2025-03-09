@@ -12,26 +12,29 @@ namespace Moodles.Moodles.StatusManaging;
 [MemoryPackable]
 internal partial class Moodle : IMoodle
 {
-    public Guid Identifier { get; private set; } = Guid.NewGuid();
-    public string Title { get; private set; } = string.Empty;
-    public string Description { get; private set; } = string.Empty;
-    public bool Dispellable { get; private set; } = false;
-    public StatusType StatusType { get; private set; } = StatusType.Positive;
-    public int IconID { get; private set; } = 0;
-    public string VFXPath { get; private set; } = string.Empty;
-    public bool DispellsOnDeath { get; private set; } = true;
-    public bool CountsDownWhenOffline { get; private set; } = false;
-    public int StartingStacks { get; private set; } = 1;
-    public Guid StatusOnDispell { get; private set; } = Guid.Empty;
-    public bool StackOnReapply { get; private set; } = false;
-    public int StackIncrementOnReapply { get; private set; } = 1;
-    public int Days { get; private set; } = 0;
-    public int Hours { get; private set; } = 0;
-    public int Minutes { get; private set; } = 0;
-    public int Seconds { get; private set; } = 0;
-    public bool Permanent { get; private set; } = true;
+    [JsonIgnore] public string ID => Identifier.ToString();
 
-    [MemoryPackIgnore] [JsonIgnore] public bool IsEphemeral { get; private set; } = true;
+    public Guid Identifier { get; set; } = Guid.NewGuid();
+    public string Title { get; set; } = string.Empty;
+    public string Description { get; set; } = string.Empty;
+    public bool Dispellable { get; set; } = false;
+    public StatusType StatusType { get; set; } = StatusType.Positive;
+    public int IconID { get; set; } = 0;
+    public string VFXPath { get; set; } = string.Empty;
+    public bool DispellsOnDeath { get; set; } = true;
+    public bool CountsDownWhenOffline { get; set; } = false;
+    public int StartingStacks { get; set; } = 1;
+    public Guid StatusOnDispell { get; set; } = Guid.Empty;
+    public bool StackOnReapply { get; set; } = false;
+    public int StackIncrementOnReapply { get; set; } = 1;
+    public int Days { get; set; } = 0;
+    public int Hours { get; set; } = 0;
+    public int Minutes { get; set; } = 0;
+    public int Seconds { get; set; } = 0;
+    public bool Permanent { get; set; } = true;
+    public ulong CreatedBy { get; set; } = 0;
+
+    [MemoryPackIgnore] [JsonIgnore] public bool IsEphemeral { get; set; } = true;
 
     public void SetIdentifier(Guid identifier, IMoodlesMediator? mediator = null)
     {
@@ -129,6 +132,12 @@ internal partial class Moodle : IMoodle
     public void SetEphemeral(bool isEphemeral, IMoodlesMediator? mediator = null)
     {
         IsEphemeral = isEphemeral;
+        mediator?.Send(new MoodleChangedMessage(this));
+    }
+
+    public void SetCreatedBy(ulong createdBy, IMoodlesMediator? mediator = null)
+    {
+        CreatedBy = createdBy;
         mediator?.Send(new MoodleChangedMessage(this));
     }
 }

@@ -6,6 +6,8 @@ namespace Moodles.Moodles.StatusManaging.Interfaces;
 
 internal interface IMoodle
 {
+    string ID { get; }
+
     Guid Identifier { get; }
 
     string Title { get; }
@@ -31,6 +33,7 @@ internal interface IMoodle
     bool Permanent { get; }
 
     bool IsEphemeral { get; }
+    ulong CreatedBy { get; }
 
     void SetIdentifier(Guid identifier, IMoodlesMediator? mediator = null);
     void SetTitle(string title, IMoodlesMediator? mediator = null);
@@ -48,6 +51,7 @@ internal interface IMoodle
     void SetDuration(int days, int hours, int minutes, int seconds, IMoodlesMediator? mediator = null);
     void SetPermanent(bool permanent, IMoodlesMediator? mediator = null);
     void SetEphemeral(bool isEphemeral, IMoodlesMediator? mediator = null);
+    void SetCreatedBy(ulong createdBy, IMoodlesMediator? mediator = null);
 
     // The actual moodle thing should hold data like
     // Current Stack

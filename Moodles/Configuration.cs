@@ -11,7 +11,9 @@ internal class Configuration : IPluginConfiguration
 {
     public int Version { get; set; } = 2;
 
-    public List<Moodle> SavedMoodles { get; set; } = new List<Moodle>();
+    public List<Moodle> SavedMoodles = [];
+
+    public bool Censor = false;
 
     public void Save(IDalamudPluginInterface plugin)
     {
