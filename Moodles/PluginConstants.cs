@@ -1,4 +1,6 @@
-﻿namespace Moodles;
+﻿using System.Numerics;
+
+namespace Moodles;
 
 public static class PluginConstants
 {
@@ -23,4 +25,7 @@ public static class PluginConstants
     public const int GarudaII = -3123;
     public const int TitanII = -3124;
     public const int SolarBahamut = -4038;
+
+    public static readonly Vector2 JobIconSize = new Vector2(24f, 24f);
+    public static readonly Vector2 StatusIconSize = new Vector2(24, 32);
 }

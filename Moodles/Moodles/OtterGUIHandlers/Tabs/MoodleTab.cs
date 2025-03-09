@@ -9,22 +9,39 @@ using Moodles.Moodles.StatusManaging.Interfaces;
 using OtterGui.Filesystem;
 using Moodles.Moodles.Services.Interfaces;
 using System.Numerics;
+using ECommons.ImGuiMethods;
+using Moodles.Moodles.Services;
+using Moodles.Moodles.Mediation.Interfaces;
+using Moodles.Moodles.OtterGUIHandlers.Selectors;
+using Moodles.Moodles.Services.Data;
+using System.Linq;
 
 namespace Moodles.Moodles.OtterGUIHandlers.Tabs;
 
 internal class MoodleTab
 {
+    // TEMP
+    readonly Vector2 StatusIconSize = new(24, 32);
+
     string Filter = "";
 
     IMoodle? Selected => OtterGuiHandler.MoodleFileSystem.Selector?.Selected;
 
     readonly OtterGuiHandler OtterGuiHandler;
     readonly IMoodlesServices Services;
+    readonly DalamudServices DalamudServices;
+    readonly IMoodlesMediator Mediator;
 
-    public MoodleTab(OtterGuiHandler otterGuiHandler, IMoodlesServices services)
+    readonly StatusSelector StatusSelector;
+
+    public MoodleTab(OtterGuiHandler otterGuiHandler, IMoodlesServices services, DalamudServices dalamudServices, IMoodlesMediator mediator)
     {
+        DalamudServices = dalamudServices;
         OtterGuiHandler = otterGuiHandler;
         Services = services;
+        Mediator = mediator;
+
+        StatusSelector = new StatusSelector(Mediator, dalamudServices, services);
     }
 
     public void Draw()
@@ -59,43 +76,21 @@ internal class MoodleTab
 
     public void DrawSelected()
     {
-        using var child = ImRaii.Child("##Panel", -Vector2.One, true);
+        using ImRaii.IEndObject child = ImRaii.Child("##Panel", -Vector2.One, true);
         if (!child || Selected == null) return;
 
-        var cur = new Vector2(ImGui.GetCursorPosX() + ImGui.GetContentRegionAvail().X - UI.StatusIconSize.X * 2, ImGui.GetCursorPosY()) - new Vector2(10, 0);
+        Vector2 cur = new Vector2(ImGui.GetCursorPosX() + ImGui.GetContentRegionAvail().X - StatusIconSize.X * 2, ImGui.GetCursorPosY()) - new Vector2(10, 0);
         if (ImGui.Button("Apply to Yourself"))
         {
-            Utils.GetMyStatusManager(Player.NameWithWorld).AddOrUpdate(Selected.PrepareToApply(AsPermanent ? PrepareOptions.Persistent : PrepareOptions.NoOption), UpdateSource.StatusTuple);
+            
         }
         ImGui.SameLine();
 
-        var isMare = Utils.GetMarePlayers().Contains(Svc.Targets.Target?.Address ?? -1);
-        var isGSpeak = Svc.Targets.Target is IPlayerCharacter pc && Utils.GSpeakPlayers.Any(player => player.Item1 == pc.GetNameWithWorld());
-        var dis = Svc.Targets.Target is not IPlayerCharacter || (isMare && !isGSpeak);
-        if (dis) ImGui.BeginDisabled();
-        var buttonText = Svc.Targets.Target is not IPlayerCharacter
-            ? "No Target Selected" : isMare && !isGSpeak
-                ? "Cannot Apply To Mare User" : $"Apply to Target ({(isGSpeak ? "via GagSpeak" : "Locally")})";
+        var buttonText = DalamudServices.TargetManager.Target is not IPlayerCharacter ? "No Target Selected" : "Apply to target";
         if (ImGui.Button(buttonText))
         {
-            try
-            {
-                var target = (IPlayerCharacter)Svc.Targets.Target;
-                if (!isMare)
-                {
-                    Utils.GetMyStatusManager(target.GetNameWithWorld()).AddOrUpdate(Selected.PrepareToApply(AsPermanent ? PrepareOptions.Persistent : PrepareOptions.NoOption), UpdateSource.StatusTuple);
-                }
-                else
-                {
-                    Selected.SendGSpeakMessage(target);
-                }
-            }
-            catch (Exception e)
-            {
-                e.Log();
-            }
+            
         }
-        if (dis) ImGui.EndDisabled();
 
         if (ImGui.BeginTable("##moodles", 2, ImGuiTableFlags.Borders | ImGuiTableFlags.RowBg | ImGuiTableFlags.SizingStretchSame))
         {
@@ -107,23 +102,21 @@ internal class MoodleTab
             ImGuiEx.RightFloat("TitleCharLimit", () => ImGuiEx.TextV(ImGuiColors.DalamudGrey2, $"{Selected.Title.Length}/150"), out _, ImGui.GetContentRegionAvail().X + ImGui.GetCursorPosX() + ImGui.GetStyle().CellPadding.X + 5);
             ImGuiEx.TextV($"Title:");
             Formatting();
-            {
-                Utils.ParseBBSeString(Selected.Title, out var error);
-                if (error != null)
-                {
-                    ImGuiEx.HelpMarker(error, EColor.RedBright, FontAwesomeIcon.ExclamationTriangle.ToIconString());
-                }
-            }
+
             if (Selected.Title.Length == 0)
             {
                 ImGuiEx.HelpMarker("Title can not be empty", EColor.RedBright, FontAwesomeIcon.ExclamationTriangle.ToIconString());
             }
+
             ImGui.TableNextColumn();
             ImGuiEx.SetNextItemFullWidth();
-            ImGui.InputText("##name", ref Selected.Title, 150);
+
+            string titleHolder = Selected.Title;
+
+            ImGui.InputText("##name", ref titleHolder, 150);
             if (ImGui.IsItemDeactivatedAfterEdit())
             {
-                P.IPCProcessor.StatusModified(Selected.GUID);
+                Selected.SetTitle(titleHolder, Mediator);
             }
 
             // Icon Field
@@ -136,25 +129,23 @@ internal class MoodleTab
             }
             ImGui.TableNextColumn();
             ImGuiEx.SetNextItemFullWidth();
-            var selinfo = Utils.GetIconInfo((uint)Selected.IconID);
+
+            IconInfo? selinfo = Services.MoodlesCache.GetStatusIconInfo((uint)Selected.IconID);
+
             if (ImGui.BeginCombo("##sel", $"Icon: #{Selected.IconID} {selinfo?.Name}", ImGuiComboFlags.HeightLargest))
             {
-                var cursor = ImGui.GetCursorPos();
-                ImGui.Dummy(new Vector2(100, ImGuiHelpers.MainViewport.Size.Y * C.SelectorHeight / 100));
+                Vector2 cursor = ImGui.GetCursorPos();
+
+                ImGui.Dummy(new Vector2(100, ImGuiHelpers.MainViewport.Size.Y * Services.Configuration.SelectorHeight / 100));
                 ImGui.SetCursorPos(cursor);
-                P.StatusSelector.Delegate = Selected;
-                P.StatusSelector.Draw();
-                //P.StatusSelector.Open(Selected);
-                //ImGui.CloseCurrentPopup();
+
+                StatusSelector.SetSelectedMoodle(Selected);
+                StatusSelector.Draw();
+
                 ImGui.EndCombo();
             }
-            // post update to IPC if a new icon is selected.
-            if (Utils.GetIconInfo((uint)Selected.IconID)?.Name != selinfo?.Name)
-            {
-                P.IPCProcessor.StatusModified(Selected.GUID);
-            }
 
-
+            /*
             // Custom VFX Field
             ImGui.TableNextRow();
             ImGui.TableNextColumn();
@@ -389,20 +380,20 @@ internal class MoodleTab
             ImGui.TableNextColumn();
             ImGuiEx.SetNextItemFullWidth();
             ImGui.InputText($"##id-text", Encoding.UTF8.GetBytes(Selected.ID), 36, ImGuiInputTextFlags.ReadOnly);
-
+            */
             ImGui.EndTable();
         }
-
+            
+        /*
         if (Selected.IconID != 0 && ThreadLoadImageHandler.TryGetIconTextureWrap(Selected.AdjustedIconID, true, out var image))
         {
             ImGui.SetCursorPos(cur);
             ImGui.Image(image.ImGuiHandle, UI.StatusIconSize * 2);
-        }
+        }*/
     }
-    public static void Formatting()
+
+    void Formatting()
     {
-        //ImGui.SetWindowFontScale(0.75f);
-        ImGuiEx.HelpMarker($"This field supports formatting tags.\n[color=red]...[/color], [color=5]...[/color] - colored text.\n[glow=blue]...[/glow], [glow=7]...[/glow] - glowing text outline\nThe following colors are available:\n{Enum.GetValues<ECommons.ChatMethods.UIColor>().Select(x => x.ToString()).Where(x => !x.StartsWith("_")).Print()}\nFor extra color, look up numeric value with \"/xldata uicolor\" command\n[i]...[/i] - italic text", ImGuiColors.DalamudWhite, FontAwesomeIcon.Code.ToIconString());
-        //ImGui.SetWindowFontScale(1f);
+        ImGuiEx.HelpMarker("UH OH!");
     }
 }

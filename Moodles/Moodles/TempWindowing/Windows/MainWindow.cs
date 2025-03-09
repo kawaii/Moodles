@@ -1,6 +1,5 @@
 ﻿using ImGuiNET;
 using Moodles.Moodles.MoodleUsers.Interfaces;
-using Moodles.Moodles.MoodleUsers;
 using Moodles.Moodles.StatusManaging.Interfaces;
 using Moodles.Moodles.OtterGUIHandlers;
 

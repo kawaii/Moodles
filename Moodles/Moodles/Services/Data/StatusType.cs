@@ -1,4 +1,4 @@
-﻿namespace Moodles.Moodles.StatusManaging.Enums;
+﻿namespace Moodles.Moodles.Services.Data;
 
 internal enum StatusType
 {

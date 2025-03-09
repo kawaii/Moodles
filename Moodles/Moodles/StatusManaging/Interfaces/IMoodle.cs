@@ -1,5 +1,5 @@
 ﻿using Moodles.Moodles.Mediation.Interfaces;
-using Moodles.Moodles.StatusManaging.Enums;
+using Moodles.Moodles.Services.Data;
 using System;
 
 namespace Moodles.Moodles.StatusManaging.Interfaces;

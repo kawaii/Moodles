@@ -1,4 +1,5 @@
 ﻿using Dalamud.Plugin;
+using ECommons;
 using Moodles.Moodles.Hooking;
 using Moodles.Moodles.Hooking.Interfaces;
 using Moodles.Moodles.MoodleUsers;

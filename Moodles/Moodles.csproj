@@ -26,6 +26,7 @@
     </PropertyGroup>
 
     <ItemGroup>
+        <ProjectReference Include="..\ECommons\ECommons\ECommons.csproj" />
         <ProjectReference Include="..\OtterGui\OtterGui.csproj" />
     </ItemGroup>
 
@@ -77,7 +78,6 @@
     </ItemGroup>
 
     <ItemGroup>
-      <Folder Include="Moodles\OtterGUIHandlers\Tabs\" />
       <Folder Include="Moodles\Serialization\" />
       <Folder Include="Moodles\Updating\Updatables\" />
     </ItemGroup>

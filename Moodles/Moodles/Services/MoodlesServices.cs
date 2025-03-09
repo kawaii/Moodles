@@ -14,6 +14,7 @@ internal class MoodlesServices : IMoodlesServices
     public IStringHelper StringHelper { get; }
     public ISheets Sheets { get; }
     public IMoodlesMediator Mediator { get; }
+    public IMoodlesCache MoodlesCache { get; }
 
     public MoodlesServices(DalamudServices dalamudServices)
     {
@@ -27,5 +28,6 @@ internal class MoodlesServices : IMoodlesServices
 
         StringHelper = new StringHelperWrapper();
         Sheets = new SheetsWrapper(DalamudServices);
+        MoodlesCache = new MoodlesCache(DalamudServices, Sheets);
     }
 }

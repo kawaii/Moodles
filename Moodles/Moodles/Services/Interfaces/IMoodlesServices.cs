@@ -9,4 +9,5 @@ internal interface IMoodlesServices
     IStringHelper StringHelper { get; }
     ISheets Sheets { get; }
     IMoodlesMediator Mediator { get; }
+    IMoodlesCache MoodlesCache { get; }
 }
