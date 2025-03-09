@@ -10,6 +10,7 @@ using Moodles.Moodles.Services;
 using Moodles.Moodles.Services.Data;
 using Moodles.Moodles.Services.Interfaces;
 using Moodles.Moodles.StatusManaging.Interfaces;
+using Moodles.Moodles.TempWindowing;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -50,7 +51,7 @@ internal class StatusSelector : Window
         ClassJobSelector = new ClassJobSelector(services, dalamudServices);
 
         CachedAvailableIcons = Services.Sheets.IconIDs.Select(iconId => Services.MoodlesCache.GetStatusIconInfo(iconId, false)).Where(x => x.HasValue).Cast<IconInfo>().ToArray();
-        AvailableIcons = CachedAvailableIcons.AsEnumerable();
+        RebuildChaches();
     }
 
     public void SetSelectedMoodle(IMoodle? moodle)
@@ -66,14 +67,14 @@ internal class StatusSelector : Window
         }
 
         ImGui.SetNextItemWidth(150f);
-        if (ImGui.InputTextWithHint("##search", "Filter...", ref Filter, 50))
+        if (ImGui.InputTextWithHint($"##search{WindowHandler.InternalCounter}", "Filter...", ref Filter, 50))
         {
             RebuildChaches();
         }
 
         ImGui.SameLine();
 
-        if (ImGui.Checkbox("Prefill Data", ref Services.Configuration.AutoFill))
+        if (ImGui.Checkbox($"Prefill Data##{WindowHandler.InternalCounter}", ref Services.Configuration.AutoFill))
         {
             RebuildChaches();
         }
@@ -82,7 +83,7 @@ internal class StatusSelector : Window
 
         ImGui.SameLine();
 
-        if (ImGuiEx.Checkbox("Stackable", ref IsStackable))
+        if (ImGuiEx.Checkbox($"Stackable##{WindowHandler.InternalCounter}", ref IsStackable))
         {
             RebuildChaches();
         }
@@ -104,7 +105,7 @@ internal class StatusSelector : Window
 
         ImGui.SetNextItemWidth(100f);
 
-        ImGuiEx.EnumCombo("##order", ref Services.Configuration.IconSortOption);
+        ImGuiEx.EnumCombo($"##order{WindowHandler.InternalCounter}", ref Services.Configuration.IconSortOption);
 
         if (lastItemSortOption != Services.Configuration.IconSortOption)
         {
@@ -112,16 +113,16 @@ internal class StatusSelector : Window
             RebuildChaches();
         }
 
-        if (!ImGui.BeginChild("child")) return;
+        if (!ImGui.BeginChild($"child##{WindowHandler.InternalCounter}")) return;
 
         if (Services.Configuration.FavIcons.Count > 0)
         {
-            IconTable("Favourites", AvailableIconsFav);
+            IconTable($"Favourites##{WindowHandler.InternalCounter}", AvailableIconsFav);
         }
 
-        IconTable("Positive Status Effects", AvailableIconsPos);
-        IconTable("Negative Status Effects", AvailableIconsNeg);
-        IconTable("Special Status Effects", AvailableIconsSpec);
+        IconTable($"Positive Status Effects##{WindowHandler.InternalCounter}", AvailableIconsPos);
+        IconTable($"Negative Status Effects##{WindowHandler.InternalCounter}", AvailableIconsNeg);
+        IconTable($"Special Status Effects##{WindowHandler.InternalCounter}", AvailableIconsSpec);
 
         ImGui.EndChild();
     }
@@ -131,12 +132,12 @@ internal class StatusSelector : Window
         PluginLog.LogVerbose("Rebuild Icon Search Cache");
 
         AvailableIcons = CachedAvailableIcons
-            .Where(x => Filter == "" || x.Name.Contains(Filter, StringComparison.OrdinalIgnoreCase) || x.IconID.ToString().Contains(Filter))
+            .Where(x => Filter == string.Empty || x.Name.Contains(Filter, StringComparison.OrdinalIgnoreCase) || x.IconID.ToString().Contains(Filter))
             .Where(x => IsFCStatus == null || IsFCStatus == x.IsFCBuff)
             .Where(x => IsStackable == null || IsStackable == x.IsStackable)
             .Where(x => ClassJobSelector.SelectedJobs.Count == 0 || ClassJobSelector.SelectedJobs.Any(j => j.IsValidJob(x.ClassJobCategory)));
 
-        if (Services.Configuration.IconSortOption == SortOption.Alphabetical) AvailableIcons = AvailableIcons.OrderBy(x => x.Name);
+        if (Services.Configuration.IconSortOption == SortOption.Alphabetical)   AvailableIcons = AvailableIcons.OrderBy(x => x.Name);
         if (Services.Configuration.IconSortOption == SortOption.Numerical)      AvailableIcons = AvailableIcons.OrderBy(x => x.IconID);
 
         AvailableIconsFav = AvailableIcons.Where(x => Services.Configuration.FavIcons.Contains(x.IconID));
@@ -147,12 +148,11 @@ internal class StatusSelector : Window
 
     void IconTable(string headerName, IEnumerable<IconInfo> availableIcons)
     {
-        if (!ImGui.CollapsingHeader("Positive Status Effects")) return;
+        if (!ImGui.CollapsingHeader(headerName)) return;
 
         if (!availableIcons.Any())
         {
             ImGuiEx.Text(EColor.RedBright, $"There are no elements that match filter conditions.");
-            return;
         }
 
         DrawIconTable(availableIcons);
@@ -164,7 +164,7 @@ internal class StatusSelector : Window
 
         int cols = Math.Clamp((int)(ImGui.GetWindowSize().X / 200f), 1, 10);
 
-        if (!ImGui.BeginTable("StatusTable", cols, ImGuiTableFlags.RowBg | ImGuiTableFlags.SizingStretchSame)) return;
+        if (!ImGui.BeginTable($"StatusTable##{WindowHandler.InternalCounter}", cols, ImGuiTableFlags.RowBg | ImGuiTableFlags.SizingStretchSame)) return;
 
         for (int i = 0; i < cols; i++)
         {
@@ -183,21 +183,22 @@ internal class StatusSelector : Window
 
             ImGui.TableNextColumn();
 
-            ISharedImmediateTexture iconTexture = DalamudServices.TextureProvider.GetFromGameIcon(info.IconID);
+            if (!DalamudServices.TextureProvider.TryGetFromGameIcon(info.IconID, out ISharedImmediateTexture? iconTexture)) continue;
             if (!iconTexture.TryGetWrap(out IDalamudTextureWrap? wrap, out _)) continue;
 
             ImGui.Image(wrap.ImGuiHandle, PluginConstants.StatusIconSize);
+            
+            ImGui.SameLine();
+
             ImGuiEx.Tooltip($"{info.IconID}");
 
-            ImGui.SameLine();
-            
             if (ImGui.RadioButton($"{info.Name}##{info.IconID}", selectedMoodle.IconID == info.IconID))
             {
                 IconInfo? oldInfo = Services.MoodlesCache.GetStatusIconInfo((uint)selectedMoodle.IconID);
-                if (oldInfo != null && Services.Configuration.AutoFill)
+                if (Services.Configuration.AutoFill)
                 {
                     if (selectedMoodle.Title.Length == 0 || selectedMoodle.Title == oldInfo?.Name)                      selectedMoodle.SetTitle(info.Name);
-                    if (selectedMoodle.Description.Length == 0 || selectedMoodle.Description == oldInfo?.Description)   selectedMoodle.SetTitle(info.Description);
+                    if (selectedMoodle.Description.Length == 0 || selectedMoodle.Description == oldInfo?.Description)   selectedMoodle.SetDescription(info.Description);
                 }
                 selectedMoodle.SetIconID((int)info.IconID, Mediator);
             }

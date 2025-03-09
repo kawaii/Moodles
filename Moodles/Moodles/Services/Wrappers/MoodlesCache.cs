@@ -1,6 +1,7 @@
 ﻿using Lumina.Excel.Sheets;
 using Moodles.Moodles.Services.Data;
 using Moodles.Moodles.Services.Interfaces;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 
@@ -52,7 +53,7 @@ internal class MoodlesCache : IMoodlesCache
             foundStatus.Value.Description.ExtractText()
         );
 
-        IconInfoCache[iconID] = info;
+        IconInfoCache[iconID] = newInfo;
 
         if (triggerSort)
         {

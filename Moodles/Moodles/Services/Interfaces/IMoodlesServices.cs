@@ -10,4 +10,5 @@ internal interface IMoodlesServices
     ISheets Sheets { get; }
     IMoodlesMediator Mediator { get; }
     IMoodlesCache MoodlesCache { get; }
+    IMoodleValidator MoodleValidator { get; }
 }

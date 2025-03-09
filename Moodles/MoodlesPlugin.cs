@@ -47,7 +47,7 @@ public sealed class MoodlesPlugin : IDalamudPlugin
 
 
         OtterGuiHandler = new OtterGuiHandler(DalamudServices, MoodlesServices, Database);
-        WindowHandler = new WindowHandler(DalamudServices, Database, UserList, OtterGuiHandler);
+        WindowHandler = new WindowHandler(DalamudServices, Database, UserList, OtterGuiHandler, MoodlesServices);
     }
 
     public void Dispose()

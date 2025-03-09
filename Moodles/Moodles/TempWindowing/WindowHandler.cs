@@ -1,7 +1,9 @@
 ﻿using Dalamud.Interface.Windowing;
+using Moodles.Moodles.Mediation.Interfaces;
 using Moodles.Moodles.MoodleUsers.Interfaces;
 using Moodles.Moodles.OtterGUIHandlers;
 using Moodles.Moodles.Services;
+using Moodles.Moodles.Services.Interfaces;
 using Moodles.Moodles.StatusManaging.Interfaces;
 using Moodles.Moodles.TempWindowing.Windows;
 using System;
@@ -23,12 +25,14 @@ internal class WindowHandler : IDisposable
 
     readonly IMoodlesDatabase Database;
     readonly IUserList UserList;
+    readonly IMoodlesServices Services;
 
-    public WindowHandler(DalamudServices dalamudServices, IMoodlesDatabase database, IUserList userList, OtterGuiHandler otterGuiHandler)
+    public WindowHandler(DalamudServices dalamudServices, IMoodlesDatabase database, IUserList userList, OtterGuiHandler otterGuiHandler, IMoodlesServices services)
     {
         DalamudServices = dalamudServices;
         Database = database;
         UserList = userList;
+        Services = services;
 
         OtterGuiHandler = otterGuiHandler;
 
@@ -41,7 +45,7 @@ internal class WindowHandler : IDisposable
 
     void _Register()
     {
-        Register(new MainWindow(OtterGuiHandler, Database, UserList));
+        Register(new MainWindow(OtterGuiHandler, DalamudServices, Services));
     }
 
     void Register(MoodleWindow moodleWindow)
@@ -49,7 +53,7 @@ internal class WindowHandler : IDisposable
         _windows.Add(moodleWindow);
 
 
-        //WindowSystem.AddWindow(moodleWindow);
+        WindowSystem.AddWindow(moodleWindow);
     }
 
     void Draw()

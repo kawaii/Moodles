@@ -5,6 +5,7 @@ namespace Moodles.Moodles.Services.Interfaces;
 
 internal interface ISheets
 {
+    List<string> VFXPaths { get; }
     uint[] IconIDs { get; }
     ClassJob[] FilterableJobs { get; }
 
@@ -16,4 +17,8 @@ internal interface ISheets
 
     ClassJob? GetJob(uint id);
     Status? GetStatusFromIconId(uint iconId);
+
+    uint? GetStackCount(uint iconId);
+
+    bool StatusIsDispellable(uint statusId);
 }

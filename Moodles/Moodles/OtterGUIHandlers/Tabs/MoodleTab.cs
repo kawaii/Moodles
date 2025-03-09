@@ -3,7 +3,6 @@ using Dalamud.Interface.Colors;
 using Dalamud.Interface.Utility;
 using Dalamud.Interface;
 using ImGuiNET;
-using System;
 using Dalamud.Interface.Utility.Raii;
 using Moodles.Moodles.StatusManaging.Interfaces;
 using OtterGui.Filesystem;
@@ -14,15 +13,18 @@ using Moodles.Moodles.Services;
 using Moodles.Moodles.Mediation.Interfaces;
 using Moodles.Moodles.OtterGUIHandlers.Selectors;
 using Moodles.Moodles.Services.Data;
+using Dalamud.Interface.Textures;
+using Dalamud.Interface.Textures.TextureWraps;
 using System.Linq;
+using Moodles.Moodles.StatusManaging;
+using ECommons;
+using System;
+using System.Text;
 
 namespace Moodles.Moodles.OtterGUIHandlers.Tabs;
 
 internal class MoodleTab
 {
-    // TEMP
-    readonly Vector2 StatusIconSize = new(24, 32);
-
     string Filter = "";
 
     IMoodle? Selected => OtterGuiHandler.MoodleFileSystem.Selector?.Selected;
@@ -34,21 +36,22 @@ internal class MoodleTab
 
     readonly StatusSelector StatusSelector;
 
-    public MoodleTab(OtterGuiHandler otterGuiHandler, IMoodlesServices services, DalamudServices dalamudServices, IMoodlesMediator mediator)
+    public MoodleTab(OtterGuiHandler otterGuiHandler, IMoodlesServices services, DalamudServices dalamudServices)
     {
         DalamudServices = dalamudServices;
         OtterGuiHandler = otterGuiHandler;
         Services = services;
-        Mediator = mediator;
+        Mediator = services.Mediator;
 
         StatusSelector = new StatusSelector(Mediator, dalamudServices, services);
     }
 
     public void Draw()
     {
+        OtterGuiHandler.MoodleFileSystem.Selector!.Draw(200f);
+
         if (Selected == null) return;
 
-        OtterGuiHandler.MoodleFileSystem.Selector!.Draw(200f);
         ImGui.SameLine();
         using var group = ImRaii.Group();
         DrawHeader();
@@ -79,7 +82,7 @@ internal class MoodleTab
         using ImRaii.IEndObject child = ImRaii.Child("##Panel", -Vector2.One, true);
         if (!child || Selected == null) return;
 
-        Vector2 cur = new Vector2(ImGui.GetCursorPosX() + ImGui.GetContentRegionAvail().X - StatusIconSize.X * 2, ImGui.GetCursorPosY()) - new Vector2(10, 0);
+        Vector2 statusIconCursorPos = new Vector2(ImGui.GetCursorPosX() + ImGui.GetContentRegionAvail().X - PluginConstants.StatusIconSize.X * 2, ImGui.GetCursorPosY()) - new Vector2(10, 0);
         if (ImGui.Button("Apply to Yourself"))
         {
             
@@ -92,10 +95,19 @@ internal class MoodleTab
             
         }
 
-        if (ImGui.BeginTable("##moodles", 2, ImGuiTableFlags.Borders | ImGuiTableFlags.RowBg | ImGuiTableFlags.SizingStretchSame))
+        if (ImGui.BeginTable("##moodles", 2, ImGuiTableFlags.Borders | ImGuiTableFlags.RowBg | ImGuiTableFlags.SizingMask))
         {
             ImGui.TableSetupColumn("Name", ImGuiTableColumnFlags.WidthFixed, 175f);
             ImGui.TableSetupColumn("Field", ImGuiTableColumnFlags.WidthStretch);
+            ImGui.TableNextColumn();
+
+
+            // ID field  
+            ImGuiEx.TextV($"ID:");
+            ImGuiEx.HelpMarker("Used in commands to apply moodle.");
+            ImGui.TableNextColumn();
+            ImGuiEx.SetNextItemFullWidth();
+            ImGui.InputText($"##id-text", Encoding.UTF8.GetBytes(Selected.ID), 36, ImGuiInputTextFlags.ReadOnly);
             ImGui.TableNextColumn();
 
             // Title Field
@@ -145,7 +157,7 @@ internal class MoodleTab
                 ImGui.EndCombo();
             }
 
-            /*
+            
             // Custom VFX Field
             ImGui.TableNextRow();
             ImGui.TableNextColumn();
@@ -153,17 +165,17 @@ internal class MoodleTab
             ImGuiEx.HelpMarker("You may select a custom VFX to play upon application.");
             ImGui.TableNextColumn();
             ImGuiEx.SetNextItemFullWidth();
-            var currentPath = Selected.CustomFXPath;
+            string currentPath = Selected.VFXPath;
             if (ImGui.BeginCombo("##vfx", $"VFX: {currentPath}", ImGuiComboFlags.HeightLargest))
             {
-                for (var i = 0; i < P.CommonProcessor.StatusEffectPaths.Count; i++)
+                for (var i = 0; i < Services.Sheets.VFXPaths.Count; i++)
                 {
-                    if (ImGui.Selectable(P.CommonProcessor.StatusEffectPaths[i])) Selected.CustomFXPath = P.CommonProcessor.StatusEffectPaths[i];
+                    if (ImGui.Selectable(Services.Sheets.VFXPaths[i])) Selected.SetVFXPath(Services.Sheets.VFXPaths[i], Mediator);
                 }
 
-                if (Selected.CustomFXPath == "Clear")
+                if (Selected.VFXPath == "Clear")
                 {
-                    Selected.CustomFXPath = string.Empty;
+                    Selected.SetVFXPath(string.Empty, Mediator);
                 }
 
                 ImGui.EndCombo();
@@ -171,101 +183,87 @@ internal class MoodleTab
 
             ImGui.TableNextRow();
 
+            
             // Stack Field
             ImGui.TableNextColumn();
             ImGuiEx.TextV($"Stacks:");
             ImGuiEx.HelpMarker("Where the game data contains information about sequential status effect stacks you can select the desired number here. Not all status effects that have stacks follow the same logic due to inconsistencies so the icon you're looking for may be elsewhere.");
             ImGui.TableNextColumn();
             ImGuiEx.SetNextItemFullWidth();
-            var maxStacks = 1;
-            if (P.CommonProcessor.IconStackCounts.TryGetValue((uint)Selected.IconID, out var count))
+            uint maxStacks = 1;
+            uint? currentStackCount = Services.Sheets.GetStackCount((uint)Selected.IconID);
+
+            if (currentStackCount != null)
             {
-                maxStacks = (int)count;
+                maxStacks = currentStackCount.Value;
             }
-            if (maxStacks <= 1) ImGui.BeginDisabled();
-            if (ImGui.BeginCombo("##stk", $"{Selected.Stacks}"))
+         
+            ImGui.BeginDisabled(maxStacks <= 1);
+
+            if (ImGui.BeginCombo("##stk", $"{Selected.StartingStacks}"))
             {
-                for (var i = 1; i <= maxStacks; i++)
+                for (int i = 1; i <= maxStacks; i++)
                 {
                     if (ImGui.Selectable($"{i}"))
                     {
-                        Selected.Stacks = i;
-                        // Inform IPC of change after adjusting stack count.
-                        P.IPCProcessor.StatusModified(Selected.GUID);
+                        Selected.SetStartingStacks(i, Mediator);
                     }
                 }
                 ImGui.EndCombo();
             }
-            if (maxStacks <= 1) ImGui.EndDisabled();
-            if (Selected.Stacks > maxStacks) Selected.Stacks = maxStacks;
-            if (Selected.Stacks < 1)
-            {
-                Selected.Stacks = 1;
-                Selected.StackOnReapply = false;
-                Selected.StacksIncOnReapply = 1;
-            }
-            ImGui.TableNextRow();
 
-            // Description Field
-            ImGui.TableNextColumn();
-            var cpx = ImGui.GetCursorPosX();
-            ImGuiEx.RightFloat("DescCharLimit", () => ImGuiEx.TextV(ImGuiColors.DalamudGrey2, $"{Selected.Description.Length}/500"), out _, ImGui.GetContentRegionAvail().X + ImGui.GetCursorPosX() + ImGui.GetStyle().CellPadding.X);
-            ImGuiEx.TextV($"Description:");
-            Formatting();
-            {
-                Utils.ParseBBSeString(Selected.Description, out var error);
-                if (error != null)
-                {
-                    ImGuiEx.HelpMarker(error, EColor.RedBright, FontAwesomeIcon.ExclamationTriangle.ToIconString());
-                }
+            ImGui.EndDisabled();
+
+            if (Selected.StartingStacks > maxStacks) 
+            { 
+                Selected.SetStartingStacks((int)maxStacks, Mediator); 
             }
-            ImGui.TableNextColumn();
-            ImGuiEx.SetNextItemFullWidth();
-            ImGuiEx.InputTextMultilineExpanding("##desc", ref Selected.Description, 500);
-            if (ImGui.IsItemDeactivatedAfterEdit())
+
+            if (Selected.StartingStacks < 1)
             {
-                P.IPCProcessor.StatusModified(Selected.GUID);
+                Selected.SetStartingStacks(1, Mediator);
+                Selected.SetStackOnReapply(false, Mediator);
+                Selected.SetStackIncrementOnReapply(1, Mediator);
             }
             ImGui.TableNextRow();
+            
 
             // Category Field
             ImGui.TableNextColumn();
             ImGuiEx.TextV($"Category:");
             ImGui.TableNextColumn();
             ImGuiEx.SetNextItemFullWidth();
-            if (ImGuiEx.EnumRadio(ref Selected.Type, true))
+
+            StatusType localStatusType = Selected.StatusType;
+
+            if (ImGuiEx.EnumRadio(ref localStatusType, true))
             {
-                P.IPCProcessor.StatusModified(Selected.GUID);
+                Selected.SetStatusType(localStatusType, Mediator);
             }
 
             // Duration Field
             ImGui.TableNextRow();
             ImGui.TableNextColumn();
             ImGuiEx.TextV($"Duration:");
-            if (Selected.TotalDurationSeconds < 1 && !Selected.NoExpire)
+
+            bool noExpire = Selected.Permanent;
+
+            int totalTime = Services.MoodleValidator.GetMoodleDuration(Selected, out int localDays, out int localHours, out int localMinutes, out int localSeconds);
+
+            if (totalTime < 1 && !Selected.Permanent)
             {
                 ImGuiEx.HelpMarker("Duration must be at least 1 second", EColor.RedBright, FontAwesomeIcon.ExclamationTriangle.ToIconString());
             }
             ImGui.TableNextColumn();
-            if (Utils.DurationSelector("Permanent", ref Selected.NoExpire, ref Selected.Days, ref Selected.Hours, ref Selected.Minutes, ref Selected.Seconds))
+            if (DurationSelector("Permanent", ref noExpire, ref localDays, ref localHours, ref localMinutes, ref localSeconds))
             {
-                P.IPCProcessor.StatusModified(Selected.GUID);
+                Selected.SetPermanent(noExpire);
+                Selected.SetDuration(localDays, localHours, localMinutes, localSeconds, Mediator);
             }
 
-            // Sticky Field
-            ImGui.TableNextRow();
-            ImGui.TableNextColumn();
-            ImGuiEx.TextV($"Sticky:");
-            ImGuiEx.HelpMarker("When manually applied outside the scope of an automation preset, this Moodle will not be removed or overridden unless you right-click it off.");
-            ImGui.TableNextColumn();
-            ImGuiEx.SetNextItemFullWidth();
-            if (ImGui.Checkbox($"##sticky", ref Selected.AsPermanent))
-            {
-                P.IPCProcessor.StatusModified(Selected.GUID);
-            }
 
             // Dispelable Field
-            if (P.CommonProcessor.DispelableIcons.Contains((uint)Selected.IconID))
+            if (Services.Sheets.StatusIsDispellable((uint)Selected.IconID))
             {
                 ImGui.TableNextRow();
 
@@ -274,9 +272,12 @@ internal class MoodleTab
                 ImGuiEx.HelpMarker("Applies the dispellable indicator to this Moodle implying it can be removed via the use of Esuna. Only available for icons representing negative status effects.");
                 ImGui.TableNextColumn();
                 ImGuiEx.SetNextItemFullWidth();
-                if (ImGui.Checkbox("##dispel", ref Selected.Dispelable))
+
+                bool localIsDispellable = Selected.Dispellable;
+
+                if (ImGui.Checkbox("##dispel", ref localIsDispellable))
                 {
-                    P.IPCProcessor.StatusModified(Selected.GUID);
+                    Selected.SetDispellable(localIsDispellable, Mediator);
                 }
             }
 
@@ -289,9 +290,12 @@ internal class MoodleTab
 
                 ImGui.TableNextColumn();
                 ImGuiEx.SetNextItemFullWidth();
-                if (ImGui.Checkbox("##stackonreapply", ref Selected.StackOnReapply))
+
+                bool localStacksOnReapply = Selected.StackOnReapply;
+
+                if (ImGui.Checkbox("##stackonreapply", ref localStacksOnReapply))
                 {
-                    P.IPCProcessor.StatusModified(Selected.GUID);
+                    Selected.SetStackOnReapply(localStacksOnReapply, Mediator);
                 }
                 // if the selected should reapply and we have a stacked moodle.
                 if (Selected.StackOnReapply && maxStacks > 1)
@@ -299,14 +303,18 @@ internal class MoodleTab
                     // display the slider for the stack count.
                     ImGui.SameLine();
                     ImGui.SetNextItemWidth(30);
-                    ImGui.DragInt("Increased Stack Count", ref Selected.StacksIncOnReapply, 0.1f, 0, maxStacks);
+
+                    int localStacksIncOnReapply = Selected.StackIncrementOnReapply;
+
+                    ImGui.DragInt("Increased Stack Count", ref localStacksIncOnReapply, 0.1f, 0, (int)maxStacks);
                     if (ImGui.IsItemDeactivatedAfterEdit())
                     {
-                        P.IPCProcessor.StatusModified(Selected.GUID);
+                        Selected.SetStackIncrementOnReapply(localStacksIncOnReapply, Mediator);
                     }
                 }
             }
             ImGui.TableNextRow();
+
 
             ImGui.TableNextColumn();
             ImGuiEx.TextV($"Apply on Dispell:");
@@ -317,9 +325,9 @@ internal class MoodleTab
 
             string information = "Apply Moodle On Dispell...";
 
-            if (C.SavedStatuses.Where(v => v.GUID == Selected.StatusOnDispell).TryGetFirst(out MyStatus myStat))
+            if (Services.Configuration.SavedMoodles.Where(v => v.Identifier == Selected.StatusOnDispell).TryGetFirst(out Moodle myStat))
             {
-                information = P.OtterGuiHandler.MoodleFileSystem.TryGetPathByID(myStat.GUID, out var path) ? path : myStat.GUID.ToString();
+                information = OtterGuiHandler.MoodleFileSystem.TryGetPathByID(myStat.Identifier, out string? path) ? path : myStat.ID;
             }
 
             if (ImGui.BeginCombo("##addnew", information, ImGuiComboFlags.HeightLargest))
@@ -329,71 +337,128 @@ internal class MoodleTab
 
                 if (ImGui.Selectable($"Clear", false, ImGuiSelectableFlags.None))
                 {
-                    Selected.StatusOnDispell = Guid.Empty;
-                    P.IPCProcessor.StatusModified(Selected.GUID);
+                    Selected.SetStatusOnDispell(Guid.Empty, Mediator);
                 }
-
-                foreach (var x in C.SavedStatuses)
+                
+                foreach (Moodle moodle in Services.Configuration.SavedMoodles)
                 {
-                    if (!x.IsValid(out _)) continue;
-                    if (Selected.GUID != x.GUID && P.OtterGuiHandler.MoodleFileSystem.TryGetPathByID(x.GUID, out var path))
+                    if (!Services.MoodleValidator.IsValid(moodle, out _)) continue;
+                    if (Selected.Identifier != moodle.Identifier && OtterGuiHandler.MoodleFileSystem.TryGetPathByID(moodle.Identifier, out string? path))
                     {
                         if (Filter == "" || path.Contains(Filter, StringComparison.OrdinalIgnoreCase))
                         {
-                            var split = path.Split(@"/");
-                            var name = split[^1];
-                            var directory = split[0..^1].Join(@"/");
+                            string[] split = path.Split(@"/");
+                            string name = split[^1];
+                            string directory = split[0..^1].Join(@"/");
+
                             if (directory != name)
                             {
-                                ImGuiEx.RightFloat($"Selector{x.ID}", () => ImGuiEx.Text(ImGuiColors.DalamudGrey, directory));
+                                ImGuiEx.RightFloat($"Selector{moodle.ID}", () => ImGuiEx.Text(ImGuiColors.DalamudGrey, directory));
                             }
-                            if (ThreadLoadImageHandler.TryGetIconTextureWrap(x.AdjustedIconID, false, out var tex))
+
+                            IDalamudTextureWrap? tWrap = GetTextureWrapFor(Selected);
+                            if (tWrap != null)
                             {
-                                ImGui.Image(tex.ImGuiHandle, UI.StatusIconSize * 0.5f);
+                                ImGui.Image(tWrap.ImGuiHandle, PluginConstants.StatusIconSize * 0.5f);
                                 ImGui.SameLine();
                             }
-                            if (ImGui.Selectable($"{name}##{x.ID}", false, ImGuiSelectableFlags.None))
+
+                            if (ImGui.Selectable($"{name}##{moodle.ID}", false, ImGuiSelectableFlags.None))
                             {
-                                Selected.StatusOnDispell = x.GUID;
-                                P.IPCProcessor.StatusModified(Selected.GUID);
+                                Selected.SetStatusOnDispell(moodle.Identifier, Mediator);
                             }
                         }
                     }
                 }
+                
+
                 ImGui.EndCombo();
             }
 
+
+            // Description Field
+            ImGui.TableNextRow(ImGuiTableRowFlags.None, ImGui.GetContentRegionAvail().Y);
             ImGui.TableNextColumn();
-            ImGuiEx.TextV($"Applicant:");
-            ImGuiEx.HelpMarker("Indicates who applied the Moodle. Changes the colour of the duration counter to be green if the character name and world resolve to yourself.");
-            ImGui.TableNextColumn();
-            ImGuiEx.SetNextItemFullWidth();
-            ImGui.InputTextWithHint("##applier", "Player Name@World", ref Selected.Applier, 150, C.Censor ? ImGuiInputTextFlags.Password : ImGuiInputTextFlags.None);
-            if (ImGui.IsItemDeactivatedAfterEdit())
-            {
-                P.IPCProcessor.StatusModified(Selected.GUID);
-            }
+            ImGuiEx.RightFloat("DescCharLimit", () => ImGuiEx.TextV(ImGuiColors.DalamudGrey2, $"{Selected.Description.Length}/500"), out _, ImGui.GetContentRegionAvail().X + ImGui.GetCursorPosX() + ImGui.GetStyle().CellPadding.X);
+            ImGuiEx.TextV($"Description:");
+            Formatting();
 
             ImGui.TableNextColumn();
-            ImGuiEx.TextV($"ID:");
-            ImGuiEx.HelpMarker("Used in commands to apply moodle.");
-            ImGui.TableNextColumn();
-            ImGuiEx.SetNextItemFullWidth();
-            ImGui.InputText($"##id-text", Encoding.UTF8.GetBytes(Selected.ID), 36, ImGuiInputTextFlags.ReadOnly);
-            */
+            //ImGuiEx.SetNextItemFullWidth();
+
+            string localDescription = Selected.Description;
+
+            ImGui.InputTextMultiline("##desc", ref localDescription, 500, ImGui.GetContentRegionAvail() - ImGui.GetStyle().CellPadding, ImGuiInputTextFlags.None);
+            if (ImGui.IsItemDeactivatedAfterEdit())
+            {
+                Selected.SetDescription(localDescription, Mediator);
+            }
+
             ImGui.EndTable();
         }
-            
-        /*
-        if (Selected.IconID != 0 && ThreadLoadImageHandler.TryGetIconTextureWrap(Selected.AdjustedIconID, true, out var image))
-        {
-            ImGui.SetCursorPos(cur);
-            ImGui.Image(image.ImGuiHandle, UI.StatusIconSize * 2);
-        }*/
+
+
+        DrawSelectedIcon(statusIconCursorPos);
+    }
+
+    void DrawSelectedIcon(Vector2 statusIconCursorPos)
+    {
+        if (Selected == null) return;
+
+        IDalamudTextureWrap? tWrap = GetTextureWrapFor(Selected);
+        if (tWrap == null) return;
+
+        ImGui.SetCursorPos(statusIconCursorPos);
+        ImGui.Image(tWrap.ImGuiHandle, PluginConstants.StatusIconSize * 2);
+    }
+
+    IDalamudTextureWrap? GetTextureWrapFor(IMoodle moodle)
+    {
+        if (Selected == null) return null;
+
+        if (Selected.IconID == 0) return null;
+        if (!DalamudServices.TextureProvider.TryGetFromGameIcon(Services.MoodleValidator.GetAdjustedIconId(Selected), out ISharedImmediateTexture? texture)) return null;
+        if (!texture.TryGetWrap(out IDalamudTextureWrap? image, out _)) return null;
+
+        return image;
     }
 
     void Formatting()
     {
         ImGuiEx.HelpMarker("UH OH!");
+    }
+
+    bool DurationSelector(string PermanentTitle, ref bool NoExpire, ref int Days, ref int Hours, ref int Minutes, ref int Seconds)
+    {
+        var modified = false;
+
+        if (ImGui.Checkbox(PermanentTitle, ref NoExpire))
+        {
+            modified = true;
+        }
+        if (!NoExpire)
+        {
+            ImGui.SameLine();
+            ImGui.SetNextItemWidth(30);
+            ImGui.DragInt("D", ref Days, 0.1f, 0, 999);
+            if (ImGui.IsItemDeactivatedAfterEdit()) modified = true;
+            ImGui.SameLine();
+            ImGui.SetNextItemWidth(30);
+            ImGui.DragInt("H##h", ref Hours, 0.1f, 0, 23);
+            if (ImGui.IsItemDeactivatedAfterEdit()) modified = true;
+            ImGui.SameLine();
+            ImGui.SetNextItemWidth(30);
+            ImGui.DragInt("M##m", ref Minutes, 0.1f, 0, 59);
+            if (ImGui.IsItemDeactivatedAfterEdit()) modified = true;
+            ImGui.SameLine();
+            ImGui.SetNextItemWidth(30);
+            ImGui.DragInt("S##s", ref Seconds, 0.1f, 0, 59);
+            if (ImGui.IsItemDeactivatedAfterEdit()) modified = true;
+
+        }
+        // Wait 5 seconds before firing our status modified event. (helps prevent flooding)
+        if (modified) return true;
+        // otherwise, return false for the change.
+        return false;
     }
 }

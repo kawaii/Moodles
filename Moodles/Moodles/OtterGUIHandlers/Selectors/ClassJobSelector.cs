@@ -5,12 +5,13 @@ using ImGuiNET;
 using Lumina.Excel.Sheets;
 using Moodles.Moodles.Services;
 using Moodles.Moodles.Services.Interfaces;
+using Moodles.Moodles.TempWindowing;
 using System;
 using System.Collections.Generic;
 
 namespace Moodles.Moodles.OtterGUIHandlers.Selectors;
 
-internal class ClassJobSelector : IDisposable
+internal class ClassJobSelector
 {
     public readonly List<SelectableJob> SelectedJobs = [];
     readonly SelectableJob[] SelectableJobs = [];
@@ -39,7 +40,7 @@ internal class ClassJobSelector : IDisposable
         ImGui.SameLine();
         ImGui.SetNextItemWidth(width);
 
-        if (ImGui.BeginCombo("##job", SelectorShower()))
+        if (ImGui.BeginCombo($"##job##jobselect{WindowHandler.InternalCounter}", SelectorShower()))
         {
             foreach (SelectableJob sJob in SelectableJobs)
             {
@@ -78,11 +79,6 @@ internal class ClassJobSelector : IDisposable
         }
 
         return abbreviations;
-    }
-
-    public void Dispose()
-    {
-        
     }
 }
 

@@ -9,12 +9,19 @@ namespace Moodles.Moodles.Services.Wrappers;
 
 internal class SheetsWrapper : ISheets
 {
+    public List<string> VFXPaths { get; private set; } = ["Clear"];
     public uint[] IconIDs { get; private set; } = [];
     public ClassJob[] FilterableJobs => FilterableJobList.ToArray();
 
     readonly DalamudServices DalamudServices;
 
     readonly List<IPetSheetData> petSheetCache = new List<IPetSheetData>();
+
+    readonly Dictionary<uint, uint> IconStackCounts = [];
+    readonly HashSet<uint> NegativeStatuses = [];
+    readonly HashSet<uint> PositiveStatuses = [];
+    readonly HashSet<uint> SpecialStatuses = [];
+    readonly HashSet<uint> DispelableIcons = [];
 
     readonly ExcelSheet<Companion>? petSheet;
     readonly ExcelSheet<Pet>? battlePetSheet;
@@ -35,7 +42,7 @@ internal class SheetsWrapper : ISheets
         classJobs = dalamudServices.DataManager.GetExcelSheet<ClassJob>();
 
         SetupPetSheetCache();
-        SetupIconIDCache();
+        SetupStatusCaches();
         SetupJobList();
     }
 
@@ -60,7 +67,7 @@ internal class SheetsWrapper : ISheets
         SetupBattlePets();
     }
 
-    void SetupIconIDCache()
+    void SetupStatusCaches()
     {
         if (statuses == null) return;
 
@@ -68,12 +75,60 @@ internal class SheetsWrapper : ISheets
 
         foreach (Status status in statuses)
         {
+            if (temporaryList.Contains(status.Icon)) continue;
             if (status.Icon == 0) continue;
-            if (status.Name.ExtractText().IsNullOrWhitespace()) continue;
+            if (status.Name.ExtractText().IsNullOrEmpty()) continue;
 
             temporaryList.Add(status.Icon);
         }
 
+        foreach (Status status in statuses)
+        {
+            if (status.HitEffect.ValueNullable == null) continue;
+            if (status.HitEffect.Value.Location.ValueNullable == null) continue;
+
+            string vfxPath = status.HitEffect.Value.Location.Value.Location.ExtractText();
+            if (vfxPath.IsNullOrWhitespace()) continue;
+            if (VFXPaths.Contains(vfxPath)) continue;
+
+            VFXPaths.Add(vfxPath);
+        }
+
+        foreach (Status status in statuses)
+        {
+            if (IconStackCounts.TryGetValue(status.Icon, out uint count))
+            {
+                if (count < status.MaxStacks)
+                {
+                    IconStackCounts[status.Icon] = status.MaxStacks;
+                }
+            }
+            else
+            {
+                IconStackCounts[status.Icon] = status.MaxStacks;
+            }
+
+            if (NegativeStatuses.Contains(status.RowId) || PositiveStatuses.Contains(status.RowId) || SpecialStatuses.Contains(status.RowId)) continue;
+
+            if (status.CanIncreaseRewards == 1)
+            {
+                SpecialStatuses.Add(status.RowId);
+            }
+            else if (status.StatusCategory == 1)
+            {
+                PositiveStatuses.Add(status.RowId);
+            }
+            else if (status.StatusCategory == 2)
+            {
+                NegativeStatuses.Add(status.RowId);
+                DispelableIcons.Add(status.Icon);
+                for (var i = 1; i < status.MaxStacks; i++)
+                {
+                    DispelableIcons.Add((uint)(status.Icon + i));
+                }
+            }
+        }
+        
         IconIDs = temporaryList.ToArray();
     }
 
@@ -106,6 +161,21 @@ internal class SheetsWrapper : ISheets
 
             petSheetCache.Add(new PetSheetData(skeleton));
         }
+    }
+
+    public bool StatusIsDispellable(uint statusId)
+    {
+        return DispelableIcons.Contains(statusId);
+    }
+
+    public uint? GetStackCount(uint iconId)
+    {
+        if (IconStackCounts.TryGetValue(iconId, out uint value))
+        {
+            return value;
+        }
+
+        return null;
     }
 
     public ClassJob? GetJob(uint id)
