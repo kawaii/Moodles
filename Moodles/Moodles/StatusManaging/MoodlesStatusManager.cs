@@ -1,4 +1,5 @@
 ﻿using Dalamud.Plugin.Services;
+using Moodles.Moodles.Mediation;
 using Moodles.Moodles.MoodleUsers.Interfaces;
 using Moodles.Moodles.Services.Interfaces;
 using Moodles.Moodles.StatusManaging.Interfaces;
@@ -58,7 +59,7 @@ internal class MoodlesStatusManager : IMoodleStatusManager
         if (IsActive) return;
         if (!user.IsLocalPlayer) return;
 
-        // Mark Dirty Eventually
+        Services.Mediator.Send(new StatusManagerDirtyMessage(this));
     }
 
     public void UpdateEntry(IMoodlePet pet)
@@ -69,7 +70,7 @@ internal class MoodlesStatusManager : IMoodleStatusManager
         if (IsActive) return;
         if (!pet.Owner.IsLocalPlayer) return;
 
-        // Mark Dirty Eventually
+        Services.Mediator.Send(new StatusManagerDirtyMessage(this));
     }
 
     public void SetIdentifier(ulong contentID, int skeleton, bool removeEphemeralStatus = false)
@@ -87,5 +88,10 @@ internal class MoodlesStatusManager : IMoodleStatusManager
     public void Clear(bool isIPC)
     {
         IsActive = false;
+
+        if (isIPC) return;
+
+        Services.Mediator.Send(new StatusManagerClearedMessage(this));
+        Services.Mediator.Send(new StatusManagerDirtyMessage(this));
     }
 }

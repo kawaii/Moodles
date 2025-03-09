@@ -1,4 +1,5 @@
 ﻿using Dalamud.Plugin.Services;
+using Moodles.Moodles.Mediation;
 using Moodles.Moodles.Services;
 using Moodles.Moodles.Services.Interfaces;
 using Moodles.Moodles.StatusManaging.Interfaces;
@@ -10,8 +11,10 @@ namespace Moodles.Moodles.StatusManaging;
 internal class MoodlesDatabase : IMoodlesDatabase
 {
     public IMoodleStatusManager[] StatusManagers => _statusManagers.ToArray();
+    public IMoodle[] Moodles => _moodles.ToArray();
 
     readonly List<IMoodleStatusManager> _statusManagers = new List<IMoodleStatusManager>();
+    readonly List<IMoodle> _moodles = new List<IMoodle>();
 
     readonly IMoodlesServices Services;
 
@@ -20,11 +23,62 @@ internal class MoodlesDatabase : IMoodlesDatabase
         Services = services;
     }
 
-    public void UpdateStatusManagers(IFramework framework)
+    public void Update(IFramework framework)
     {
         foreach (IMoodleStatusManager statusManager in _statusManagers)
         {
             statusManager.Update(framework);
+        }
+    }
+
+    public IMoodle? GetMoodleNoCreate(Guid identifier)
+    {
+        int moodlesCount = _moodles.Count;
+
+        for (int i = 0; i < moodlesCount; i++)
+        {
+            IMoodle moodle = _moodles[i];
+            if (moodle.Identifier != identifier) continue;
+
+            return moodle;
+        }
+
+        return null;
+    }
+
+    public void RegisterMoodle(IMoodle moodle)
+    {
+        RemoveMoodle(moodle);
+
+        _moodles.Add(moodle);
+
+        Services.Mediator.Send(new DatabaseAddedMoodleMessage(this, moodle));
+        Services.Mediator.Send(new DatabaseDirtyMessage(this));
+    }
+
+    public IMoodle CreateMoodle()
+    {
+        IMoodle newMoodle = new Moodle();
+        _moodles.Add(newMoodle);
+
+        Services.Mediator.Send(new DatabaseAddedMoodleMessage(this, newMoodle));
+        Services.Mediator.Send(new DatabaseDirtyMessage(this));
+
+        return newMoodle;
+    }
+
+    public void RemoveMoodle(IMoodle moodle)
+    {
+        for (int i = _moodles.Count - 1; i >= 0; i--)
+        {
+            if (_moodles[i].Identifier != moodle.Identifier) continue;
+
+            PluginLog.LogVerbose($"Removed moodle for: {moodle.Identifier} {moodle.Title}");
+
+            Services.Mediator.Send(new DatabaseRemovedMoodleMessage(this, _moodles[i]));
+            Services.Mediator.Send(new DatabaseDirtyMessage(this));
+
+            _moodles.RemoveAt(i);
         }
     }
 
@@ -58,6 +112,10 @@ internal class MoodlesDatabase : IMoodlesDatabase
 
         IMoodleStatusManager newStatusManager = new MoodlesStatusManager(Services, contentID, skeletonID, "[UNKNOWN]", 0, false);
         _statusManagers.Add(newStatusManager);
+
+        Services.Mediator.Send(new DatabaseAddedStatusManagerMessage(this, newStatusManager));
+        Services.Mediator.Send(new DatabaseDirtyMessage(this));
+
         return newStatusManager;
     }
 
@@ -69,6 +127,9 @@ internal class MoodlesDatabase : IMoodlesDatabase
             if (_statusManagers[i].SkeletonID != entry.SkeletonID) continue;
 
             PluginLog.LogVerbose($"Removed status manager for: {entry.Name}");
+
+            Services.Mediator.Send(new DatabaseRemovedStatusManagerMessage(this, _statusManagers[i]));
+            Services.Mediator.Send(new DatabaseDirtyMessage(this));
 
             _statusManagers.RemoveAt(i);
         }

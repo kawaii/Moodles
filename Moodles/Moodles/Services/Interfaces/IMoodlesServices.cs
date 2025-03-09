@@ -1,4 +1,6 @@
-﻿namespace Moodles.Moodles.Services.Interfaces;
+﻿using Moodles.Moodles.Mediation.Interfaces;
+
+namespace Moodles.Moodles.Services.Interfaces;
 
 internal interface IMoodlesServices
 {
@@ -6,4 +8,5 @@ internal interface IMoodlesServices
 
     IStringHelper StringHelper { get; }
     ISheets Sheets { get; }
+    IMoodlesMediator Mediator { get; }
 }

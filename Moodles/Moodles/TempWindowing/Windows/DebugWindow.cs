@@ -21,8 +21,36 @@ internal class DebugWindow : MoodleWindow
         Database = database;
         UserList = userList;
 
+        devStructList.Add(new DevStruct("Moodles", DrawMoodles));
         devStructList.Add(new DevStruct("User List", DrawUserList));
         devStructList.Add(new DevStruct("Database", DrawDatabase));
+    }
+
+    void DrawMoodles()
+    {
+        if (ImGui.Button($"+##+{WindowHandler.InternalCounter}"))
+        {
+            Database.CreateMoodle();
+        }
+
+        IMoodle[] moodles = Database.Moodles;
+
+        foreach (IMoodle moodle in moodles)
+        {
+            DrawMoodle(moodle);
+        }
+    }
+
+    void DrawMoodle(IMoodle moodle)
+    {
+        if (ImGui.Button($"-##-{WindowHandler.InternalCounter}"))
+        {
+            Database.RemoveMoodle(moodle);
+        }
+
+        ImGui.LabelText(moodle.Title, "Title:");
+        ImGui.LabelText(moodle.Description, "Description:");
+        ImGui.LabelText(moodle.Identifier.ToString(), "Guid:");
     }
 
     void DrawUserList()
