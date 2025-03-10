@@ -172,7 +172,7 @@ internal sealed class MoodleFileSystem : FileSystem<IMoodle>, IDisposable
             IMoodle? copy = Selected.JSONClone();
             if (copy == null) return;
 
-            copy.SetIdentifier(Guid.Empty);
+            copy.EnforceCleanGUID();
             ImGui.SetClipboardText(JsonConvert.SerializeObject(copy));
         }
 
@@ -228,6 +228,11 @@ internal sealed class MoodleFileSystem : FileSystem<IMoodle>, IDisposable
                     Moodle? newStatus = JsonConvert.DeserializeObject<Moodle>(ClipboardText);
                     if (newStatus != null)
                     {
+                        if (newStatus.Identifier == Guid.Empty)
+                        {
+                            newStatus.EnforceNewGUID();
+                        }
+
                         MoodleFileSystem.CreateLeaf(MoodleFileSystem.Root, NewName, newStatus);
                         Database.RegisterMoodle(newStatus);
                     }

@@ -14,7 +14,7 @@ internal partial class Moodle : IMoodle
 {
     [JsonIgnore] public string ID => Identifier.ToString();
 
-    public Guid Identifier { get; set; } = Guid.NewGuid();
+    public Guid Identifier { get; set; } = Guid.CreateVersion7();
     public string Title { get; set; } = string.Empty;
     public string Description { get; set; } = string.Empty;
     public bool Dispellable { get; set; } = false;
@@ -39,6 +39,18 @@ internal partial class Moodle : IMoodle
     public void SetIdentifier(Guid identifier, IMoodlesMediator? mediator = null)
     {
         Identifier = identifier;
+        mediator?.Send(new MoodleChangedMessage(this));
+    }
+
+    public void EnforceCleanGUID(IMoodlesMediator? mediator = null)
+    {
+        Identifier = Guid.Empty;
+        mediator?.Send(new MoodleChangedMessage(this));
+    }
+
+    public void EnforceNewGUID(IMoodlesMediator? mediator = null)
+    {
+        Identifier = Guid.CreateVersion7();
         mediator?.Send(new MoodleChangedMessage(this));
     }
 

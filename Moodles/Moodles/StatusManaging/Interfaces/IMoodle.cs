@@ -53,6 +53,9 @@ internal interface IMoodle
     void SetEphemeral(bool isEphemeral, IMoodlesMediator? mediator = null);
     void SetCreatedBy(ulong createdBy, IMoodlesMediator? mediator = null);
 
+    void EnforceCleanGUID(IMoodlesMediator? mediator = null);
+    void EnforceNewGUID(IMoodlesMediator? mediator = null);
+
     // The actual moodle thing should hold data like
     // Current Stack
     // GUID
