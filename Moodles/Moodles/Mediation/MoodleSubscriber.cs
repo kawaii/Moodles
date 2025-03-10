@@ -5,9 +5,9 @@ namespace Moodles.Moodles.Mediation;
 
 internal abstract class MoodleSubscriber : IMoodleSubscriber
 {
-    public MoodleMediator Mediator { get; }
+    public IMoodlesMediator Mediator { get; }
 
-    protected MoodleSubscriber(MoodleMediator mediator)
+    protected MoodleSubscriber(IMoodlesMediator mediator)
     {
         Mediator = mediator;
     }

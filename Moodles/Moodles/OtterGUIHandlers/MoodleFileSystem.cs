@@ -44,7 +44,7 @@ internal sealed class MoodleFileSystem : FileSystem<IMoodle>, IDisposable
             if (info.Exists)
             {
                 PluginLog.Log($"Trying to identify {info}");
-                Load(info, services.Configuration.SavedMoodles, ConvertToIdentifier, ConvertToName);
+                Load(info, Database.Moodles, ConvertToIdentifier, ConvertToName);
             }
             Selector = new FileSystemSelector(this, otterGuiHandler, dalamudServices, services, Database);
         }
@@ -65,7 +65,7 @@ internal sealed class MoodleFileSystem : FileSystem<IMoodle>, IDisposable
 
         PluginLog.Log($"Deleting {moodle.Identifier}");
 
-        Services.Configuration.SavedMoodles.Remove(moodle);
+        Database.RemoveMoodle(moodle);
 
         if (FindLeaf(moodle, out Leaf? leaf))
         {
@@ -87,7 +87,7 @@ internal sealed class MoodleFileSystem : FileSystem<IMoodle>, IDisposable
     {
         path = default;
 
-        Moodle? firstMoodle = Services.Configuration.SavedMoodles.FirstOrDefault(x => x.Identifier == id);
+        IMoodle? firstMoodle = Database.GetMoodleNoCreate(id);
         if (firstMoodle == null) return false;
 
         if (!FindLeaf(firstMoodle, out Leaf? leaf))
@@ -118,7 +118,6 @@ internal sealed class MoodleFileSystem : FileSystem<IMoodle>, IDisposable
             using var FileStream = new FileStream(FilePath, FileMode.Create, FileAccess.ReadWrite, FileShare.ReadWrite);
             using var StreamWriter = new StreamWriter(FileStream);
             SaveToFile(StreamWriter, SaveConverter, true);
-            Services.Configuration.Save(DalamudServices.DalamudPlugin);
         }
         catch (Exception ex)
         {
@@ -230,8 +229,7 @@ internal sealed class MoodleFileSystem : FileSystem<IMoodle>, IDisposable
                     if (newStatus != null)
                     {
                         MoodleFileSystem.CreateLeaf(MoodleFileSystem.Root, NewName, newStatus);
-                        Services.Configuration.SavedMoodles.Add(newStatus);
-                        MoodleFileSystem.Save();
+                        Database.RegisterMoodle(newStatus);
                     }
                     else
                     {
@@ -248,13 +246,8 @@ internal sealed class MoodleFileSystem : FileSystem<IMoodle>, IDisposable
                 try
                 {
                     IMoodle newStatus = Database.CreateMoodle();
-
-                    if (newStatus is Moodle moodle)
-                    {
-                        Services.Configuration.SavedMoodles.Add(moodle);
-                        MoodleFileSystem.CreateLeaf(FileSystem.Root, NewName, moodle);
-                        MoodleFileSystem.Save();
-                    }
+                    MoodleFileSystem.CreateLeaf(FileSystem.Root, NewName, newStatus);
+                    MoodleFileSystem.Save();
                 }
                 catch (Exception e)
                 {
@@ -276,6 +269,5 @@ internal sealed class MoodleFileSystem : FileSystem<IMoodle>, IDisposable
         {
             return FilterValue.Length > 0 && !path.FullName().Contains(FilterValue, StringComparison.OrdinalIgnoreCase);
         }
-
     }
 }

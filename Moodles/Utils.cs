@@ -1,21 +1,20 @@
-﻿using ECommons;
+﻿using Dalamud.Game.Text.SeStringHandling;
+using ECommons;
+using ECommons.ChatMethods;
 using ECommons.DalamudServices;
 using ImGuiNET;
-using Lumina.Excel.Sheets;
-using Lumina.Extensions;
-using Moodles.Moodles.Services.Data;
 using Moodles.Moodles.StatusManaging;
 using Moodles.Moodles.StatusManaging.Interfaces;
 using Newtonsoft.Json;
 using System;
-using System.Collections.Generic;
 using System.Linq;
 using System.Numerics;
 using System.Runtime.CompilerServices;
+using System.Text.RegularExpressions;
 
 namespace Moodles;
 
-internal static class Utils
+internal unsafe static partial class Utils
 {
     static readonly JsonSerializerSettings Settings = new JsonSerializerSettings()
     {
@@ -38,6 +37,92 @@ internal static class Utils
     {
         return ImGui.ColorConvertFloat4ToU32(color);
     }
+
+    // If you think im learning how this BS Kite made works... think again :bceStare2:
+    public static SeString ParseBBSeString(string text, bool nullTerminator = true) => ParseBBSeString(text, out _, nullTerminator);
+    public static SeString ParseBBSeString(string text, out string? error, bool nullTerminator = true)
+    {
+        try
+        {
+            error = null;
+            var result = SplitRegex().Split(text);
+            var str = new SeStringBuilder();
+            int[] valid = [0, 0, 0];
+            foreach (var s in result)
+            {
+                if (s == string.Empty) continue;
+                if (s.StartsWith("[color=", StringComparison.OrdinalIgnoreCase))
+                {
+                    var success = ushort.TryParse(s[7..^1], out var r);
+                    if (!success)
+                    {
+                        r = (ushort)Enum.GetValues<UIColor>().FirstOrDefault(x => x.ToString().EqualsIgnoreCase(s[7..^1]));
+                    }
+                    if (r == 0 || Svc.Data.GetExcelSheet<Lumina.Excel.Sheets.UIColor>().GetRowOrDefault(r) == null) goto ColorError;
+                    str.AddUiForeground(r);
+                    valid[0]++;
+                }
+                else if (s.Equals("[/color]", StringComparison.OrdinalIgnoreCase))
+                {
+                    str.AddUiForegroundOff();
+                    if (valid[0] <= 0) goto ParseError;
+                    valid[0]--;
+                }
+                else if (s.StartsWith("[glow=", StringComparison.OrdinalIgnoreCase))
+                {
+                    var success = ushort.TryParse(s[6..^1], out var r);
+                    if (!success)
+                    {
+                        r = (ushort)Enum.GetValues<UIColor>().FirstOrDefault(x => x.ToString().EqualsIgnoreCase(s[6..^1]));
+                    }
+                    if (r == 0 || Svc.Data.GetExcelSheet<Lumina.Excel.Sheets.UIColor>().GetRowOrDefault(r) == null) goto ColorError;
+                    str.AddUiGlow(r);
+                    valid[1]++;
+                }
+                else if (s.Equals("[/glow]", StringComparison.OrdinalIgnoreCase))
+                {
+                    str.AddUiGlowOff();
+                    if (valid[1] <= 0) goto ParseError;
+                    valid[1]--;
+                }
+                else if (s.Equals("[i]", StringComparison.OrdinalIgnoreCase))
+                {
+                    str.AddItalicsOn();
+                    valid[2]++;
+                }
+                else if (s.Equals("[/i]", StringComparison.OrdinalIgnoreCase))
+                {
+                    str.AddItalicsOff();
+                    if (valid[2] <= 0) goto ParseError;
+                    valid[2]--;
+                }
+                else
+                {
+                    str.AddText(s);
+                }
+            }
+            if (!valid.All(x => x == 0))
+            {
+                goto ParseError;
+            }
+            if (nullTerminator) str.AddText("\0");
+            return str.Build();
+        ParseError:
+            error = "Error: Opening and closing elements mismatch.";
+            return new SeStringBuilder().AddText($"{error}\0").Build();
+        ColorError:
+            error = "Error: Color is out of range.";
+            return new SeStringBuilder().AddText($"{error}\0").Build();
+        }
+        catch (Exception e)
+        {
+            error = "Error: please check syntax.";
+            return new SeStringBuilder().AddText($"{error}\0").Build();
+        }
+    }
+
+    [GeneratedRegex(@"(\[color=[0-9a-zA-Z]+\])|(\[\/color\])|(\[glow=[0-9a-zA-Z]+\])|(\[\/glow\])|(\[i\])|(\[\/i\])", RegexOptions.IgnoreCase, "en-US")]
+    private static partial Regex SplitRegex();
 }
 
 public class AbstractConverter<TReal, TAbstract>

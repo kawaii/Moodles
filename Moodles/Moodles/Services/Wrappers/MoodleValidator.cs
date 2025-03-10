@@ -32,21 +32,20 @@ internal class MoodleValidator : IMoodleValidator
             return false;
         }
         
-        /*
-        Utils.ParseBBSeString(Title, out var parseError);
-        if (parseError != null)
+        _ = Utils.ParseBBSeString(moodle.Title, out string? titleParseError);
+        if (titleParseError != null)
         {
-            error = $"Syntax error in title: {parseError}";
+            error = $"Syntax error in title: {titleParseError}";
             return false;
         }
-        
-        
-        Utils.ParseBBSeString(Description, out var parseError);
-        if (parseError != null)
+
+
+        _ = Utils.ParseBBSeString(moodle.Description, out string? descriptionParseError);
+        if (descriptionParseError != null)
         {
-            error = $"Syntax error in description: {parseError}";
+            error = $"Syntax error in description: {descriptionParseError}";
             return false;
-        }*/
+        }
 
         error = null;
         return true;
@@ -57,12 +56,13 @@ internal class MoodleValidator : IMoodleValidator
         return moodle.Days + moodle.Hours + moodle.Seconds + moodle.Minutes;
     }
 
-    public int GetMoodleDuration(IMoodle moodle, out int days, out int hours, out int minutes, out int seconds)
+    public int GetMoodleDuration(IMoodle moodle, out int days, out int hours, out int minutes, out int seconds, out bool countDownWhenOffline)
     {
         days = moodle.Days;
         hours = moodle.Hours;
         minutes = moodle.Minutes;
         seconds = moodle.Seconds;
+        countDownWhenOffline = moodle.CountsDownWhenOffline;
 
         return GetMoodleDuration(moodle);
     }

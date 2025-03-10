@@ -2,5 +2,5 @@
 
 internal interface IMoodleSubscriber
 {
-    MoodleMediator Mediator { get; }
+    IMoodlesMediator Mediator { get; }
 }

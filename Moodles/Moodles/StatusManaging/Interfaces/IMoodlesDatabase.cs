@@ -13,10 +13,14 @@ internal interface IMoodlesDatabase
     IMoodleStatusManager GetPetStatusManager(ulong contentID, int skeletonID);
 
     IMoodle? GetMoodleNoCreate(Guid identifier);
-    IMoodle CreateMoodle();
+    IMoodle CreateMoodle(bool isEphemiral = false);
+    void RegisterMoodle(IMoodle moodle, bool fromIPC = false);
 
     void RemoveMoodle(IMoodle moodle);
     void RemoveStatusManager(IMoodleStatusManager entry);
 
     void Update(IFramework framework);
+
+    void PrepareForSave();
+    void CleanupSave();
 }

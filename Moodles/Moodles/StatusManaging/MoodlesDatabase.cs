@@ -21,6 +21,39 @@ internal class MoodlesDatabase : IMoodlesDatabase
     public MoodlesDatabase(IMoodlesServices services)
     {
         Services = services;
+
+        FloodDatabase();
+    }
+
+    void FloodDatabase()
+    {
+        foreach (Moodle moodle in Services.Configuration.SavedMoodles)
+        {
+            RegisterMoodle(moodle);
+        }
+
+        Services.Configuration.SavedMoodles.Clear();
+    }
+
+    public void PrepareForSave()
+    {
+        CleanupSave();
+
+        int moodlesCount = _moodles.Count;
+
+        for (int i = 0; i < moodlesCount; i++)
+        {
+            IMoodle moodle = _moodles[i];
+            if (moodle is not Moodle mMoodle) continue;
+            if (moodle.IsEphemeral) continue;
+
+            Services.Configuration.SavedMoodles.Add(mMoodle);
+        }
+    }
+
+    public void CleanupSave()
+    {
+        Services.Configuration.SavedMoodles.Clear();
     }
 
     public void Update(IFramework framework)
@@ -46,9 +79,11 @@ internal class MoodlesDatabase : IMoodlesDatabase
         return null;
     }
 
-    public void RegisterMoodle(IMoodle moodle)
+    public void RegisterMoodle(IMoodle moodle, bool fromIPC = false)
     {
         RemoveMoodle(moodle);
+
+        moodle.SetEphemeral(fromIPC);   // Don't notify
 
         _moodles.Add(moodle);
 
@@ -56,10 +91,11 @@ internal class MoodlesDatabase : IMoodlesDatabase
         Services.Mediator.Send(new DatabaseDirtyMessage(this));
     }
 
-    public IMoodle CreateMoodle()
+    public IMoodle CreateMoodle(bool isEphemiral = false)
     {
         IMoodle newMoodle = new Moodle();
         _moodles.Add(newMoodle);
+        newMoodle.SetEphemeral(isEphemiral);
 
         Services.Mediator.Send(new DatabaseAddedMoodleMessage(this, newMoodle));
         Services.Mediator.Send(new DatabaseDirtyMessage(this));

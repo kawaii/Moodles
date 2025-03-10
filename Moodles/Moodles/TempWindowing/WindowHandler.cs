@@ -45,7 +45,7 @@ internal class WindowHandler : IDisposable
 
     void _Register()
     {
-        Register(new MainWindow(OtterGuiHandler, DalamudServices, Services));
+        Register(new MainWindow(OtterGuiHandler, DalamudServices, Services, Database));
     }
 
     void Register(MoodleWindow moodleWindow)

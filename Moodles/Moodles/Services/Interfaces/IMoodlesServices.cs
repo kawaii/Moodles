@@ -1,8 +1,9 @@
 ﻿using Moodles.Moodles.Mediation.Interfaces;
+using System;
 
 namespace Moodles.Moodles.Services.Interfaces;
 
-internal interface IMoodlesServices
+internal interface IMoodlesServices : IDisposable
 {
     Configuration Configuration { get; }
 

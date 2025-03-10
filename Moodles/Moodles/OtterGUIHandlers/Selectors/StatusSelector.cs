@@ -36,19 +36,21 @@ internal class StatusSelector : Window
     IEnumerable<IconInfo> AvailableIconsNeg = [];
     IEnumerable<IconInfo> AvailableIconsSpec = [];
 
-    bool Valid => selectedMoodle != null && Services.Configuration.SavedMoodles.Contains(selectedMoodle);
+    bool Valid => selectedMoodle != null && Database.GetMoodleNoCreate(selectedMoodle.Identifier) != null;
 
     readonly IMoodlesMediator Mediator;
     readonly DalamudServices DalamudServices;
     readonly IMoodlesServices Services;
     readonly ClassJobSelector ClassJobSelector;
+    readonly IMoodlesDatabase Database;
 
-    public StatusSelector(IMoodlesMediator mediator, DalamudServices dalamudServices, IMoodlesServices services) : base("Select Icon")
+    public StatusSelector(IMoodlesMediator mediator, DalamudServices dalamudServices, IMoodlesServices services, IMoodlesDatabase database) : base("Select Icon")
     {
         Mediator = mediator;
         DalamudServices = dalamudServices;
         Services = services;
         ClassJobSelector = new ClassJobSelector(services, dalamudServices);
+        Database = database;
 
         CachedAvailableIcons = Services.Sheets.IconIDs.Select(iconId => Services.MoodlesCache.GetStatusIconInfo(iconId, false)).Where(x => x.HasValue).Cast<IconInfo>().ToArray();
         RebuildChaches();
@@ -201,6 +203,7 @@ internal class StatusSelector : Window
                     if (selectedMoodle.Description.Length == 0 || selectedMoodle.Description == oldInfo?.Description)   selectedMoodle.SetDescription(info.Description);
                 }
                 selectedMoodle.SetIconID((int)info.IconID, Mediator);
+                PluginLog.Log($"Set Icon To: {info.IconID}");
             }
             ImGui.SameLine();
             ImGui.PushFont(UiBuilder.IconFont);

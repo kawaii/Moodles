@@ -33,17 +33,19 @@ internal class MoodleTab
     readonly IMoodlesServices Services;
     readonly DalamudServices DalamudServices;
     readonly IMoodlesMediator Mediator;
+    readonly IMoodlesDatabase Database;
 
     readonly StatusSelector StatusSelector;
 
-    public MoodleTab(OtterGuiHandler otterGuiHandler, IMoodlesServices services, DalamudServices dalamudServices)
+    public MoodleTab(OtterGuiHandler otterGuiHandler, IMoodlesServices services, DalamudServices dalamudServices, IMoodlesDatabase database)
     {
         DalamudServices = dalamudServices;
         OtterGuiHandler = otterGuiHandler;
         Services = services;
         Mediator = services.Mediator;
+        Database = database;
 
-        StatusSelector = new StatusSelector(Mediator, dalamudServices, services);
+        StatusSelector = new StatusSelector(Mediator, dalamudServices, services, Database);
     }
 
     public void Draw()
@@ -115,6 +117,12 @@ internal class MoodleTab
             ImGuiEx.TextV($"Title:");
             Formatting();
 
+            Utils.ParseBBSeString(Selected.Title, out string? titleError);
+            if (titleError != null)
+            {
+                ImGuiEx.HelpMarker(titleError, EColor.RedBright, FontAwesomeIcon.ExclamationTriangle.ToIconString());
+            }
+
             if (Selected.Title.Length == 0)
             {
                 ImGuiEx.HelpMarker("Title can not be empty", EColor.RedBright, FontAwesomeIcon.ExclamationTriangle.ToIconString());
@@ -128,6 +136,7 @@ internal class MoodleTab
             ImGui.InputText("##name", ref titleHolder, 150);
             if (ImGui.IsItemDeactivatedAfterEdit())
             {
+                PluginLog.Log($"Set Title from UI to: {titleHolder}");
                 Selected.SetTitle(titleHolder, Mediator);
             }
 
@@ -170,11 +179,15 @@ internal class MoodleTab
             {
                 for (var i = 0; i < Services.Sheets.VFXPaths.Count; i++)
                 {
-                    if (ImGui.Selectable(Services.Sheets.VFXPaths[i])) Selected.SetVFXPath(Services.Sheets.VFXPaths[i], Mediator);
+                    if (!ImGui.Selectable(Services.Sheets.VFXPaths[i])) continue;
+                    
+                    Selected.SetVFXPath(Services.Sheets.VFXPaths[i], Mediator);
+                    PluginLog.Log($"Set VFX Path to: {Selected.VFXPath}");
                 }
 
                 if (Selected.VFXPath == "Clear")
                 {
+                    PluginLog.Log($"Set VFX Path to: {string.Empty}");
                     Selected.SetVFXPath(string.Empty, Mediator);
                 }
 
@@ -207,6 +220,7 @@ internal class MoodleTab
                     if (ImGui.Selectable($"{i}"))
                     {
                         Selected.SetStartingStacks(i, Mediator);
+                        PluginLog.Log($"Set starting stacks to: {i}");
                     }
                 }
                 ImGui.EndCombo();
@@ -214,16 +228,21 @@ internal class MoodleTab
 
             ImGui.EndDisabled();
 
-            if (Selected.StartingStacks > maxStacks) 
-            { 
-                Selected.SetStartingStacks((int)maxStacks, Mediator); 
-            }
-
             if (Selected.StartingStacks < 1)
             {
                 Selected.SetStartingStacks(1, Mediator);
                 Selected.SetStackOnReapply(false, Mediator);
                 Selected.SetStackIncrementOnReapply(1, Mediator);
+                PluginLog.Log($"Set starting stacks to: {1}");
+            }
+
+            if (maxStacks > 1)
+            {
+                if (Selected.StartingStacks > maxStacks)
+                {
+                    Selected.SetStartingStacks((int)maxStacks, Mediator);
+                    PluginLog.Log($"Set starting stacks to: {maxStacks}");
+                }
             }
             ImGui.TableNextRow();
             
@@ -239,6 +258,7 @@ internal class MoodleTab
             if (ImGuiEx.EnumRadio(ref localStatusType, true))
             {
                 Selected.SetStatusType(localStatusType, Mediator);
+                PluginLog.Log($"Set Status Type: {localStatusType}");
             }
 
             // Duration Field
@@ -248,19 +268,38 @@ internal class MoodleTab
 
             bool noExpire = Selected.Permanent;
 
-            int totalTime = Services.MoodleValidator.GetMoodleDuration(Selected, out int localDays, out int localHours, out int localMinutes, out int localSeconds);
+            int totalTime = Services.MoodleValidator.GetMoodleDuration(Selected, out int localDays, out int localHours, out int localMinutes, out int localSeconds, out bool offlineCountdown);
 
             if (totalTime < 1 && !Selected.Permanent)
             {
                 ImGuiEx.HelpMarker("Duration must be at least 1 second", EColor.RedBright, FontAwesomeIcon.ExclamationTriangle.ToIconString());
             }
             ImGui.TableNextColumn();
-            if (DurationSelector("Permanent", ref noExpire, ref localDays, ref localHours, ref localMinutes, ref localSeconds))
+            if (DurationSelector("Permanent", ref noExpire, ref localDays, ref localHours, ref localMinutes, ref localSeconds, ref offlineCountdown))
             {
                 Selected.SetPermanent(noExpire);
+                Selected.SetCountsDownWhenOffline(offlineCountdown);
                 Selected.SetDuration(localDays, localHours, localMinutes, localSeconds, Mediator);
+                PluginLog.Log($"Time To: {noExpire} {localDays} {localHours} {localMinutes} {localSeconds} {offlineCountdown}");
             }
 
+
+
+            // Dispells on Death Field
+            ImGui.TableNextRow();
+            ImGui.TableNextColumn();
+            ImGuiEx.TextV($"Dispell on Death:");
+            ImGuiEx.HelpMarker("Does not apply next Moodle in the sequence.");
+
+            ImGui.TableNextColumn();
+
+            bool localDispellOnDeath = Selected.DispellsOnDeath;
+
+            if (ImGui.Checkbox("Dispell On Death", ref localDispellOnDeath))
+            {
+                Selected.SetDispellsOnDeath(localDispellOnDeath, Mediator);
+                PluginLog.Log($"SetDispellsOnDeath: {localDispellOnDeath}");
+            }
 
             // Dispelable Field
             if (Services.Sheets.StatusIsDispellable((uint)Selected.IconID))
@@ -278,6 +317,7 @@ internal class MoodleTab
                 if (ImGui.Checkbox("##dispel", ref localIsDispellable))
                 {
                     Selected.SetDispellable(localIsDispellable, Mediator);
+                    PluginLog.Log($"SetDispellable: {localIsDispellable}");
                 }
             }
 
@@ -296,6 +336,7 @@ internal class MoodleTab
                 if (ImGui.Checkbox("##stackonreapply", ref localStacksOnReapply))
                 {
                     Selected.SetStackOnReapply(localStacksOnReapply, Mediator);
+                    PluginLog.Log($"SetStackOnReapply: {localStacksOnReapply}");
                 }
                 // if the selected should reapply and we have a stacked moodle.
                 if (Selected.StackOnReapply && maxStacks > 1)
@@ -310,6 +351,7 @@ internal class MoodleTab
                     if (ImGui.IsItemDeactivatedAfterEdit())
                     {
                         Selected.SetStackIncrementOnReapply(localStacksIncOnReapply, Mediator);
+                        PluginLog.Log($"SetStackIncrementOnReapply: {localStacksIncOnReapply}");
                     }
                 }
             }
@@ -325,9 +367,10 @@ internal class MoodleTab
 
             string information = "Apply Moodle On Dispell...";
 
-            if (Services.Configuration.SavedMoodles.Where(v => v.Identifier == Selected.StatusOnDispell).TryGetFirst(out Moodle myStat))
+            IMoodle? dispellableMoodle = Database.GetMoodleNoCreate(Selected.StatusOnDispell);
+            if (dispellableMoodle != null)
             {
-                information = OtterGuiHandler.MoodleFileSystem.TryGetPathByID(myStat.Identifier, out string? path) ? path : myStat.ID;
+                information = OtterGuiHandler.MoodleFileSystem.TryGetPathByID(dispellableMoodle.Identifier, out string? path) ? path : dispellableMoodle.ID;
             }
 
             if (ImGui.BeginCombo("##addnew", information, ImGuiComboFlags.HeightLargest))
@@ -338,9 +381,10 @@ internal class MoodleTab
                 if (ImGui.Selectable($"Clear", false, ImGuiSelectableFlags.None))
                 {
                     Selected.SetStatusOnDispell(Guid.Empty, Mediator);
+                    PluginLog.Log($"SetStatusOnDispell: {Guid.Empty}");
                 }
                 
-                foreach (Moodle moodle in Services.Configuration.SavedMoodles)
+                foreach (Moodle moodle in Database.Moodles)
                 {
                     if (!Services.MoodleValidator.IsValid(moodle, out _)) continue;
                     if (Selected.Identifier != moodle.Identifier && OtterGuiHandler.MoodleFileSystem.TryGetPathByID(moodle.Identifier, out string? path))
@@ -366,6 +410,7 @@ internal class MoodleTab
                             if (ImGui.Selectable($"{name}##{moodle.ID}", false, ImGuiSelectableFlags.None))
                             {
                                 Selected.SetStatusOnDispell(moodle.Identifier, Mediator);
+                                PluginLog.Log($"SetStatusOnDispell: {moodle.Identifier}");
                             }
                         }
                     }
@@ -383,6 +428,12 @@ internal class MoodleTab
             ImGuiEx.TextV($"Description:");
             Formatting();
 
+            Utils.ParseBBSeString(Selected.Description, out string? descriptionError);
+            if (descriptionError != null)
+            {
+                ImGuiEx.HelpMarker(descriptionError, EColor.RedBright, FontAwesomeIcon.ExclamationTriangle.ToIconString());
+            }
+
             ImGui.TableNextColumn();
             //ImGuiEx.SetNextItemFullWidth();
 
@@ -392,6 +443,7 @@ internal class MoodleTab
             if (ImGui.IsItemDeactivatedAfterEdit())
             {
                 Selected.SetDescription(localDescription, Mediator);
+                PluginLog.Log($"SetDescription: {localDescription}");
             }
 
             ImGui.EndTable();
@@ -425,10 +477,10 @@ internal class MoodleTab
 
     void Formatting()
     {
-        ImGuiEx.HelpMarker("UH OH!");
+        ImGuiEx.HelpMarker($"This field supports formatting tags.\n[color=red]...[/color], [color=5]...[/color] - colored text.\n[glow=blue]...[/glow], [glow=7]...[/glow] - glowing text outline\nThe following colors are available:\n{Enum.GetValues<ECommons.ChatMethods.UIColor>().Select(x => x.ToString()).Where(x => !x.StartsWith("_")).Print()}\nFor extra color, look up numeric value with \"/xldata uicolor\" command\n[i]...[/i] - italic text", ImGuiColors.DalamudWhite, FontAwesomeIcon.Code.ToIconString());
     }
 
-    bool DurationSelector(string PermanentTitle, ref bool NoExpire, ref int Days, ref int Hours, ref int Minutes, ref int Seconds)
+    bool DurationSelector(string PermanentTitle, ref bool NoExpire, ref int Days, ref int Hours, ref int Minutes, ref int Seconds, ref bool countDownWhenOffline)
     {
         var modified = false;
 
@@ -441,20 +493,25 @@ internal class MoodleTab
             ImGui.SameLine();
             ImGui.SetNextItemWidth(30);
             ImGui.DragInt("D", ref Days, 0.1f, 0, 999);
-            if (ImGui.IsItemDeactivatedAfterEdit()) modified = true;
+            modified |= ImGui.IsItemDeactivatedAfterEdit();
             ImGui.SameLine();
             ImGui.SetNextItemWidth(30);
             ImGui.DragInt("H##h", ref Hours, 0.1f, 0, 23);
-            if (ImGui.IsItemDeactivatedAfterEdit()) modified = true;
+            modified |= ImGui.IsItemDeactivatedAfterEdit();
             ImGui.SameLine();
             ImGui.SetNextItemWidth(30);
             ImGui.DragInt("M##m", ref Minutes, 0.1f, 0, 59);
-            if (ImGui.IsItemDeactivatedAfterEdit()) modified = true;
+            modified |= ImGui.IsItemDeactivatedAfterEdit();
             ImGui.SameLine();
             ImGui.SetNextItemWidth(30);
             ImGui.DragInt("S##s", ref Seconds, 0.1f, 0, 59);
-            if (ImGui.IsItemDeactivatedAfterEdit()) modified = true;
-
+            modified |= ImGui.IsItemDeactivatedAfterEdit();
+            ImGui.SameLine();
+            if (ImGui.Checkbox("Offline Countdown", ref countDownWhenOffline))
+            {
+                modified = true;
+            }
+            ImGuiEx.HelpMarker("When offline this moodle will keep ticking down, and can thus be dispelled when offline.");
         }
         // Wait 5 seconds before firing our status modified event. (helps prevent flooding)
         if (modified) return true;
