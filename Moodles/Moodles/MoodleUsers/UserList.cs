@@ -27,7 +27,7 @@ internal class UserList : IUserList
         return null;
     }
 
-    public IMoodleUser? GetUser(nint user)
+    public IMoodleUser? GetUser(nint user, bool petMeansOwner = true)
     {
         if (user == nint.Zero) return null;
 
@@ -36,9 +36,13 @@ internal class UserList : IUserList
             IMoodleUser? pUser = Users[i];
             if (pUser == null) continue;
             if (pUser.Address == user) return pUser;
-            if (pUser.GetPet(user) == null) continue;
 
-            return pUser;
+            if (petMeansOwner)
+            {
+                if (pUser.GetPet(user) == null) continue;
+
+                return pUser;
+            }
         }
 
         return null;

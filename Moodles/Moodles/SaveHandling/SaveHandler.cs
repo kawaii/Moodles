@@ -1,6 +1,5 @@
 ﻿using Dalamud.Plugin.Services;
 using Moodles.Moodles.Mediation;
-using Moodles.Moodles.Services;
 using Moodles.Moodles.Services.Interfaces;
 using Moodles.Moodles.Updating.Interfaces;
 
@@ -8,7 +7,7 @@ namespace Moodles.Moodles.SaveHandling;
 
 internal class SaveHandler : MoodleSubscriber, IUpdatable
 {
-    const double SaveInterval = 30;
+    const double SaveInterval = 3;
 
     public bool Enabled { get; set; } = true;
 

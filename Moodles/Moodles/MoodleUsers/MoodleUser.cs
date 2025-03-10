@@ -10,7 +10,6 @@ namespace Moodles.Moodles.MoodleUsers;
 
 internal unsafe sealed class MoodleUser : IMoodleUser
 {
-    public bool IsActive => StatusManager.IsActive;
     public bool IsLocalPlayer { get; }
 
     public List<IMoodlePet> MoodlePets { get; } = new List<IMoodlePet>();
@@ -48,11 +47,6 @@ internal unsafe sealed class MoodleUser : IMoodleUser
         ShortObjectID = Self->GetGameObjectId().ObjectId;
 
         StatusManager = Database.GetPlayerStatusManager(ContentID);
-        if (IsLocalPlayer) 
-        {
-            StatusManager.SetEphemeralStatus(false);
-            StatusManager.SetActive(true, moodlesServices.Mediator); 
-        }
     }
 
     void CreateNewPet(IMoodlePet pet, int index = -1)
@@ -152,20 +146,10 @@ internal unsafe sealed class MoodleUser : IMoodleUser
 
     public void Dispose()
     {
-        if (StatusManager.IsEphemeral)
-        {
-            StatusManager.Clear();
-        }
-
-        if (__tempStatusCountPlaceholder == 0)
+        if (!StatusManager.Savable())
         {
             Database.RemoveStatusManager(StatusManager);
         }
-
-        if (!IsActive)
-        {
-            Database.RemoveStatusManager(StatusManager);
-        }    
 
         foreach (IMoodlePet pet in MoodlePets)
         {

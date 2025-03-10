@@ -12,6 +12,7 @@ internal interface IMoodlesDatabase
     IMoodleStatusManager GetPlayerStatusManager(ulong contentID);
     IMoodleStatusManager GetPetStatusManager(ulong contentID, int skeletonID);
 
+    IMoodle? GetMoodle(WorldMoodle wMoodle);
     IMoodle? GetMoodleNoCreate(Guid identifier);
     IMoodle CreateMoodle(bool isEphemiral = false);
     void RegisterMoodle(IMoodle moodle, bool fromIPC = false);

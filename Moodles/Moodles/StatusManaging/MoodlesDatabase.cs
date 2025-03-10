@@ -1,10 +1,12 @@
 ﻿using Dalamud.Plugin.Services;
 using Moodles.Moodles.Mediation;
+using Moodles.Moodles.MoodleUsers.Interfaces;
 using Moodles.Moodles.Services;
 using Moodles.Moodles.Services.Interfaces;
 using Moodles.Moodles.StatusManaging.Interfaces;
 using System;
 using System.Collections.Generic;
+using static FFXIVClientStructs.FFXIV.Client.LayoutEngine.ILayoutInstance;
 
 namespace Moodles.Moodles.StatusManaging;
 
@@ -17,10 +19,12 @@ internal class MoodlesDatabase : IMoodlesDatabase
     readonly List<IMoodle> _moodles = new List<IMoodle>();
 
     readonly IMoodlesServices Services;
+    readonly IUserList UserList;
 
-    public MoodlesDatabase(IMoodlesServices services)
+    public MoodlesDatabase(IMoodlesServices services, IUserList userList)
     {
         Services = services;
+        UserList = userList;
 
         FloodDatabase();
     }
@@ -48,22 +52,36 @@ internal class MoodlesDatabase : IMoodlesDatabase
 
         for (int i = 0; i < moodlesCount; i++)
         {
-            IMoodle moodle = _moodles[i];
-            if (moodle.Savable()) continue;
-            if (moodle is not Moodle mMoodle) continue;
+            try
+            {
+                IMoodle moodle = _moodles[i];
+                if (!moodle.Savable(this)) continue;
+                if (moodle is not Moodle mMoodle) continue;
 
-            Services.Configuration.SavedMoodles.Add(mMoodle);
+                Services.Configuration.SavedMoodles.Add(mMoodle);
+            }
+            catch(Exception e)
+            {
+                PluginLog.LogException(e);
+            }
         }
 
         int statusManagerCount = _statusManagers.Count;
 
         for (int i = 0; i < statusManagerCount; i++)
         {
-            IMoodleStatusManager statusManager = _statusManagers[i];
-            if (!statusManager.Savable()) continue;
-            if (statusManager is not MoodlesStatusManager sManager) continue;
+            try
+            {
+                IMoodleStatusManager statusManager = _statusManagers[i];
+                if (!statusManager.Savable()) continue;
+                if (statusManager is not MoodlesStatusManager sManager) continue;
 
-            Services.Configuration.SavedStatusManagers.Add(sManager);
+                Services.Configuration.SavedStatusManagers.Add(sManager);
+            }
+            catch (Exception e)
+            {
+                PluginLog.LogException(e);
+            }
         }
     }
 
@@ -75,10 +93,28 @@ internal class MoodlesDatabase : IMoodlesDatabase
 
     public void Update(IFramework framework)
     {
-        foreach (IMoodleStatusManager statusManager in _statusManagers)
+        int statusManagerCount = _statusManagers.Count;
+
+        for (int i = 0; i < statusManagerCount; i++)
         {
-            statusManager.Update(framework);
+            _statusManagers[i].Update(framework);
+            _statusManagers[i].ValidateMoodles(framework, Services.MoodleValidator, this, UserList, Services.Mediator);
         }
+    }
+
+    public IMoodle? GetMoodle(WorldMoodle wMoodle)
+    {
+        int moodlesCount = _moodles.Count;
+
+        for (int i = 0; i < moodlesCount; i++)
+        {
+            IMoodle moodle = _moodles[i];
+            if (moodle.Identifier != wMoodle.Identifier) continue;
+
+            return moodle;
+        }
+
+        return null;
     }
 
     public IMoodle? GetMoodleNoCreate(Guid identifier)
@@ -101,7 +137,6 @@ internal class MoodlesDatabase : IMoodlesDatabase
         RemoveStatusManager(statusManager);
 
         statusManager.SetEphemeralStatus(fromIpc);  // Don't Notify
-        statusManager.SetActive(true);
 
         _statusManagers.Add(statusManager);
 
@@ -176,7 +211,7 @@ internal class MoodlesDatabase : IMoodlesDatabase
 
         PluginLog.LogVerbose($"Created status manager for: {contentID} {skeletonID}");
 
-        IMoodleStatusManager newStatusManager = new MoodlesStatusManager(contentID, skeletonID, false);
+        IMoodleStatusManager newStatusManager = new MoodlesStatusManager(contentID, skeletonID);
         _statusManagers.Add(newStatusManager);
 
         Services.Mediator.Send(new DatabaseAddedStatusManagerMessage(this, newStatusManager));

@@ -20,6 +20,9 @@ using Moodles.Moodles.StatusManaging;
 using ECommons;
 using System;
 using System.Text;
+using Moodles.Moodles.MoodleUsers.Interfaces;
+using Moodles.Moodles.TempWindowing;
+using Dalamud.Game.ClientState.Objects.Types;
 
 namespace Moodles.Moodles.OtterGUIHandlers.Tabs;
 
@@ -34,16 +37,18 @@ internal class MoodleTab
     readonly DalamudServices DalamudServices;
     readonly IMoodlesMediator Mediator;
     readonly IMoodlesDatabase Database;
+    readonly IUserList UserList;
 
     readonly StatusSelector StatusSelector;
 
-    public MoodleTab(OtterGuiHandler otterGuiHandler, IMoodlesServices services, DalamudServices dalamudServices, IMoodlesDatabase database)
+    public MoodleTab(OtterGuiHandler otterGuiHandler, IMoodlesServices services, DalamudServices dalamudServices, IMoodlesDatabase database, IUserList userList)
     {
         DalamudServices = dalamudServices;
         OtterGuiHandler = otterGuiHandler;
         Services = services;
         Mediator = services.Mediator;
         Database = database;
+        UserList = userList;
 
         StatusSelector = new StatusSelector(Mediator, dalamudServices, services, Database);
     }
@@ -85,17 +90,12 @@ internal class MoodleTab
         if (!child || Selected == null) return;
 
         Vector2 statusIconCursorPos = new Vector2(ImGui.GetCursorPosX() + ImGui.GetContentRegionAvail().X - PluginConstants.StatusIconSize.X * 2, ImGui.GetCursorPosY()) - new Vector2(10, 0);
-        if (ImGui.Button("Apply to Yourself"))
-        {
-            
-        }
+
+        DrawTargetButton(UserList.LocalPlayer, "Yourself");
+
         ImGui.SameLine();
 
-        var buttonText = DalamudServices.TargetManager.Target is not IPlayerCharacter ? "No Target Selected" : "Apply to target";
-        if (ImGui.Button(buttonText))
-        {
-            
-        }
+        DrawTargetButton(Services.TargetManager.Target, "Target");
 
         if (ImGui.BeginTable("##moodles", 2, ImGuiTableFlags.Borders | ImGuiTableFlags.RowBg | ImGuiTableFlags.SizingMask))
         {
@@ -245,7 +245,52 @@ internal class MoodleTab
                 }
             }
             ImGui.TableNextRow();
-            
+
+            // Stack on Reapply Field
+            if (maxStacks > 1)
+            {
+                ImGui.TableNextColumn();
+                ImGuiEx.TextV($"Increasing Stacks:");
+                ImGuiEx.HelpMarker("Applying a Moodle already active will increase its stack count.\nYou can set how many stacks increase on reapplication.");
+
+                ImGui.TableNextColumn();
+                ImGuiEx.SetNextItemFullWidth();
+
+                bool localStacksOnReapply = Selected.StackOnReapply;
+
+                if (ImGui.Checkbox("##stackonreapply", ref localStacksOnReapply))
+                {
+                    Selected.SetStackOnReapply(localStacksOnReapply, Mediator);
+                    PluginLog.LogVerbose($"SetStackOnReapply: {localStacksOnReapply}");
+                }
+                // if the selected should reapply and we have a stacked moodle.
+                if (Selected.StackOnReapply && maxStacks > 1)
+                {
+                    // display the slider for the stack count.
+                    ImGui.SameLine();
+                    ImGui.SetNextItemWidth(30);
+
+                    int localStacksIncOnReapply = Selected.StackIncrementOnReapply;
+
+                    ImGui.DragInt("Increase By", ref localStacksIncOnReapply, 0.1f, 0, (int)maxStacks);
+                    if (ImGui.IsItemDeactivatedAfterEdit())
+                    {
+                        Selected.SetStackIncrementOnReapply(localStacksIncOnReapply, Mediator);
+                        PluginLog.LogVerbose($"SetStackIncrementOnReapply: {localStacksIncOnReapply}");
+                    }
+
+                    ImGui.SameLine();
+                    ImGui.SetNextItemWidth(30);
+
+                    bool localTimeResetOnStack = Selected.TimeResetsOnStack;
+                    if (ImGui.Checkbox("Time Resets On Stack", ref localTimeResetOnStack))
+                    {
+                        Selected.SetTimeResetsOnStack(localTimeResetOnStack, Mediator);
+                        PluginLog.LogVerbose($"Set Time Resets On Stack: {localTimeResetOnStack}");
+                    }
+                }
+            }
+            ImGui.TableNextRow();
 
             // Category Field
             ImGui.TableNextColumn();
@@ -320,43 +365,6 @@ internal class MoodleTab
                     PluginLog.LogVerbose($"SetDispellable: {localIsDispellable}");
                 }
             }
-
-            // Stack on Reapply Field
-            if (maxStacks > 1)
-            {
-                ImGui.TableNextColumn();
-                ImGuiEx.TextV($"Increasing Stacks:");
-                ImGuiEx.HelpMarker("Applying a Moodle already active will increase its stack count.\nYou can set how many stacks increase on reapplication.");
-
-                ImGui.TableNextColumn();
-                ImGuiEx.SetNextItemFullWidth();
-
-                bool localStacksOnReapply = Selected.StackOnReapply;
-
-                if (ImGui.Checkbox("##stackonreapply", ref localStacksOnReapply))
-                {
-                    Selected.SetStackOnReapply(localStacksOnReapply, Mediator);
-                    PluginLog.LogVerbose($"SetStackOnReapply: {localStacksOnReapply}");
-                }
-                // if the selected should reapply and we have a stacked moodle.
-                if (Selected.StackOnReapply && maxStacks > 1)
-                {
-                    // display the slider for the stack count.
-                    ImGui.SameLine();
-                    ImGui.SetNextItemWidth(30);
-
-                    int localStacksIncOnReapply = Selected.StackIncrementOnReapply;
-
-                    ImGui.DragInt("Increased Stack Count", ref localStacksIncOnReapply, 0.1f, 0, (int)maxStacks);
-                    if (ImGui.IsItemDeactivatedAfterEdit())
-                    {
-                        Selected.SetStackIncrementOnReapply(localStacksIncOnReapply, Mediator);
-                        PluginLog.LogVerbose($"SetStackIncrementOnReapply: {localStacksIncOnReapply}");
-                    }
-                }
-            }
-            ImGui.TableNextRow();
-
 
             ImGui.TableNextColumn();
             ImGuiEx.TextV($"Apply on Dispell:");
@@ -469,10 +477,39 @@ internal class MoodleTab
         if (Selected == null) return null;
 
         if (Selected.IconID == 0) return null;
-        if (!DalamudServices.TextureProvider.TryGetFromGameIcon(Services.MoodleValidator.GetAdjustedIconId(Selected), out ISharedImmediateTexture? texture)) return null;
+        if (!DalamudServices.TextureProvider.TryGetFromGameIcon(Services.MoodleValidator.GetAdjustedIconId((uint)Selected.IconID, (uint)Selected.StartingStacks), out ISharedImmediateTexture? texture)) return null;
         if (!texture.TryGetWrap(out IDalamudTextureWrap? image, out _)) return null;
 
         return image;
+    }
+
+    void DrawTargetButton(IMoodleHolder? target, string targetName)
+    {
+        if (Selected == null) return;
+
+        string applyToSelfText      = "No Target Available";
+        bool targetNull             = target == null;
+        bool hasMoodle              = target?.StatusManager.HasMaxedOutMoodle(Selected, Services.MoodleValidator, out _) ?? false;
+        if (!targetNull)
+        {
+            if (hasMoodle)  applyToSelfText = $"Remove from {targetName}";
+            else            applyToSelfText = $"Apply to {targetName}";
+        }
+
+        ImGui.BeginDisabled(target == null);
+        if (ImGui.Button(applyToSelfText + $"##selfTargetButton{WindowHandler.InternalCounter}"))
+        {
+            if (hasMoodle)
+            {
+                target?.StatusManager.RemoveMoodle(Selected, MoodleRemoveReason.ManualNoFlag, Mediator);
+            }
+            else
+            {
+                target?.StatusManager.ApplyMoodle(Selected, Services.MoodleValidator, Mediator);
+            }
+        }
+
+        ImGui.EndDisabled();
     }
 
     void Formatting()

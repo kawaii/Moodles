@@ -2,7 +2,9 @@
 using Moodles.Moodles.SaveHandling;
 using Moodles.Moodles.Services;
 using Moodles.Moodles.Services.Interfaces;
+using Moodles.Moodles.StatusManaging.Interfaces;
 using Moodles.Moodles.Updating.Interfaces;
+using Moodles.Moodles.Updating.Updatables;
 using System.Collections.Generic;
 
 namespace Moodles.Moodles.Updating;
@@ -12,14 +14,16 @@ internal class UpdateHandler : IUpdateHandler
     readonly DalamudServices DalamudServices;
     readonly IMoodlesServices MoodlesServices;
     readonly SaveHandler SaveHandler;
+    readonly IMoodlesDatabase Database;
 
     readonly List<IUpdatable> _updatables = new List<IUpdatable>();
 
-    public UpdateHandler(DalamudServices dalamudServices, IMoodlesServices moodlesServices, SaveHandler saveHandler)
+    public UpdateHandler(DalamudServices dalamudServices, IMoodlesServices moodlesServices, SaveHandler saveHandler, IMoodlesDatabase database)
     {
         DalamudServices = dalamudServices;
         MoodlesServices = moodlesServices;
         SaveHandler = saveHandler;
+        Database = database;
 
         DalamudServices.Framework.Update += OnUpdate;
 
@@ -29,6 +33,7 @@ internal class UpdateHandler : IUpdateHandler
     void _Register()
     {
         Register(SaveHandler);
+        Register(new DatabaseUpdater(Database));
     }
 
     void Register(IUpdatable updatable)

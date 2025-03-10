@@ -79,6 +79,5 @@
 
     <ItemGroup>
       <Folder Include="Moodles\Serialization\" />
-      <Folder Include="Moodles\Updating\Updatables\" />
     </ItemGroup>
 </Project>

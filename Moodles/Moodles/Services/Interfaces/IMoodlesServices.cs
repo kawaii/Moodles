@@ -12,4 +12,5 @@ internal interface IMoodlesServices : IDisposable
     IMoodlesMediator Mediator { get; }
     IMoodlesCache MoodlesCache { get; }
     IMoodleValidator MoodleValidator { get; }
+    IMoodlesTargetManager TargetManager { get; }
 }

@@ -24,6 +24,7 @@ internal interface IMoodle
     
     bool StackOnReapply { get; }
     int StackIncrementOnReapply { get; }
+    bool TimeResetsOnStack { get; }
 
     int Days { get; }
     int Hours { get; }
@@ -48,6 +49,7 @@ internal interface IMoodle
     void SetStatusOnDispell(Guid statusOnDispell, IMoodlesMediator? mediator = null);
     void SetStackOnReapply(bool stackOnReapply, IMoodlesMediator? mediator = null);
     void SetStackIncrementOnReapply(int stackIncrementOnReapply, IMoodlesMediator? mediator = null);
+    void SetTimeResetsOnStack(bool timeResetsOnStack, IMoodlesMediator? mediator = null);
     void SetDuration(int days, int hours, int minutes, int seconds, IMoodlesMediator? mediator = null);
     void SetPermanent(bool permanent, IMoodlesMediator? mediator = null);
     void SetEphemeral(bool isEphemeral, IMoodlesMediator? mediator = null);
@@ -56,7 +58,7 @@ internal interface IMoodle
     void EnforceCleanGUID(IMoodlesMediator? mediator = null);
     void EnforceNewGUID(IMoodlesMediator? mediator = null);
 
-    bool Savable();
+    bool Savable(IMoodlesDatabase database);
 
     // The actual moodle thing should hold data like
     // Current Stack

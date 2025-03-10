@@ -1,11 +1,21 @@
-﻿using Moodles.Moodles.Services.Interfaces;
+﻿using ECommons.ExcelServices.TerritoryEnumeration;
+using Moodles.Moodles.Services.Interfaces;
+using Moodles.Moodles.StatusManaging;
 using Moodles.Moodles.StatusManaging.Interfaces;
+using System;
 using System.Diagnostics.CodeAnalysis;
 
 namespace Moodles.Moodles.Services.Wrappers;
 
 internal class MoodleValidator : IMoodleValidator
 {
+    readonly ISheets Sheets;
+
+    public MoodleValidator(ISheets sheets)
+    {
+        Sheets = sheets;
+    }
+
     public bool IsValid(IMoodle moodle, [NotNullWhen(false)] out string? error)
     {
         if (moodle.IconID == 0)
@@ -67,8 +77,62 @@ internal class MoodleValidator : IMoodleValidator
         return GetMoodleDuration(moodle);
     }
 
-    public uint GetAdjustedIconId(IMoodle moodle)
+    public uint GetAdjustedIconId(uint iconId, uint currentStackSize)
     {
-        return (uint)(moodle.IconID + moodle.StartingStacks - 1);
+        return iconId + currentStackSize - 1;
+    }
+
+    public uint GetMaxStackSize(uint iconId)
+    {
+        uint? stackSize = Sheets.GetStackCount(iconId);
+        if (stackSize == null) return 1;
+
+        return stackSize.Value;
+    }
+
+    public bool CanApplyStacks(uint iconId, uint currentStackSize, uint stacksToApply)
+    {
+        uint maxStackSize = GetMaxStackSize(iconId);
+
+        uint newStackSize = currentStackSize + stacksToApply;
+
+        return newStackSize <= maxStackSize;
+    }
+
+    public long GetMoodleTickTime(WorldMoodle wMoodle, IMoodle moodle)
+    {
+        if (wMoodle.Identifier != moodle.Identifier) return 0;
+
+        if (moodle.CountsDownWhenOffline)
+        {
+            return DateTime.Now.Ticks - wMoodle.AppliedOn;
+        }
+
+        return wMoodle.TickedTime;
+    }
+
+    public long MoodleLifetime(IMoodle moodle)
+    {
+        if (moodle.Permanent) return -1;
+
+        // 10000 for ticks
+        return 10000 * (moodle.Seconds * 1000 + moodle.Minutes * 1000 * 60 + moodle.Hours * 1000 * 60 * 60 + moodle.Days * 1000 * 60 * 60 * 24);
+    }
+
+    public bool MoodleOverTime(WorldMoodle wMoodle, IMoodle moodle)
+    {
+        if (wMoodle.Identifier != moodle.Identifier) return false;
+
+        if (moodle.Permanent) return false;
+
+        long lifetime = MoodleLifetime(moodle);
+        long tickedTime = GetMoodleTickTime(wMoodle, moodle);
+
+        if (tickedTime > lifetime)
+        {
+            return true;
+        }
+
+        return false;
     }
 }

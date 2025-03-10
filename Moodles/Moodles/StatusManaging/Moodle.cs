@@ -5,6 +5,7 @@ using Newtonsoft.Json;
 using Moodles.Moodles.Mediation.Interfaces;
 using Moodles.Moodles.Mediation;
 using Moodles.Moodles.Services.Data;
+using Moodles.Moodles.Services;
 
 namespace Moodles.Moodles.StatusManaging;
 
@@ -27,6 +28,7 @@ internal partial class Moodle : IMoodle
     public Guid StatusOnDispell { get; set; } = Guid.Empty;
     public bool StackOnReapply { get; set; } = false;
     public int StackIncrementOnReapply { get; set; } = 1;
+    public bool TimeResetsOnStack { get; set; } = true;
     public int Days { get; set; } = 0;
     public int Hours { get; set; } = 0;
     public int Minutes { get; set; } = 0;
@@ -122,6 +124,12 @@ internal partial class Moodle : IMoodle
     public void SetStackIncrementOnReapply(int stackIncrementOnReapply, IMoodlesMediator? mediator = null)
     {
         StackIncrementOnReapply = stackIncrementOnReapply;
+        mediator?.Send(new MoodleChangedMessage(this));
+    }
+
+    public void SetTimeResetsOnStack(bool timeResetsOnStack, IMoodlesMediator? mediator = null)
+    {
+        TimeResetsOnStack = timeResetsOnStack;
         mediator?.Send(new MoodleChangedMessage(this));
     }
 

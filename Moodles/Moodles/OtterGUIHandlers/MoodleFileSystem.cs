@@ -39,6 +39,8 @@ internal sealed class MoodleFileSystem : FileSystem<IMoodle>, IDisposable
 
         FilePath = Path.Combine(DalamudServices.DalamudPlugin.ConfigDirectory.FullName, "NewMoodleFileSystem.json");
 
+        Changed += (_, _, _, _) => Save();
+
         try
         {
             FileInfo info = new FileInfo(FilePath);

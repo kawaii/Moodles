@@ -6,7 +6,6 @@ namespace Moodles.Moodles.MoodleUsers.Interfaces;
 
 internal unsafe interface IMoodleUser : IBattleUser, IMoodleHolder
 {
-    bool IsActive { get; }
     bool IsLocalPlayer { get; }
 
     List<IMoodlePet> MoodlePets { get; }

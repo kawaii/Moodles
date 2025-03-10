@@ -40,18 +40,19 @@ public sealed class MoodlesPlugin : IDalamudPlugin
         Version = Assembly.GetExecutingAssembly().GetName().Version?.ToString() ?? "Unknown Version";
 
         DalamudServices = DalamudServices.Create(dalamud, this);
-        MoodlesServices = new MoodlesServices(DalamudServices);
+
+        UserList = new UserList();
+
+        MoodlesServices = new MoodlesServices(DalamudServices, UserList);
 
         SaveHandler = new SaveHandler(MoodlesServices);
 
-        UserList = new UserList();
-        Database = new MoodlesDatabase(MoodlesServices);
+        Database = new MoodlesDatabase(MoodlesServices, UserList);
 
         HookHandler = new HookHandler(DalamudServices, MoodlesServices, UserList, Database);
-        UpdateHandler = new UpdateHandler(DalamudServices, MoodlesServices, SaveHandler);
+        UpdateHandler = new UpdateHandler(DalamudServices, MoodlesServices, SaveHandler, Database);
 
-
-        OtterGuiHandler = new OtterGuiHandler(DalamudServices, MoodlesServices, Database);
+        OtterGuiHandler = new OtterGuiHandler(DalamudServices, MoodlesServices, Database, UserList);
         WindowHandler = new WindowHandler(DalamudServices, Database, UserList, OtterGuiHandler, MoodlesServices);
 
         MoodlesServices.Configuration.Initialise(DalamudServices.DalamudPlugin, Database);

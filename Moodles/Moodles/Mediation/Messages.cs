@@ -1,4 +1,6 @@
-﻿using Moodles.Moodles.StatusManaging.Interfaces;
+﻿using Moodles.Moodles.Services.Data;
+using Moodles.Moodles.StatusManaging;
+using Moodles.Moodles.StatusManaging.Interfaces;
 
 namespace Moodles.Moodles.Mediation;
 
@@ -10,3 +12,6 @@ internal record DatabaseRemovedMoodleMessage(IMoodlesDatabase Database, IMoodle 
 internal record StatusManagerDirtyMessage(IMoodleStatusManager StatusManager) : MessageBase;
 internal record StatusManagerClearedMessage(IMoodleStatusManager StatusManager) : MessageBase;
 internal record MoodleChangedMessage(IMoodle Moodle) : MessageBase;
+internal record MoodleAppliedMessage(IMoodle Moodle, WorldMoodle WorldMoodle, IMoodleStatusManager StatusManager) : MessageBase;
+internal record MoodleRemovedMessage(WorldMoodle WorldMoodle, MoodleRemoveReason RemoveReason, IMoodleStatusManager StatusManager) : MessageBase;
+internal record MoodleStackChangedMessage(WorldMoodle WorldMoodle) : MessageBase;

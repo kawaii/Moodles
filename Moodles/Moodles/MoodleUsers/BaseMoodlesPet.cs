@@ -1,6 +1,5 @@
 ﻿using FFXIVClientStructs.FFXIV.Client.Game.Character;
 using Moodles.Moodles.MoodleUsers.Interfaces;
-using Moodles.Moodles.Services;
 using Moodles.Moodles.Services.Interfaces;
 using Moodles.Moodles.StatusManaging.Interfaces;
 
@@ -40,27 +39,11 @@ internal unsafe abstract class BaseMoodlesPet : IMoodlePet
         PetData = moodleServices.Sheets.GetPet(SkeletonID);
 
         StatusManager = Database.GetPetStatusManager(owner.ContentID, SkeletonID);
-        if (Owner.IsLocalPlayer) 
-        {
-            StatusManager.SetEphemeralStatus(false);
-            StatusManager.SetActive(true, moodleServices.Mediator);
-        }
     }
 
     public void Dispose()
     {
-        // Check if it is a companion
-        if (SkeletonID > 0)
-        {
-            Database.RemoveStatusManager(StatusManager);
-        }
-
-        if (__tempStatusCountPlaceholder == 0)
-        {
-            Database.RemoveStatusManager(StatusManager);
-        }
-
-        if (!Owner.IsActive)
+        if (!StatusManager.Savable() || !Owner.StatusManager.Savable())
         {
             Database.RemoveStatusManager(StatusManager);
         }

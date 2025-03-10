@@ -1,5 +1,6 @@
 ﻿using Moodles.Moodles.Mediation;
 using Moodles.Moodles.Mediation.Interfaces;
+using Moodles.Moodles.MoodleUsers.Interfaces;
 using Moodles.Moodles.Services.Interfaces;
 using Moodles.Moodles.Services.Wrappers;
 using System;
@@ -18,8 +19,9 @@ internal class MoodlesServices : IMoodlesServices
     public MediationLogger MediationLogger { get; }
     public IMoodlesCache MoodlesCache { get; }
     public IMoodleValidator MoodleValidator { get; }
+    public IMoodlesTargetManager TargetManager { get; }
 
-    public MoodlesServices(DalamudServices dalamudServices)
+    public MoodlesServices(DalamudServices dalamudServices, IUserList userList)
     {
         DalamudServices = dalamudServices;
 
@@ -33,7 +35,8 @@ internal class MoodlesServices : IMoodlesServices
         StringHelper = new StringHelperWrapper();
         Sheets = new SheetsWrapper(DalamudServices);
         MoodlesCache = new MoodlesCache(DalamudServices, Sheets);
-        MoodleValidator = new MoodleValidator();
+        MoodleValidator = new MoodleValidator(Sheets);
+        TargetManager = new MoodlesTargetManager(dalamudServices, userList);
     }
 
     public void Dispose()
