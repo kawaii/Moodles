@@ -25,6 +25,7 @@ internal class Configuration : IPluginConfiguration
     public int Version { get; set; } = 2;
 
     public List<Moodle> SavedMoodles = [];
+    public List<MoodlesStatusManager> SavedStatusManagers = [];
 
     public HashSet<uint> FavIcons = [];
     public bool AutoFill = true;

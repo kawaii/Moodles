@@ -12,7 +12,7 @@ namespace Moodles.Moodles.StatusManaging;
 [MemoryPackable]
 internal partial class Moodle : IMoodle
 {
-    [JsonIgnore] public string ID => Identifier.ToString();
+    [MemoryPackIgnore] [JsonIgnore] public string ID => Identifier.ToString();
 
     public Guid Identifier { get; set; } = Guid.CreateVersion7();
     public string Title { get; set; } = string.Empty;
@@ -33,8 +33,7 @@ internal partial class Moodle : IMoodle
     public int Seconds { get; set; } = 0;
     public bool Permanent { get; set; } = true;
     public ulong CreatedBy { get; set; } = 0;
-
-    [MemoryPackIgnore] [JsonIgnore] public bool IsEphemeral { get; set; } = true;
+    public bool IsEphemeral { get; set; } = true;
 
     public void SetIdentifier(Guid identifier, IMoodlesMediator? mediator = null)
     {
@@ -151,5 +150,29 @@ internal partial class Moodle : IMoodle
     {
         CreatedBy = createdBy;
         mediator?.Send(new MoodleChangedMessage(this));
+    }
+
+    public bool Savable(IMoodlesDatabase database)
+    {
+        if (Identifier == Guid.Empty) return false;
+
+        if (IsEphemeral)
+        {
+            foreach (IMoodleStatusManager manager in database.StatusManagers)
+            {
+                if (!manager.Savable()) continue;
+
+                foreach (WorldMoodle moodle in manager.WorldMoodles)
+                {
+                    if (moodle.Identifier != Identifier) continue;
+
+                    return true;
+                }
+            }
+
+            return false;
+        }
+
+        return true;
     }
 }

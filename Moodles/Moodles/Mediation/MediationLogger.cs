@@ -13,7 +13,7 @@ internal class MediationLogger : MoodleSubscriber, IDisposable
 
     void Log(MessageBase mBase)
     {
-        PluginLog.Log($"Received message from: {mBase.GetType()}");
+        PluginLog.LogVerbose($"Received message from: {mBase.GetType()}");
     }
 
     public void Dispose()

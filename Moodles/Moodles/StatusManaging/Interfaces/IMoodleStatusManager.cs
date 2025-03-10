@@ -1,26 +1,25 @@
 ﻿using Dalamud.Plugin.Services;
-using Moodles.Moodles.MoodleUsers.Interfaces;
+using Moodles.Moodles.Mediation.Interfaces;
+using System.Collections.Generic;
 
 namespace Moodles.Moodles.StatusManaging.Interfaces;
 
 internal interface IMoodleStatusManager
 {
-    public bool IsActive { get;  }
-    public bool IsEphemeral { get; }
+    bool IsActive { get;  }
+    bool IsEphemeral { get; }
 
-    ulong ContentID { get; }
-
+    ulong ContentID { get; } // Player or owner content ID
     int SkeletonID { get; } // Player skeleton is 0
 
-    string Name { get; }
-    ushort Homeworld { get; }
-    string HomeworldName { get; }
+    List<WorldMoodle> WorldMoodles { get; }
 
     void Update(IFramework framework);
-    void UpdateEntry(IMoodleUser user);
-    void UpdateEntry(IMoodlePet pet);
 
-    void SetIdentifier(ulong contentID, int skeletonID, bool removeEphemeralStatus = false);
+    void SetActive(bool active, IMoodlesMediator? mediator = null);
+    void SetEphemeralStatus(bool ephemeralStatus, IMoodlesMediator? mediator = null);
 
-    void Clear(bool isIPC);
+    void Clear(IMoodlesMediator? mediator = null);
+
+    bool Savable();
 }

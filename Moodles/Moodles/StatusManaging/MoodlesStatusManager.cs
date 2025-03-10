@@ -1,97 +1,68 @@
-﻿using Dalamud.Plugin.Services;
+﻿using System;
+using Dalamud.Plugin.Services;
+using MemoryPack;
 using Moodles.Moodles.Mediation;
-using Moodles.Moodles.MoodleUsers.Interfaces;
-using Moodles.Moodles.Services.Interfaces;
+using Moodles.Moodles.Mediation.Interfaces;
 using Moodles.Moodles.StatusManaging.Interfaces;
+using Newtonsoft.Json;
 
 namespace Moodles.Moodles.StatusManaging;
 
-internal class MoodlesStatusManager : IMoodleStatusManager
+[Serializable]
+[MemoryPackable]
+internal partial class MoodlesStatusManager : IMoodleStatusManager
 {
-    public bool IsActive { get; private set; }
-    public bool IsEphemeral { get; private set; } = false;
+    [MemoryPackIgnore][JsonIgnore] public bool Enabled { get; set; } = true;
 
-    public ulong ContentID { get; private set; }     // The owners contentID if this is a pets status manager
+    [MemoryPackIgnore][JsonIgnore] public bool IsActive { get; private set; }
+    [MemoryPackIgnore][JsonIgnore] public bool IsEphemeral { get; private set; } = false;
 
-    public int SkeletonID { get; private set; }      // The pets skeleton, is 0 if it is a player
+    public ulong ContentID { get; set; }     // The owners contentID if this is a pets status manager
 
-    public string Name { get; private set; } = "";
+    public int SkeletonID { get; set; }      // The pets skeleton, is 0 if it is a player
 
-    public ushort Homeworld { get; private set; }
-    public string HomeworldName { get; private set; } = "";
-
-    readonly IMoodlesServices Services;
-
-    public MoodlesStatusManager(IMoodlesServices services, ulong contentID, int skeletonID, string name, ushort homeworld, bool active)
+    [MemoryPackConstructor]
+    [JsonConstructor]
+    public MoodlesStatusManager(ulong contentID, int skeletonID) : this(contentID, skeletonID, true) { }
+    public MoodlesStatusManager(ulong contentID, int skeletonID, bool active)
     {
-        Services = services;
-
         ContentID = contentID;
         SkeletonID = skeletonID;
         IsActive = active;
-        IsEphemeral = !IsActive;
 
-        SetName(name);
-        SetHomeworld(homeworld);
-    }
-
-    void SetName(string name)
-    {
-        Name = name;
-    }
-
-    void SetHomeworld(ushort homeworld)
-    {
-        Homeworld = homeworld;
-        HomeworldName = Services.Sheets.GetWorldName(homeworld) ?? "...";
+        SetEphemeralStatus(!IsActive);
     }
 
     public void Update(IFramework framework)
     {
-        
+
     }
 
-    public void UpdateEntry(IMoodleUser user)
+    public void SetActive(bool active, IMoodlesMediator? mediator = null)
     {
-        SetName(user.Name);
-        SetHomeworld(user.Homeworld);
+        IsActive = active;
 
-        if (IsActive) return;
-        if (!user.IsLocalPlayer) return;
-
-        Services.Mediator.Send(new StatusManagerDirtyMessage(this));
+        mediator?.Send(new StatusManagerDirtyMessage(this));
     }
 
-    public void UpdateEntry(IMoodlePet pet)
+    public void SetEphemeralStatus(bool ephemeralStatus, IMoodlesMediator? mediator = null)
     {
-        SetName(pet.Name + $" [{pet.Owner.Name}@{pet.Owner.Homeworld}]");
-        SetHomeworld(pet.Owner.Homeworld);
+        IsEphemeral = ephemeralStatus;
 
-        if (IsActive) return;
-        if (!pet.Owner.IsLocalPlayer) return;
-
-        Services.Mediator.Send(new StatusManagerDirtyMessage(this));
+        mediator?.Send(new StatusManagerDirtyMessage(this));
     }
 
-    public void SetIdentifier(ulong contentID, int skeleton, bool removeEphemeralStatus = false)
+    public void Clear(IMoodlesMediator? mediator = null)
     {
-        ContentID = contentID;
-        SkeletonID = skeleton;
-        IsActive = true;
-
-        if (removeEphemeralStatus)
-        {
-            IsEphemeral = false;
-        }
+        SetActive(false);
     }
 
-    public void Clear(bool isIPC)
+    public bool Savable()
     {
-        IsActive = false;
+        if (IsEphemeral) return false;
+        if (!IsActive) return false;
+        if (SkeletonID > 0) return false;   // Dont save status managers of minions
 
-        if (isIPC) return;
-
-        Services.Mediator.Send(new StatusManagerClearedMessage(this));
-        Services.Mediator.Send(new StatusManagerDirtyMessage(this));
+        return true;
     }
 }

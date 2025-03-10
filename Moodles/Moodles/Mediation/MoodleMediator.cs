@@ -17,7 +17,7 @@ internal class MoodleMediator : IMoodlesMediator
 
     public void Send<T>(T message) where T : MessageBase
     {
-        PluginLog.Log($"Message Send: '{message.ToString()}'");
+        PluginLog.LogVerbose($"Message Send: '{message.ToString()}'");
         ExecuteMessage(message);
     }
 

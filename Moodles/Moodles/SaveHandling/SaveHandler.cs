@@ -51,26 +51,16 @@ internal class SaveHandler : MoodleSubscriber, IUpdatable
 
     void DatabaseAddedMoodle(DatabaseAddedMoodleMessage message)
     {
-        if (message.Moodle.IsEphemeral) return;
-
         savable = true;
     }
 
     void DatabaseRemoveMoodleMessage(DatabaseRemovedMoodleMessage message)
     {
-        if (message.Moodle.IsEphemeral) return;
-
         savable = true;
     }
 
     void OnMoodleChanged(MoodleChangedMessage message)
     {
-        PluginLog.Log("Save Handler received Moodle Changed");
-
-        if (message.Moodle.IsEphemeral) return;
-
-        PluginLog.Log("Moodle is not Ephemeral");
-
         savable = true;
     }
 }

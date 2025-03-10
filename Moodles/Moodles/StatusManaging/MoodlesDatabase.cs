@@ -32,7 +32,12 @@ internal class MoodlesDatabase : IMoodlesDatabase
             RegisterMoodle(moodle);
         }
 
-        Services.Configuration.SavedMoodles.Clear();
+        foreach (MoodlesStatusManager statusManager in Services.Configuration.SavedStatusManagers)
+        {
+            RegisterStatusManager(statusManager);
+        }
+
+        CleanupSave();
     }
 
     public void PrepareForSave()
@@ -44,16 +49,28 @@ internal class MoodlesDatabase : IMoodlesDatabase
         for (int i = 0; i < moodlesCount; i++)
         {
             IMoodle moodle = _moodles[i];
+            if (moodle.Savable()) continue;
             if (moodle is not Moodle mMoodle) continue;
-            if (moodle.IsEphemeral) continue;
 
             Services.Configuration.SavedMoodles.Add(mMoodle);
+        }
+
+        int statusManagerCount = _statusManagers.Count;
+
+        for (int i = 0; i < statusManagerCount; i++)
+        {
+            IMoodleStatusManager statusManager = _statusManagers[i];
+            if (!statusManager.Savable()) continue;
+            if (statusManager is not MoodlesStatusManager sManager) continue;
+
+            Services.Configuration.SavedStatusManagers.Add(sManager);
         }
     }
 
     public void CleanupSave()
     {
         Services.Configuration.SavedMoodles.Clear();
+        Services.Configuration.SavedStatusManagers.Clear();
     }
 
     public void Update(IFramework framework)
@@ -77,6 +94,19 @@ internal class MoodlesDatabase : IMoodlesDatabase
         }
 
         return null;
+    }
+
+    public void RegisterStatusManager(IMoodleStatusManager statusManager, bool fromIpc = false)
+    {
+        RemoveStatusManager(statusManager);
+
+        statusManager.SetEphemeralStatus(fromIpc);  // Don't Notify
+        statusManager.SetActive(true);
+
+        _statusManagers.Add(statusManager);
+
+        Services.Mediator.Send(new DatabaseAddedStatusManagerMessage(this, statusManager));
+        Services.Mediator.Send(new DatabaseDirtyMessage(this));
     }
 
     public void RegisterMoodle(IMoodle moodle, bool fromIPC = false)
@@ -146,7 +176,7 @@ internal class MoodlesDatabase : IMoodlesDatabase
 
         PluginLog.LogVerbose($"Created status manager for: {contentID} {skeletonID}");
 
-        IMoodleStatusManager newStatusManager = new MoodlesStatusManager(Services, contentID, skeletonID, "[UNKNOWN]", 0, false);
+        IMoodleStatusManager newStatusManager = new MoodlesStatusManager(contentID, skeletonID, false);
         _statusManagers.Add(newStatusManager);
 
         Services.Mediator.Send(new DatabaseAddedStatusManagerMessage(this, newStatusManager));
@@ -162,7 +192,7 @@ internal class MoodlesDatabase : IMoodlesDatabase
             if (_statusManagers[i].ContentID != entry.ContentID) continue;
             if (_statusManagers[i].SkeletonID != entry.SkeletonID) continue;
 
-            PluginLog.LogVerbose($"Removed status manager for: {entry.Name}");
+            PluginLog.LogVerbose($"Removed status manager for: {entry.ContentID}");
 
             Services.Mediator.Send(new DatabaseRemovedStatusManagerMessage(this, _statusManagers[i]));
             Services.Mediator.Send(new DatabaseDirtyMessage(this));

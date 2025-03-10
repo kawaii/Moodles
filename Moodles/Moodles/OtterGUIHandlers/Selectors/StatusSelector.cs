@@ -203,7 +203,7 @@ internal class StatusSelector : Window
                     if (selectedMoodle.Description.Length == 0 || selectedMoodle.Description == oldInfo?.Description)   selectedMoodle.SetDescription(info.Description);
                 }
                 selectedMoodle.SetIconID((int)info.IconID, Mediator);
-                PluginLog.Log($"Set Icon To: {info.IconID}");
+                PluginLog.LogVerbose($"Set Icon To: {info.IconID}");
             }
             ImGui.SameLine();
             ImGui.PushFont(UiBuilder.IconFont);

@@ -16,6 +16,7 @@ using System.Numerics;
 using Newtonsoft.Json;
 using Moodles.Moodles.Services;
 using Moodles.Moodles.StatusManaging.Interfaces;
+using Moodles.Moodles.MoodleUsers.Interfaces;
 
 namespace Moodles.Moodles.OtterGUIHandlers;
 
@@ -29,7 +30,7 @@ internal sealed class MoodleFileSystem : FileSystem<IMoodle>, IDisposable
     readonly IMoodlesServices Services;
     readonly IMoodlesDatabase Database;
 
-    public MoodleFileSystem(DalamudServices dalamudServices, OtterGuiHandler otterGuiHandler, IMoodlesServices services, IMoodlesDatabase database)
+    public MoodleFileSystem(DalamudServices dalamudServices, OtterGuiHandler otterGuiHandler, IMoodlesServices services, IMoodlesDatabase database, IUserList userList)
     {
         DalamudServices = dalamudServices;
         Services = services;
@@ -43,10 +44,10 @@ internal sealed class MoodleFileSystem : FileSystem<IMoodle>, IDisposable
             FileInfo info = new FileInfo(FilePath);
             if (info.Exists)
             {
-                PluginLog.Log($"Trying to identify {info}");
+                PluginLog.LogVerbose($"Trying to identify {info}");
                 Load(info, Database.Moodles, ConvertToIdentifier, ConvertToName);
             }
-            Selector = new FileSystemSelector(this, otterGuiHandler, dalamudServices, services, Database);
+            Selector = new FileSystemSelector(this, otterGuiHandler, dalamudServices, services, Database, userList);
         }
         catch (Exception e)
         {
@@ -56,14 +57,14 @@ internal sealed class MoodleFileSystem : FileSystem<IMoodle>, IDisposable
 
     public void Dispose()
     {
-        
+
     }
 
     public void DoDelete(IMoodle status)
     {
         if (status is not Moodle moodle) return;
 
-        PluginLog.Log($"Deleting {moodle.Identifier}");
+        PluginLog.LogVerbose($"Deleting {moodle.Identifier}");
 
         Database.RemoveMoodle(moodle);
 
@@ -141,12 +142,14 @@ internal sealed class MoodleFileSystem : FileSystem<IMoodle>, IDisposable
         readonly MoodleFileSystem MoodleFileSystem;
         readonly IMoodlesServices Services;
         readonly IMoodlesDatabase Database;
+        readonly IUserList UserList;
 
-        public FileSystemSelector(MoodleFileSystem fileSystem, OtterGuiHandler otterGuiHandler, DalamudServices services, IMoodlesServices moodlesServices, IMoodlesDatabase database) : base(fileSystem, services.KeyState, otterGuiHandler.Logger, PluginLog.LogException)
+        public FileSystemSelector(MoodleFileSystem fileSystem, OtterGuiHandler otterGuiHandler, DalamudServices services, IMoodlesServices moodlesServices, IMoodlesDatabase database, IUserList userList) : base(fileSystem, services.KeyState, otterGuiHandler.Logger, PluginLog.LogException)
         {
             MoodleFileSystem = fileSystem;
             Services = moodlesServices;
             Database = database;
+            UserList = userList;
 
             AddButton(NewMoodleButton, 0);
             AddButton(ImportButton, 10);
@@ -251,6 +254,11 @@ internal sealed class MoodleFileSystem : FileSystem<IMoodle>, IDisposable
                 try
                 {
                     IMoodle newStatus = Database.CreateMoodle();
+                    IMoodleUser? localUser = UserList.LocalPlayer;
+                    if (localUser != null)
+                    {
+                        newStatus.SetCreatedBy(localUser.ContentID, Services.Mediator);
+                    }
                     MoodleFileSystem.CreateLeaf(FileSystem.Root, NewName, newStatus);
                     MoodleFileSystem.Save();
                 }

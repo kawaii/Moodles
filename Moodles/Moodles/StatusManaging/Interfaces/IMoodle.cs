@@ -56,6 +56,8 @@ internal interface IMoodle
     void EnforceCleanGUID(IMoodlesMediator? mediator = null);
     void EnforceNewGUID(IMoodlesMediator? mediator = null);
 
+    bool Savable();
+
     // The actual moodle thing should hold data like
     // Current Stack
     // GUID

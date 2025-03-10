@@ -136,7 +136,7 @@ internal class MoodleTab
             ImGui.InputText("##name", ref titleHolder, 150);
             if (ImGui.IsItemDeactivatedAfterEdit())
             {
-                PluginLog.Log($"Set Title from UI to: {titleHolder}");
+                PluginLog.LogVerbose($"Set Title from UI to: {titleHolder}");
                 Selected.SetTitle(titleHolder, Mediator);
             }
 
@@ -182,12 +182,12 @@ internal class MoodleTab
                     if (!ImGui.Selectable(Services.Sheets.VFXPaths[i])) continue;
                     
                     Selected.SetVFXPath(Services.Sheets.VFXPaths[i], Mediator);
-                    PluginLog.Log($"Set VFX Path to: {Selected.VFXPath}");
+                    PluginLog.LogVerbose($"Set VFX Path to: {Selected.VFXPath}");
                 }
 
                 if (Selected.VFXPath == "Clear")
                 {
-                    PluginLog.Log($"Set VFX Path to: {string.Empty}");
+                    PluginLog.LogVerbose($"Set VFX Path to: {string.Empty}");
                     Selected.SetVFXPath(string.Empty, Mediator);
                 }
 
@@ -220,7 +220,7 @@ internal class MoodleTab
                     if (ImGui.Selectable($"{i}"))
                     {
                         Selected.SetStartingStacks(i, Mediator);
-                        PluginLog.Log($"Set starting stacks to: {i}");
+                        PluginLog.LogVerbose($"Set starting stacks to: {i}");
                     }
                 }
                 ImGui.EndCombo();
@@ -233,7 +233,7 @@ internal class MoodleTab
                 Selected.SetStartingStacks(1, Mediator);
                 Selected.SetStackOnReapply(false, Mediator);
                 Selected.SetStackIncrementOnReapply(1, Mediator);
-                PluginLog.Log($"Set starting stacks to: {1}");
+                PluginLog.LogVerbose($"Set starting stacks to: {1}");
             }
 
             if (maxStacks > 1)
@@ -241,7 +241,7 @@ internal class MoodleTab
                 if (Selected.StartingStacks > maxStacks)
                 {
                     Selected.SetStartingStacks((int)maxStacks, Mediator);
-                    PluginLog.Log($"Set starting stacks to: {maxStacks}");
+                    PluginLog.LogVerbose($"Set starting stacks to: {maxStacks}");
                 }
             }
             ImGui.TableNextRow();
@@ -258,7 +258,7 @@ internal class MoodleTab
             if (ImGuiEx.EnumRadio(ref localStatusType, true))
             {
                 Selected.SetStatusType(localStatusType, Mediator);
-                PluginLog.Log($"Set Status Type: {localStatusType}");
+                PluginLog.LogVerbose($"Set Status Type: {localStatusType}");
             }
 
             // Duration Field
@@ -280,7 +280,7 @@ internal class MoodleTab
                 Selected.SetPermanent(noExpire);
                 Selected.SetCountsDownWhenOffline(offlineCountdown);
                 Selected.SetDuration(localDays, localHours, localMinutes, localSeconds, Mediator);
-                PluginLog.Log($"Time To: {noExpire} {localDays} {localHours} {localMinutes} {localSeconds} {offlineCountdown}");
+                PluginLog.LogVerbose($"Time To: {noExpire} {localDays} {localHours} {localMinutes} {localSeconds} {offlineCountdown}");
             }
 
 
@@ -298,7 +298,7 @@ internal class MoodleTab
             if (ImGui.Checkbox("Dispell On Death", ref localDispellOnDeath))
             {
                 Selected.SetDispellsOnDeath(localDispellOnDeath, Mediator);
-                PluginLog.Log($"SetDispellsOnDeath: {localDispellOnDeath}");
+                PluginLog.LogVerbose($"SetDispellsOnDeath: {localDispellOnDeath}");
             }
 
             // Dispelable Field
@@ -317,7 +317,7 @@ internal class MoodleTab
                 if (ImGui.Checkbox("##dispel", ref localIsDispellable))
                 {
                     Selected.SetDispellable(localIsDispellable, Mediator);
-                    PluginLog.Log($"SetDispellable: {localIsDispellable}");
+                    PluginLog.LogVerbose($"SetDispellable: {localIsDispellable}");
                 }
             }
 
@@ -336,7 +336,7 @@ internal class MoodleTab
                 if (ImGui.Checkbox("##stackonreapply", ref localStacksOnReapply))
                 {
                     Selected.SetStackOnReapply(localStacksOnReapply, Mediator);
-                    PluginLog.Log($"SetStackOnReapply: {localStacksOnReapply}");
+                    PluginLog.LogVerbose($"SetStackOnReapply: {localStacksOnReapply}");
                 }
                 // if the selected should reapply and we have a stacked moodle.
                 if (Selected.StackOnReapply && maxStacks > 1)
@@ -351,7 +351,7 @@ internal class MoodleTab
                     if (ImGui.IsItemDeactivatedAfterEdit())
                     {
                         Selected.SetStackIncrementOnReapply(localStacksIncOnReapply, Mediator);
-                        PluginLog.Log($"SetStackIncrementOnReapply: {localStacksIncOnReapply}");
+                        PluginLog.LogVerbose($"SetStackIncrementOnReapply: {localStacksIncOnReapply}");
                     }
                 }
             }
@@ -381,7 +381,7 @@ internal class MoodleTab
                 if (ImGui.Selectable($"Clear", false, ImGuiSelectableFlags.None))
                 {
                     Selected.SetStatusOnDispell(Guid.Empty, Mediator);
-                    PluginLog.Log($"SetStatusOnDispell: {Guid.Empty}");
+                    PluginLog.LogVerbose($"SetStatusOnDispell: {Guid.Empty}");
                 }
                 
                 foreach (Moodle moodle in Database.Moodles)
@@ -410,7 +410,7 @@ internal class MoodleTab
                             if (ImGui.Selectable($"{name}##{moodle.ID}", false, ImGuiSelectableFlags.None))
                             {
                                 Selected.SetStatusOnDispell(moodle.Identifier, Mediator);
-                                PluginLog.Log($"SetStatusOnDispell: {moodle.Identifier}");
+                                PluginLog.LogVerbose($"SetStatusOnDispell: {moodle.Identifier}");
                             }
                         }
                     }
@@ -443,7 +443,7 @@ internal class MoodleTab
             if (ImGui.IsItemDeactivatedAfterEdit())
             {
                 Selected.SetDescription(localDescription, Mediator);
-                PluginLog.Log($"SetDescription: {localDescription}");
+                PluginLog.LogVerbose($"SetDescription: {localDescription}");
             }
 
             ImGui.EndTable();
