@@ -40,11 +40,12 @@ internal partial class MoodlesStatusManager : IMoodleStatusManager
 
         for (int i = worldMoodleCount - 1; i >= 0; i--)
         {
+            // Tick every moodle, even permanent ones because the timer can change later
             WorldMoodles[i].Update(framework);
         }
     }
 
-    public unsafe void ValidateMoodles(IFramework framework, IMoodleValidator validator, IMoodlesDatabase database, IUserList userList, IMoodlesMediator? mediator = null)
+    public unsafe void ValidateMoodles(IFramework framework, IMoodleValidator validator, IMoodlesDatabase database, IMoodleUser? user, IMoodlesMediator? mediator = null)
     {
         int worldMoodleCount = WorldMoodles.Count;
 
@@ -65,14 +66,9 @@ internal partial class MoodlesStatusManager : IMoodleStatusManager
                 continue;
             }
 
-            if (moodle.DispellsOnDeath)
+            if (moodle.DispellsOnDeath && user != null)
             {
-                IMoodleUser? user = userList.GetUserFromContentID(ContentID);
-                if (user == null)
-                {
-                    wMoodle.RemoveTickedTime(framework);
-                }
-                else if (user.Self->Health == 0)
+                if (user.Self->Health == 0)
                 {
                     RemoveMoodle(wMoodle, MoodleRemoveReason.Death, mediator);
                     continue;
@@ -148,7 +144,7 @@ internal partial class MoodlesStatusManager : IMoodleStatusManager
         return false;
     }
 
-    public void ApplyMoodle(IMoodle moodle, IMoodleValidator moodleValidator, IMoodlesMediator? mediator = null)
+    public void ApplyMoodle(IMoodle moodle, IMoodleValidator moodleValidator, IUserList userList, IMoodlesMediator? mediator = null)
     {
         if (!moodleValidator.IsValid(moodle, out string? error))
         {
@@ -162,7 +158,7 @@ internal partial class MoodlesStatusManager : IMoodleStatusManager
             {
                 Identifier = moodle.Identifier,
                 StackCount = (uint)moodle.StartingStacks,
-                AppliedBy = 0,
+                AppliedBy = userList.LocalPlayer?.ContentID ?? 0,
                 AppliedOn = DateTime.Now.Ticks
             };
 

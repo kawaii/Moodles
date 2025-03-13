@@ -7,7 +7,7 @@ namespace Moodles.Moodles.MoodleUsers;
 
 internal unsafe sealed class MoodleBattlePet : BaseMoodlesPet, IMoodleBattlePet
 {
-    public BattleChara* BattlePet { get => (BattleChara*)PetPointer; }
+    public BattleChara* BattlePet { get => (BattleChara*)Address; }
 
     public MoodleBattlePet(BattleChara* battlePet, IMoodleUser owner, IMoodlesDatabase database, IMoodlesServices moodleServices) : base(&battlePet->Character, owner, database, moodleServices, true) { }
 }

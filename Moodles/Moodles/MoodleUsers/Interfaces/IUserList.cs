@@ -1,4 +1,6 @@
-﻿namespace Moodles.Moodles.MoodleUsers.Interfaces;
+﻿using Moodles.Moodles.StatusManaging.Interfaces;
+
+namespace Moodles.Moodles.MoodleUsers.Interfaces;
 
 internal interface IUserList
 {
@@ -10,4 +12,7 @@ internal interface IUserList
 
     IMoodleUser? GetUserFromContentID(ulong contentID);
     IMoodleUser? GetUserFromOwnerID(uint ownerID);
+
+    IMoodleHolder? GetHolder(ulong contentId, int skeletonId);
+    IMoodleHolder? GetHolder(IWorldMoodle worldMoodle);
 }

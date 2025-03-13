@@ -31,6 +31,8 @@ internal class HookHandler : IHookHandler
     void _Register()
     {
         Register(new CharacterManagerHook(DalamudServices, UserList, MoodlesServices, Database));
+        Register(new SHEHook(DalamudServices, UserList, MoodlesServices, Database));
+        Register(new FlyTextHook(DalamudServices, UserList, MoodlesServices, Database));
     }
 
     void Register(IHookableElement hookableElement)

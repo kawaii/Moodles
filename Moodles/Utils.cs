@@ -3,6 +3,7 @@ using ECommons;
 using ECommons.ChatMethods;
 using ECommons.DalamudServices;
 using ImGuiNET;
+using Moodles.Moodles.Services;
 using Moodles.Moodles.StatusManaging;
 using Moodles.Moodles.StatusManaging.Interfaces;
 using Newtonsoft.Json;
@@ -58,7 +59,7 @@ internal unsafe static partial class Utils
                     {
                         r = (ushort)Enum.GetValues<UIColor>().FirstOrDefault(x => x.ToString().EqualsIgnoreCase(s[7..^1]));
                     }
-                    if (r == 0 || Svc.Data.GetExcelSheet<Lumina.Excel.Sheets.UIColor>().GetRowOrDefault(r) == null) goto ColorError;
+                    if (r == 0) goto ColorError;
                     str.AddUiForeground(r);
                     valid[0]++;
                 }
@@ -75,7 +76,7 @@ internal unsafe static partial class Utils
                     {
                         r = (ushort)Enum.GetValues<UIColor>().FirstOrDefault(x => x.ToString().EqualsIgnoreCase(s[6..^1]));
                     }
-                    if (r == 0 || Svc.Data.GetExcelSheet<Lumina.Excel.Sheets.UIColor>().GetRowOrDefault(r) == null) goto ColorError;
+                    if (r == 0) goto ColorError;
                     str.AddUiGlow(r);
                     valid[1]++;
                 }
@@ -116,6 +117,7 @@ internal unsafe static partial class Utils
         }
         catch (Exception e)
         {
+            PluginLog.LogException(e);
             error = "Error: please check syntax.";
             return new SeStringBuilder().AddText($"{error}\0").Build();
         }

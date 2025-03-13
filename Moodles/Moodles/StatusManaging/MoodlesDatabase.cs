@@ -97,8 +97,16 @@ internal class MoodlesDatabase : IMoodlesDatabase
 
         for (int i = 0; i < statusManagerCount; i++)
         {
-            _statusManagers[i].Update(framework);
-            _statusManagers[i].ValidateMoodles(framework, Services.MoodleValidator, this, UserList, Services.Mediator);
+            IMoodleStatusManager statusManager = _statusManagers[i];
+
+            IMoodleUser? user = UserList.GetUserFromContentID(statusManager.ContentID);
+
+            if (user != null)
+            {
+                _statusManagers[i].Update(framework);
+            }
+
+            _statusManagers[i].ValidateMoodles(framework, Services.MoodleValidator, this, user, Services.Mediator);
         }
     }
 

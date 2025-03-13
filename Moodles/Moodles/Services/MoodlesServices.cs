@@ -32,7 +32,7 @@ internal class MoodlesServices : IMoodlesServices
 
         Configuration = DalamudServices.DalamudPlugin.GetPluginConfig() as Configuration ?? new Configuration();
 
-        StringHelper = new StringHelperWrapper();
+        StringHelper = new StringHelperWrapper(DalamudServices);
         Sheets = new SheetsWrapper(DalamudServices);
         MoodlesCache = new MoodlesCache(DalamudServices, Sheets);
         MoodleValidator = new MoodleValidator(Sheets);

@@ -67,7 +67,7 @@ internal unsafe sealed class MoodleUser : IMoodleUser
         for (int i = 0; i < petCount; i++)
         {
             IMoodlePet pPet = MoodlePets[i];
-            if (pPet.PetPointer == pet) return pPet;
+            if (pPet.Address == pet) return pPet;
         }
         return null;
     }
@@ -108,7 +108,7 @@ internal unsafe sealed class MoodleUser : IMoodleUser
         {
             IMoodlePet? pet = MoodlePets[i];
             if (pet == null) continue;
-            if (pet.PetPointer != (nint)pointer) continue;
+            if (pet.Address != (nint)pointer) continue;
             return;
         }
 
@@ -123,7 +123,7 @@ internal unsafe sealed class MoodleUser : IMoodleUser
         {
             IMoodlePet? pet = MoodlePets[i];
             if (pet == null) continue;
-            if (pet.PetPointer != (nint)pointer) continue;
+            if (pet.Address != (nint)pointer) continue;
 
             MoodlePets.RemoveAt(i);
         }

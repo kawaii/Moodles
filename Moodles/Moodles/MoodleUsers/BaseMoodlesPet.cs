@@ -9,7 +9,7 @@ internal unsafe abstract class BaseMoodlesPet : IMoodlePet
 {
     public IMoodleUser Owner { get; }
 
-    public nint PetPointer { get; }
+    public nint Address { get; }
     public ulong ObjectID { get; }
     public ushort Index { get; }
     public string Name { get; } = "";
@@ -29,7 +29,7 @@ internal unsafe abstract class BaseMoodlesPet : IMoodlePet
         Owner = owner;
         Database = database;
 
-        PetPointer = (nint)pet;
+        Address = (nint)pet;
 
         SkeletonID = pet->ModelContainer.ModelCharaId;
         if (asBattlePet) SkeletonID = -SkeletonID;

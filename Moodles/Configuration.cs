@@ -1,7 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Diagnostics;
-using System.Diagnostics.CodeAnalysis;
 using Dalamud.Configuration;
 using Dalamud.Plugin;
 using Moodles.Moodles.Services;
@@ -32,6 +31,7 @@ internal class Configuration : IPluginConfiguration
     public bool Censor = false;
     public int SelectorHeight = 33;
     public SortOption IconSortOption = SortOption.Numerical;
+    public int MoodleFlyoutTextLimit = 10;
 
     [JsonIgnore] readonly Stopwatch stopwatch = new Stopwatch();
 

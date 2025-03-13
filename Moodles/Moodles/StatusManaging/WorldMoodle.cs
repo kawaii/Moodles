@@ -22,11 +22,6 @@ internal partial class WorldMoodle : IWorldMoodle
         TickedTime += framework.UpdateDelta.Ticks;
     }
 
-    public void RemoveTickedTime(IFramework framework)
-    {
-        TickedTime -= framework.UpdateDelta.Ticks;
-    }
-
     public void AddStacksUnchecked(uint stacks, bool resetTime, IMoodlesMediator? mediator = null)
     {
         StackCount += stacks;

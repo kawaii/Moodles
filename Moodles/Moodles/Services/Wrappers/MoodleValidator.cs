@@ -116,7 +116,12 @@ internal class MoodleValidator : IMoodleValidator
         if (moodle.Permanent) return -1;
 
         // 10000 for ticks
-        return 10000 * (moodle.Seconds * 1000 + moodle.Minutes * 1000 * 60 + moodle.Hours * 1000 * 60 * 60 + moodle.Days * 1000 * 60 * 60 * 24);
+        long accurateSeconds = moodle.Seconds * TimeSpan.TicksPerSecond;
+        long accurateMinutes = moodle.Minutes * TimeSpan.TicksPerMinute;
+        long accurateHours = moodle.Hours * TimeSpan.TicksPerHour;
+        long accurateDays = moodle.Days * TimeSpan.TicksPerDay;
+
+        return accurateSeconds + accurateMinutes + accurateHours + accurateDays;
     }
 
     public bool MoodleOverTime(WorldMoodle wMoodle, IMoodle moodle)

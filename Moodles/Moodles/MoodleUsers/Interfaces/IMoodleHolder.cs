@@ -6,4 +6,5 @@ namespace Moodles.Moodles.MoodleUsers.Interfaces;
 internal interface IMoodleHolder : IDisposable
 {
     IMoodleStatusManager StatusManager { get; }
+    nint Address { get; }
 }

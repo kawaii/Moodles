@@ -18,7 +18,7 @@ internal interface IMoodleStatusManager
     List<WorldMoodle> WorldMoodles { get; }
 
     void Update(IFramework framework);
-    void ValidateMoodles(IFramework framework, IMoodleValidator validator, IMoodlesDatabase database, IUserList userList, IMoodlesMediator? mediator = null);
+    void ValidateMoodles(IFramework framework, IMoodleValidator validator, IMoodlesDatabase database, IMoodleUser? user, IMoodlesMediator? mediator = null);
 
     void SetEphemeralStatus(bool ephemeralStatus, IMoodlesMediator? mediator = null);
 
@@ -28,7 +28,7 @@ internal interface IMoodleStatusManager
 
     bool HasMoodle(IMoodle moodle, [NotNullWhen(true)] out WorldMoodle? wMoodle);
     bool HasMaxedOutMoodle(IMoodle moodle, IMoodleValidator moodleValidator, [NotNullWhen(true)] out WorldMoodle? wMoodle);
-    void ApplyMoodle(IMoodle moodle, IMoodleValidator moodleValidator, IMoodlesMediator? mediator = null);
+    void ApplyMoodle(IMoodle moodle, IMoodleValidator moodleValidator, IUserList userList, IMoodlesMediator? mediator = null);
     void RemoveMoodle(IMoodle moodle, MoodleRemoveReason removeReason, IMoodlesMediator? mediator = null);
     void RemoveMoodle(WorldMoodle wMoodle, MoodleRemoveReason removeReason, IMoodlesMediator? mediator = null);
 }

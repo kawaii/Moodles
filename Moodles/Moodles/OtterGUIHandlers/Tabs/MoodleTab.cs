@@ -505,7 +505,7 @@ internal class MoodleTab
             }
             else
             {
-                target?.StatusManager.ApplyMoodle(Selected, Services.MoodleValidator, Mediator);
+                target?.StatusManager.ApplyMoodle(Selected, Services.MoodleValidator, UserList, Mediator);
             }
         }
 

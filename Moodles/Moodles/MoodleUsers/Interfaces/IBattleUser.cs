@@ -10,7 +10,6 @@ internal unsafe interface IBattleUser
     ushort Homeworld { get; }
     ulong ContentID { get; }
 
-    nint Address { get; }
     ulong ObjectID { get; }
     uint ShortObjectID { get; }
 }

@@ -1,6 +1,5 @@
 ﻿using Dalamud.Plugin.Services;
 using Moodles.Moodles.Mediation.Interfaces;
-using Moodles.Moodles.Updating.Interfaces;
 using System;
 
 namespace Moodles.Moodles.StatusManaging.Interfaces;
