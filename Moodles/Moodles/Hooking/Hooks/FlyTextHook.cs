@@ -2,6 +2,7 @@
 using Dalamud.Game.Text.SeStringHandling;
 using Dalamud.Hooking;
 using Dalamud.Utility.Signatures;
+using FFXIVClientStructs.FFXIV.Client.UI.Agent;
 using Lumina.Excel.Sheets;
 using Moodles.Moodles.MoodleUsers.Interfaces;
 using Moodles.Moodles.Services;
@@ -33,7 +34,7 @@ internal class FlyTextHook : CommonMoodleHook
 
     public FlyTextHook(DalamudServices dalamudServices, IUserList userList, IMoodlesServices moodlesServices, IMoodlesDatabase database) : base(dalamudServices, userList, moodlesServices, database)
     {
-        
+
     }
 
     public override void Init()
@@ -45,6 +46,8 @@ internal class FlyTextHook : CommonMoodleHook
 
     void AddToScreenLogWithScreenLogKindDetour(nint target, nint source, FlyTextKind kind, byte a4, byte a5, int actionID, int statusID, int stackCount, int damageType)
     {
+        if (IsHandledByEsuna(target, source, actionID, kind)) return;
+
         AddToScreenLogWithScreenLogKindHook?.Original(target, source, kind, a4, a5, actionID, statusID, stackCount, damageType);
     }
 
@@ -69,6 +72,42 @@ internal class FlyTextHook : CommonMoodleHook
 
         lastUser = null;
         lastMoodle = null;
+    }
+
+    bool IsHandledByEsuna(nint target, nint source, int actionId, FlyTextKind kind)
+    {
+        if (!MoodlesServices.Configuration.MoodlesCanBeEsunad) return false;
+
+        if (actionId != 7568) return false;
+        if (kind != FlyTextKind.HasNoEffect) return false;
+
+        IMoodleUser? uSource = UserList.GetUser(source);
+        if (uSource == null) return false;
+
+        if (!MoodlesServices.Configuration.OthersCanEsunaMoodles)
+        {
+            if (!uSource.IsLocalPlayer) return false;
+        }
+
+        IMoodleUser? uTarget = UserList.GetUser(target);
+        if (uTarget == null) return false;
+        if (uTarget.StatusManager.IsEphemeral) return false;
+
+        int statusCount = uTarget.StatusManager.WorldMoodles.Count;
+
+        for (int i = 0; i < statusCount; i++)
+        {
+            WorldMoodle wMoodle = uTarget.StatusManager.WorldMoodles[i];
+
+            IMoodle? moodle = Database.GetMoodle(wMoodle);
+            if (moodle == null) continue;
+            if (!moodle.Dispellable) continue;
+
+            DalamudServices.Framework.RunOnFrameworkThread(() => uTarget.StatusManager.RemoveMoodle(moodle, MoodleRemoveReason.Esuna, Mediator));
+            return true;
+        }
+
+        return false;
     }
 
     bool ValidateSpawnViability()

@@ -33,6 +33,9 @@ internal class Configuration : IPluginConfiguration
     public SortOption IconSortOption = SortOption.Numerical;
     public int MoodleFlyoutTextLimit = 10;
 
+    public bool MoodlesCanBeEsunad = true;
+    public bool OthersCanEsunaMoodles = true;
+
     [JsonIgnore] readonly Stopwatch stopwatch = new Stopwatch();
 
     public void Initialise(IDalamudPluginInterface moodlesPlugin, IMoodlesDatabase database)
