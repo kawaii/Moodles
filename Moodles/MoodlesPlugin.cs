@@ -54,12 +54,14 @@ public sealed class MoodlesPlugin : IDalamudPlugin
         HookHandler = new HookHandler(DalamudServices, MoodlesServices, UserList, Database);
         UpdateHandler = new UpdateHandler(DalamudServices, MoodlesServices, SaveHandler, Database, UserList);
 
+        MoodleHelper = new MoodleHelper(Database, DalamudServices, MoodlesServices, UserList);
+
+        Database.DatabaseApplier.FloodDatabase();
+
         OtterGuiHandler = new OtterGuiHandler(DalamudServices, MoodlesServices, Database, UserList);
         WindowHandler = new WindowHandler(DalamudServices, Database, UserList, OtterGuiHandler, MoodlesServices);
 
         MoodlesServices.Configuration.Initialise(DalamudServices.DalamudPlugin, Database);
-
-        MoodleHelper = new MoodleHelper(Database, DalamudServices, MoodlesServices, UserList);
     }
 
     public void Dispose()

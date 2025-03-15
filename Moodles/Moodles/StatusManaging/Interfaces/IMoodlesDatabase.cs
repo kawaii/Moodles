@@ -1,10 +1,13 @@
 ﻿using Dalamud.Plugin.Services;
+using Moodles.Moodles.StatusManaging.Application;
 using System;
 
 namespace Moodles.Moodles.StatusManaging.Interfaces;
 
 internal interface IMoodlesDatabase
 {
+    DatabaseApplier DatabaseApplier { get; }
+
     IMoodleStatusManager[] StatusManagers { get; }
     IMoodle[] Moodles { get; }
 

@@ -21,7 +21,7 @@ internal class MoodlesDatabase : IMoodlesDatabase
     readonly IMoodlesServices Services;
     readonly IUserList UserList;
 
-    readonly DatabaseApplier DatabaseApplier;
+    public DatabaseApplier DatabaseApplier { get; }
 
     public MoodlesDatabase(IMoodlesServices services, IUserList userList)
     {
@@ -29,8 +29,6 @@ internal class MoodlesDatabase : IMoodlesDatabase
         UserList = userList;
 
         DatabaseApplier = new DatabaseApplier(this, services, userList);
-
-        DatabaseApplier.FloodDatabase();
     }
 
     public void PrepareForSave()
