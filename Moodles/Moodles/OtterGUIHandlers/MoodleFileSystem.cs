@@ -17,6 +17,7 @@ using Newtonsoft.Json;
 using Moodles.Moodles.Services;
 using Moodles.Moodles.StatusManaging.Interfaces;
 using Moodles.Moodles.MoodleUsers.Interfaces;
+using System.Collections.Generic;
 
 namespace Moodles.Moodles.OtterGUIHandlers;
 
@@ -47,7 +48,16 @@ internal sealed class MoodleFileSystem : FileSystem<IMoodle>, IDisposable
             if (info.Exists)
             {
                 PluginLog.LogVerbose($"Trying to identify {info}");
-                Load(info, Database.Moodles, ConvertToIdentifier, ConvertToName);
+                List<IMoodle> validMoodles = [];
+
+                foreach (IMoodle moodle in Database.Moodles)
+                {
+                    if (moodle.IsEphemeral) continue;
+
+                    validMoodles.Add(moodle);
+                }
+
+                Load(info, validMoodles, ConvertToIdentifier, ConvertToName);
             }
             Selector = new FileSystemSelector(this, otterGuiHandler, dalamudServices, services, Database, userList);
         }

@@ -60,7 +60,7 @@ internal class MoodleTab
         if (Selected == null) return;
 
         ImGui.SameLine();
-        using var group = ImRaii.Group();
+        using ImRaii.IEndObject group = ImRaii.Group();
         DrawHeader();
         DrawSelected();
     }
@@ -313,12 +313,18 @@ internal class MoodleTab
 
             bool noExpire = Selected.Permanent;
 
-            int totalTime = Services.MoodleValidator.GetMoodleDuration(Selected, out int localDays, out int localHours, out int localMinutes, out int localSeconds, out bool offlineCountdown);
+            long totalTime = Services.MoodleValidator.GetMoodleDuration(Selected, out int localDays, out int localHours, out int localMinutes, out int localSeconds, out bool offlineCountdown);
 
             if (totalTime < 1 && !Selected.Permanent)
             {
                 ImGuiEx.HelpMarker("Duration must be at least 1 second", EColor.RedBright, FontAwesomeIcon.ExclamationTriangle.ToIconString());
+            } 
+            
+            if (totalTime < PluginConstants.MinSyncMoodleTicks && !Selected.Permanent)
+            {
+                ImGuiEx.HelpMarker($"Moodles less than {(PluginConstants.MinSyncMoodleTicks / TimeSpan.TicksPerSecond)} seconds will NOT get synchronized.]", EColor.RedBright, FontAwesomeIcon.ExclamationTriangle.ToIconString());
             }
+
             ImGui.TableNextColumn();
             if (DurationSelector("Permanent", ref noExpire, ref localDays, ref localHours, ref localMinutes, ref localSeconds, ref offlineCountdown))
             {
@@ -501,11 +507,11 @@ internal class MoodleTab
         {
             if (hasMoodle)
             {
-                target?.StatusManager.RemoveMoodle(Selected, MoodleRemoveReason.ManualNoFlag, Mediator);
+                target?.StatusManager.RemoveMoodle(Selected, MoodleReasoning.ManualNoFlag, Mediator);
             }
             else
             {
-                target?.StatusManager.ApplyMoodle(Selected, Services.MoodleValidator, UserList, Mediator);
+                target?.StatusManager.ApplyMoodle(Selected, MoodleReasoning.ManualFlag, Services.MoodleValidator, UserList, Mediator);
             }
         }
 

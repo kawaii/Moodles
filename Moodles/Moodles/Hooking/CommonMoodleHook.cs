@@ -21,16 +21,16 @@ internal abstract class CommonMoodleHook : HookableElement
         Mediator.Subscribe<MoodleStackChangedMessage>(this, OnMoodleStackChanged);
     }
 
-    protected abstract void OnMoodleApplied(nint forAddress, IMoodle moodle, WorldMoodle wMoodle, IMoodleStatusManager statusManager);
+    protected abstract void OnMoodleApplied(nint forAddress, IMoodle moodle, MoodleReasoning reason, WorldMoodle wMoodle, IMoodleStatusManager statusManager);
     protected abstract void OnMoodleStackChanged(nint forAddress, IMoodle moodle, WorldMoodle wMoodle, IMoodleStatusManager statusManager);
-    protected abstract void OnMoodleRemoved(nint forAddress, MoodleRemoveReason reason, IMoodle moodle, WorldMoodle wMoodle, IMoodleStatusManager statusManager);
+    protected abstract void OnMoodleRemoved(nint forAddress, MoodleReasoning reason, IMoodle moodle, WorldMoodle wMoodle, IMoodleStatusManager statusManager);
 
     void OnMoodleApplied(MoodleAppliedMessage appliedMessage)
     {
         IMoodleHolder? holder = UserList.GetHolder(appliedMessage.StatusManager.ContentID, appliedMessage.StatusManager.SkeletonID);
         if (holder == null) return;
 
-        OnMoodleApplied(holder.Address, appliedMessage.Moodle, appliedMessage.WorldMoodle, appliedMessage.StatusManager);
+        OnMoodleApplied(holder.Address, appliedMessage.Moodle, appliedMessage.ApplyReason, appliedMessage.WorldMoodle, appliedMessage.StatusManager);
     }
 
     void OnMoodleStackChanged(MoodleStackChangedMessage stackChangedMessage)

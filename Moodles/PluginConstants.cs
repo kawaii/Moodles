@@ -1,9 +1,16 @@
-﻿using System.Numerics;
+﻿using System;
+using System.Numerics;
 
 namespace Moodles;
 
 public static class PluginConstants
 {
+    public const int MoodleMax = 20;
+    public const int MaxTimerDepthSearch = 100;
+
+                                          // seconds
+    public const long MinSyncMoodleTicks = 30 * TimeSpan.TicksPerSecond;
+
     public const int PlayerSkeleton = 0;
 
     public const int Eos = -407;

@@ -60,6 +60,8 @@ internal interface IMoodle
 
     bool Savable(IMoodlesDatabase database);
 
+    void Apply(IMoodle moodle, IMoodlesMediator? mediator = null);
+
     // The actual moodle thing should hold data like
     // Current Stack
     // GUID

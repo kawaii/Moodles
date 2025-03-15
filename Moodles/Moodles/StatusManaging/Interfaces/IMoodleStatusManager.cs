@@ -28,7 +28,10 @@ internal interface IMoodleStatusManager
 
     bool HasMoodle(IMoodle moodle, [NotNullWhen(true)] out WorldMoodle? wMoodle);
     bool HasMaxedOutMoodle(IMoodle moodle, IMoodleValidator moodleValidator, [NotNullWhen(true)] out WorldMoodle? wMoodle);
-    void ApplyMoodle(IMoodle moodle, IMoodleValidator moodleValidator, IUserList userList, IMoodlesMediator? mediator = null);
-    void RemoveMoodle(IMoodle moodle, MoodleRemoveReason removeReason, IMoodlesMediator? mediator = null);
-    void RemoveMoodle(WorldMoodle wMoodle, MoodleRemoveReason removeReason, IMoodlesMediator? mediator = null);
+    void ApplyMoodle(IMoodle moodle, MoodleReasoning applyReason, IMoodleValidator moodleValidator, IUserList userList, IMoodlesMediator? mediator = null);
+    void ApplyMoodle(IMoodle moodle, WorldMoodle wMoodle, MoodleReasoning applyReason, IMoodleValidator moodleValidator, IUserList userList, IMoodlesMediator? mediator = null);
+    void RemoveMoodle(IMoodle moodle, MoodleReasoning removeReason, IMoodlesMediator? mediator = null);
+    void RemoveMoodle(WorldMoodle wMoodle, MoodleReasoning removeReason, IMoodlesMediator? mediator = null);
+
+    WorldMoodle? GetMoodle(IMoodle moodle);
 }

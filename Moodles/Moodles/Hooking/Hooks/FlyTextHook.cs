@@ -2,7 +2,6 @@
 using Dalamud.Game.Text.SeStringHandling;
 using Dalamud.Hooking;
 using Dalamud.Utility.Signatures;
-using FFXIVClientStructs.FFXIV.Client.UI.Agent;
 using Lumina.Excel.Sheets;
 using Moodles.Moodles.MoodleUsers.Interfaces;
 using Moodles.Moodles.Services;
@@ -103,7 +102,7 @@ internal class FlyTextHook : CommonMoodleHook
             if (moodle == null) continue;
             if (!moodle.Dispellable) continue;
 
-            DalamudServices.Framework.RunOnFrameworkThread(() => uTarget.StatusManager.RemoveMoodle(moodle, MoodleRemoveReason.Esuna, Mediator));
+            DalamudServices.Framework.RunOnFrameworkThread(() => uTarget.StatusManager.RemoveMoodle(moodle, MoodleReasoning.Esuna, Mediator));
             return true;
         }
 
@@ -149,8 +148,19 @@ internal class FlyTextHook : CommonMoodleHook
         AddToScreenLogWithScreenLogKindDetour(forAddress, fromAddress, kind, 5, 0, 0, (int)status.Value.RowId, (int)wMoodle.StackCount, 0);
     }
 
-    protected override void OnMoodleApplied(nint forAddress, IMoodle moodle, WorldMoodle wMoodle, IMoodleStatusManager statusManager)
+    protected override void OnMoodleApplied(nint forAddress, IMoodle moodle, MoodleReasoning reason, WorldMoodle wMoodle, IMoodleStatusManager statusManager)
     {
+        if 
+        (
+            reason == MoodleReasoning.ManualNoFlag ||
+            reason == MoodleReasoning.IPCNoFlag    ||
+            reason == MoodleReasoning.Death        ||
+            reason == MoodleReasoning.Reflush
+        )
+        {
+            return;
+        }
+
         isAdd = true;
         SpawnText(forAddress, moodle, wMoodle, moodle.StatusType == StatusType.Negative ? FlyTextKind.Debuff : FlyTextKind.Buff);
     }
@@ -161,9 +171,9 @@ internal class FlyTextHook : CommonMoodleHook
         SpawnText(forAddress, moodle, wMoodle, moodle.StatusType == StatusType.Negative ? FlyTextKind.Debuff : FlyTextKind.Buff);
     }
 
-    protected override void OnMoodleRemoved(nint forAddress, MoodleRemoveReason reason, IMoodle moodle, WorldMoodle wMoodle, IMoodleStatusManager statusManager)
+    protected override void OnMoodleRemoved(nint forAddress, MoodleReasoning reason, IMoodle moodle, WorldMoodle wMoodle, IMoodleStatusManager statusManager)
     {
-        if (reason == MoodleRemoveReason.Reflush) return;
+        if (reason == MoodleReasoning.Reflush) return;
 
         isAdd = false;
         SpawnText(forAddress, moodle, wMoodle, moodle.StatusType == StatusType.Negative ? FlyTextKind.DebuffFading : FlyTextKind.BuffFading);

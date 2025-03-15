@@ -56,13 +56,13 @@ internal partial class MoodlesStatusManager : IMoodleStatusManager
 
             if (moodle == null)
             {
-                RemoveMoodle(wMoodle, MoodleRemoveReason.Rat, mediator);
+                RemoveMoodle(wMoodle, MoodleReasoning.Rat, mediator);
                 continue;
             }
 
-            if (validator.MoodleOverTime(wMoodle, moodle))
+            if (validator.MoodleOverTime(wMoodle, moodle, out _))
             {
-                RemoveMoodle(wMoodle, MoodleRemoveReason.Timeout, mediator);
+                RemoveMoodle(wMoodle, MoodleReasoning.Timeout, mediator);
                 continue;
             }
 
@@ -70,7 +70,7 @@ internal partial class MoodlesStatusManager : IMoodleStatusManager
             {
                 if (user.Self->Health == 0)
                 {
-                    RemoveMoodle(wMoodle, MoodleRemoveReason.Death, mediator);
+                    RemoveMoodle(wMoodle, MoodleReasoning.Death, mediator);
                     continue;
                 }
             }
@@ -144,8 +144,14 @@ internal partial class MoodlesStatusManager : IMoodleStatusManager
         return false;
     }
 
-    public void ApplyMoodle(IMoodle moodle, IMoodleValidator moodleValidator, IUserList userList, IMoodlesMediator? mediator = null)
+    public void ApplyMoodle(IMoodle moodle, MoodleReasoning applyReason, IMoodleValidator moodleValidator, IUserList userList, IMoodlesMediator? mediator = null)
     {
+        if (WorldMoodles.Count >= PluginConstants.MoodleMax)
+        {
+            PluginLog.LogFatal($"You've reached the max amount of moodles on this status manager.");
+            return;
+        }
+
         if (!moodleValidator.IsValid(moodle, out string? error))
         {
             PluginLog.Log($"Please do not apply a moodle that is Invalid: {error}");
@@ -165,7 +171,7 @@ internal partial class MoodlesStatusManager : IMoodleStatusManager
             PluginLog.Log($"Applied moodle: [{moodle.Identifier}] to user [{ContentID}].");
 
             WorldMoodles.Add(newMoodle);
-            mediator?.Send(new MoodleAppliedMessage(moodle, newMoodle, this));
+            mediator?.Send(new MoodleAppliedMessage(moodle, applyReason, newMoodle, this));
 
             return;
         }
@@ -182,7 +188,31 @@ internal partial class MoodlesStatusManager : IMoodleStatusManager
         PluginLog.Log($"Tried to apply moodle: [{moodle.Identifier}] which the user [{ContentID}] already had.");        
     }
 
-    public void RemoveMoodle(IMoodle moodle, MoodleRemoveReason removeReason, IMoodlesMediator? mediator = null)
+    public void ApplyMoodle(IMoodle moodle, WorldMoodle wMoodle, MoodleReasoning applyReason, IMoodleValidator moodleValidator, IUserList userList, IMoodlesMediator? mediator = null)
+    {
+        int moodleCount = WorldMoodles.Count;
+
+        for (int i = 0; i < moodleCount; i++)
+        {
+            WorldMoodle worldMoodle = WorldMoodles[i];
+            if (worldMoodle.Identifier != moodle.Identifier) continue;
+
+            worldMoodle.AppliedOn = wMoodle.AppliedOn;
+            worldMoodle.AppliedBy = wMoodle.AppliedBy;
+            worldMoodle.Identifier = wMoodle.Identifier;
+            worldMoodle.StackCount = wMoodle.StackCount;
+            worldMoodle.TickedTime = wMoodle.TickedTime;
+
+            mediator?.Send(new MoodleAppliedMessage(moodle, applyReason, wMoodle, this));
+
+            return;
+        }
+
+        WorldMoodles.Add(wMoodle);
+        mediator?.Send(new MoodleAppliedMessage(moodle, applyReason, wMoodle, this));
+    }
+
+    public void RemoveMoodle(IMoodle moodle, MoodleReasoning removeReason, IMoodlesMediator? mediator = null)
     {
         int moodleCount = WorldMoodles.Count;
 
@@ -196,11 +226,26 @@ internal partial class MoodlesStatusManager : IMoodleStatusManager
         }
     }
 
-    public void RemoveMoodle(WorldMoodle wMoodle, MoodleRemoveReason removeReason, IMoodlesMediator? mediator = null)
+    public void RemoveMoodle(WorldMoodle wMoodle, MoodleReasoning removeReason, IMoodlesMediator? mediator = null)
     {
         if (WorldMoodles.Remove(wMoodle))
         {
             mediator?.Send(new MoodleRemovedMessage(wMoodle, removeReason, this));
         }
+    }
+
+    public WorldMoodle? GetMoodle(IMoodle moodle)
+    {
+        int moodleCount = WorldMoodles.Count;
+
+        for (int i = moodleCount - 1; i >= 0; i--)
+        {
+            WorldMoodle wMoodle = WorldMoodles[i];
+            if (wMoodle.Identifier != moodle.Identifier) continue;
+
+            return wMoodle;
+        }
+
+        return null;
     }
 }

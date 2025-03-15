@@ -5,7 +5,7 @@ using Newtonsoft.Json;
 using Moodles.Moodles.Mediation.Interfaces;
 using Moodles.Moodles.Mediation;
 using Moodles.Moodles.Services.Data;
-using Moodles.Moodles.Services;
+using System.Collections.Generic;
 
 namespace Moodles.Moodles.StatusManaging;
 
@@ -15,27 +15,27 @@ internal partial class Moodle : IMoodle
 {
     [MemoryPackIgnore] [JsonIgnore] public string ID => Identifier.ToString();
 
-    public Guid Identifier { get; set; } = Guid.CreateVersion7();
-    public string Title { get; set; } = string.Empty;
-    public string Description { get; set; } = string.Empty;
-    public bool Dispellable { get; set; } = false;
-    public StatusType StatusType { get; set; } = StatusType.Positive;
-    public int IconID { get; set; } = 0;
-    public string VFXPath { get; set; } = string.Empty;
-    public bool DispellsOnDeath { get; set; } = true;
-    public bool CountsDownWhenOffline { get; set; } = false;
-    public int StartingStacks { get; set; } = 1;
-    public Guid StatusOnDispell { get; set; } = Guid.Empty;
-    public bool StackOnReapply { get; set; } = false;
-    public int StackIncrementOnReapply { get; set; } = 1;
-    public bool TimeResetsOnStack { get; set; } = true;
-    public int Days { get; set; } = 0;
-    public int Hours { get; set; } = 0;
-    public int Minutes { get; set; } = 0;
-    public int Seconds { get; set; } = 0;
-    public bool Permanent { get; set; } = true;
-    public ulong CreatedBy { get; set; } = 0;
-    public bool IsEphemeral { get; set; } = true;
+    public Guid         Identifier              { get; set; } = Guid.NewGuid();
+    public string       Title                   { get; set; } = string.Empty;
+    public string       Description             { get; set; } = string.Empty;
+    public bool         Dispellable             { get; set; } = false;
+    public StatusType   StatusType              { get; set; } = StatusType.Positive;
+    public int          IconID                  { get; set; } = 0;
+    public string       VFXPath                 { get; set; } = string.Empty;
+    public bool         DispellsOnDeath         { get; set; } = true;
+    public bool         CountsDownWhenOffline   { get; set; } = false;
+    public int          StartingStacks          { get; set; } = 1;
+    public Guid         StatusOnDispell         { get; set; } = Guid.Empty;
+    public bool         StackOnReapply          { get; set; } = false;
+    public int          StackIncrementOnReapply { get; set; } = 1;
+    public bool         TimeResetsOnStack       { get; set; } = true;
+    public int          Days                    { get; set; } = 0;
+    public int          Hours                   { get; set; } = 0;
+    public int          Minutes                 { get; set; } = 0;
+    public int          Seconds                 { get; set; } = 0;
+    public bool         Permanent               { get; set; } = true;
+    public ulong        CreatedBy               { get; set; } = 0;
+    public bool         IsEphemeral             { get; set; } = true;
 
     public void SetIdentifier(Guid identifier, IMoodlesMediator? mediator = null)
     {
@@ -51,7 +51,7 @@ internal partial class Moodle : IMoodle
 
     public void EnforceNewGUID(IMoodlesMediator? mediator = null)
     {
-        Identifier = Guid.CreateVersion7();
+        Identifier = Guid.NewGuid();
         mediator?.Send(new MoodleChangedMessage(this));
     }
 
@@ -160,27 +160,76 @@ internal partial class Moodle : IMoodle
         mediator?.Send(new MoodleChangedMessage(this));
     }
 
+    static readonly List<Guid> lookedThroughGUIDs = new List<Guid>();
+
     public bool Savable(IMoodlesDatabase database)
     {
         if (Identifier == Guid.Empty) return false;
 
         if (IsEphemeral)
         {
-            foreach (IMoodleStatusManager manager in database.StatusManagers)
-            {
-                if (!manager.Savable()) continue;
-
-                foreach (WorldMoodle moodle in manager.WorldMoodles)
-                {
-                    if (moodle.Identifier != Identifier) continue;
-
-                    return true;
-                }
-            }
-
-            return false;
+            return HandleAdvancedSavable(database);
         }
 
         return true;
+    }
+
+    bool HandleAdvancedSavable(IMoodlesDatabase database)
+    { 
+        foreach (IMoodleStatusManager manager in database.StatusManagers)
+        {
+            if (!manager.Savable()) continue;
+
+            foreach (WorldMoodle moodle in manager.WorldMoodles)
+            {
+                lookedThroughGUIDs.Clear();
+
+                if (!MoodleSavable(database, moodle)) continue;
+                
+                return true;
+            }
+        }
+
+        return false;
+    }
+
+    bool MoodleSavable(IMoodlesDatabase database, WorldMoodle moodle)
+    {
+        if (moodle.Identifier == Identifier)         return true;
+
+        if (lookedThroughGUIDs.Contains(Identifier)) return false;
+
+        IMoodle? childMoodle = database.GetMoodleNoCreate(StatusOnDispell);
+        if (childMoodle == null)                return false;
+        if (childMoodle is not Moodle cMoodle)  return false;
+
+        lookedThroughGUIDs.Add(Identifier);
+
+        return cMoodle.MoodleSavable(database, moodle);
+    }
+
+    public void Apply(IMoodle moodle, IMoodlesMediator? mediator = null)
+    {
+        if (Identifier != moodle.Identifier)    return; // If its not the same moodle, dont apply on it.
+        if (!IsEphemeral && moodle.IsEphemeral) return; // If you get a moodle from someone else with the same id (very VERY VERY rare, just keep your own :nod:)
+
+        SetTitle                    (moodle.Title,                      mediator);
+        SetDescription              (moodle.Description,                mediator);
+        SetDispellable              (moodle.Dispellable,                mediator);
+        SetStatusType               (moodle.StatusType,                 mediator);
+        SetIconID                   (moodle.IconID,                     mediator);
+        SetVFXPath                  (moodle.VFXPath,                    mediator);
+        SetDispellsOnDeath          (moodle.DispellsOnDeath,            mediator);
+        SetCountsDownWhenOffline    (moodle.CountsDownWhenOffline,      mediator);
+        SetStartingStacks           (moodle.StartingStacks,             mediator);
+        SetStatusOnDispell          (moodle.StatusOnDispell,            mediator);
+        SetStackOnReapply           (moodle.StackOnReapply,             mediator);
+        SetStackIncrementOnReapply  (moodle.StackIncrementOnReapply,    mediator);
+        SetTimeResetsOnStack        (moodle.TimeResetsOnStack,          mediator);
+        SetPermanent                (moodle.Permanent,                  mediator);
+        SetEphemeral                (moodle.IsEphemeral,                mediator);
+        SetCreatedBy                (moodle.CreatedBy,                  mediator);
+
+        SetDuration                 (moodle.Days, moodle.Hours, moodle.Minutes, moodle.Seconds, mediator);
     }
 }

@@ -3,10 +3,10 @@ using Moodles.Moodles.Mediation;
 using Moodles.Moodles.MoodleUsers.Interfaces;
 using Moodles.Moodles.Services;
 using Moodles.Moodles.Services.Interfaces;
+using Moodles.Moodles.StatusManaging.Application;
 using Moodles.Moodles.StatusManaging.Interfaces;
 using System;
 using System.Collections.Generic;
-using static FFXIVClientStructs.FFXIV.Client.LayoutEngine.ILayoutInstance;
 
 namespace Moodles.Moodles.StatusManaging;
 
@@ -21,27 +21,16 @@ internal class MoodlesDatabase : IMoodlesDatabase
     readonly IMoodlesServices Services;
     readonly IUserList UserList;
 
+    readonly DatabaseApplier DatabaseApplier;
+
     public MoodlesDatabase(IMoodlesServices services, IUserList userList)
     {
         Services = services;
         UserList = userList;
 
-        FloodDatabase();
-    }
+        DatabaseApplier = new DatabaseApplier(this, services, userList);
 
-    void FloodDatabase()
-    {
-        foreach (Moodle moodle in Services.Configuration.SavedMoodles)
-        {
-            RegisterMoodle(moodle);
-        }
-
-        foreach (MoodlesStatusManager statusManager in Services.Configuration.SavedStatusManagers)
-        {
-            RegisterStatusManager(statusManager);
-        }
-
-        CleanupSave();
+        DatabaseApplier.FloodDatabase();
     }
 
     public void PrepareForSave()

@@ -12,6 +12,6 @@ internal record DatabaseRemovedMoodleMessage(IMoodlesDatabase Database, IMoodle 
 internal record StatusManagerDirtyMessage(IMoodleStatusManager StatusManager) : MessageBase;
 internal record StatusManagerClearedMessage(IMoodleStatusManager StatusManager) : MessageBase;
 internal record MoodleChangedMessage(IMoodle Moodle) : MessageBase;
-internal record MoodleAppliedMessage(IMoodle Moodle, WorldMoodle WorldMoodle, IMoodleStatusManager StatusManager) : MessageBase;
-internal record MoodleRemovedMessage(WorldMoodle WorldMoodle, MoodleRemoveReason RemoveReason, IMoodleStatusManager StatusManager) : MessageBase;
+internal record MoodleAppliedMessage(IMoodle Moodle, MoodleReasoning ApplyReason, WorldMoodle WorldMoodle, IMoodleStatusManager StatusManager) : MessageBase;
+internal record MoodleRemovedMessage(WorldMoodle WorldMoodle, MoodleReasoning RemoveReason, IMoodleStatusManager StatusManager) : MessageBase;
 internal record MoodleStackChangedMessage(WorldMoodle WorldMoodle) : MessageBase;

@@ -1,5 +1,4 @@
-﻿using ECommons.ExcelServices.TerritoryEnumeration;
-using Moodles.Moodles.Services.Interfaces;
+﻿using Moodles.Moodles.Services.Interfaces;
 using Moodles.Moodles.StatusManaging;
 using Moodles.Moodles.StatusManaging.Interfaces;
 using System;
@@ -34,7 +33,7 @@ internal class MoodleValidator : IMoodleValidator
             return false;
         }
 
-        int totalTime = GetMoodleDuration(moodle);
+        long totalTime = GetMoodleDuration(moodle);
 
         if (totalTime < 1 && !moodle.Permanent)
         {
@@ -61,12 +60,12 @@ internal class MoodleValidator : IMoodleValidator
         return true;
     }
 
-    public int GetMoodleDuration(IMoodle moodle)
+    public long GetMoodleDuration(IMoodle moodle)
     {
-        return moodle.Days + moodle.Hours + moodle.Seconds + moodle.Minutes;
+        return GetMoodleDuration(moodle, out _, out _, out _, out _, out _);
     }
 
-    public int GetMoodleDuration(IMoodle moodle, out int days, out int hours, out int minutes, out int seconds, out bool countDownWhenOffline)
+    public long GetMoodleDuration(IMoodle moodle, out int days, out int hours, out int minutes, out int seconds, out bool countDownWhenOffline)
     {
         days = moodle.Days;
         hours = moodle.Hours;
@@ -74,7 +73,7 @@ internal class MoodleValidator : IMoodleValidator
         seconds = moodle.Seconds;
         countDownWhenOffline = moodle.CountsDownWhenOffline;
 
-        return GetMoodleDuration(moodle);
+        return MoodleLifetime(moodle);
     }
 
     public uint GetAdjustedIconId(uint iconId, uint currentStackSize)
@@ -124,14 +123,18 @@ internal class MoodleValidator : IMoodleValidator
         return accurateSeconds + accurateMinutes + accurateHours + accurateDays;
     }
 
-    public bool MoodleOverTime(WorldMoodle wMoodle, IMoodle moodle)
+    public bool MoodleOverTime(WorldMoodle wMoodle, IMoodle moodle, out long overTime)
     {
+        overTime = -1;
+
         if (wMoodle.Identifier != moodle.Identifier) return false;
 
         if (moodle.Permanent) return false;
 
         long lifetime = MoodleLifetime(moodle);
         long tickedTime = GetMoodleTickTime(wMoodle, moodle);
+
+        overTime = tickedTime - lifetime;
 
         if (tickedTime > lifetime)
         {

@@ -8,8 +8,8 @@ internal interface IMoodleValidator
 {
     bool IsValid(IMoodle moodle, [NotNullWhen(false)] out string? error);
 
-    int GetMoodleDuration(IMoodle moodle);
-    int GetMoodleDuration(IMoodle moodle, out int days, out int hours, out int minutes, out int seconds, out bool countDownWhenOffline);
+    long GetMoodleDuration(IMoodle moodle);
+    long GetMoodleDuration(IMoodle moodle, out int days, out int hours, out int minutes, out int seconds, out bool countDownWhenOffline);
 
     uint GetMaxStackSize(uint iconId);
     bool CanApplyStacks(uint iconId, uint currentStackSize, uint stacksToApply);
@@ -18,5 +18,5 @@ internal interface IMoodleValidator
 
     long GetMoodleTickTime(WorldMoodle wMoodle, IMoodle moodle);
     long MoodleLifetime(IMoodle moodle);
-    bool MoodleOverTime(WorldMoodle wMoodle, IMoodle moodle);
+    bool MoodleOverTime(WorldMoodle wMoodle, IMoodle moodle, out long overTime);
 }

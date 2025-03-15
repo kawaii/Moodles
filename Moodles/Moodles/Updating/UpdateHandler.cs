@@ -1,4 +1,5 @@
 ﻿using Dalamud.Plugin.Services;
+using Moodles.Moodles.MoodleUsers.Interfaces;
 using Moodles.Moodles.SaveHandling;
 using Moodles.Moodles.Services;
 using Moodles.Moodles.Services.Interfaces;
@@ -15,15 +16,17 @@ internal class UpdateHandler : IUpdateHandler
     readonly IMoodlesServices MoodlesServices;
     readonly SaveHandler SaveHandler;
     readonly IMoodlesDatabase Database;
+    readonly IUserList UserList;
 
     readonly List<IUpdatable> _updatables = new List<IUpdatable>();
 
-    public UpdateHandler(DalamudServices dalamudServices, IMoodlesServices moodlesServices, SaveHandler saveHandler, IMoodlesDatabase database)
+    public UpdateHandler(DalamudServices dalamudServices, IMoodlesServices moodlesServices, SaveHandler saveHandler, IMoodlesDatabase database, IUserList userList)
     {
         DalamudServices = dalamudServices;
         MoodlesServices = moodlesServices;
         SaveHandler = saveHandler;
         Database = database;
+        UserList = userList;
 
         DalamudServices.Framework.Update += OnUpdate;
 
@@ -34,6 +37,7 @@ internal class UpdateHandler : IUpdateHandler
     {
         Register(SaveHandler);
         Register(new DatabaseUpdater(Database));
+        Register(new DatabaseValidator(Database, UserList));
     }
 
     void Register(IUpdatable updatable)

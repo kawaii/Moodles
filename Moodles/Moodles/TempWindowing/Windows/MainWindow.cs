@@ -27,7 +27,7 @@ internal class MainWindow : MoodleWindow
         UserList = userList;
 
         MoodleTab = new MoodleTab(OtterGuiHandler, services, dalamudServices, Database, UserList);
-        DebugTab = new DebugTab(OtterGuiHandler, services, dalamudServices, Database);
+        DebugTab = new DebugTab(OtterGuiHandler, services, dalamudServices, Database, UserList);
     }
 
     public override void Draw()

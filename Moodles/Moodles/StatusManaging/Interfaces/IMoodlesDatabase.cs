@@ -16,6 +16,7 @@ internal interface IMoodlesDatabase
     IMoodle? GetMoodleNoCreate(Guid identifier);
     IMoodle CreateMoodle(bool isEphemiral = false);
     void RegisterMoodle(IMoodle moodle, bool fromIPC = false);
+    void RegisterStatusManager(IMoodleStatusManager statusManager, bool fromIpc = false);
 
     void RemoveMoodle(IMoodle moodle);
     void RemoveStatusManager(IMoodleStatusManager entry);

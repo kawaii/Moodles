@@ -68,8 +68,19 @@ internal class SHEHook : CommonMoodleHook
         SheApplierDetour(path, target, target, -1, 0, 0, false);
     }
 
-    protected override void OnMoodleApplied(nint forAddress, IMoodle moodle, WorldMoodle wMoodle, IMoodleStatusManager statusManager)
+    protected override void OnMoodleApplied(nint forAddress, IMoodle moodle, MoodleReasoning reason, WorldMoodle wMoodle, IMoodleStatusManager statusManager)
     {
+        if 
+        (
+            reason == MoodleReasoning.ManualNoFlag ||
+            reason == MoodleReasoning.IPCNoFlag    ||
+            reason == MoodleReasoning.Death        ||
+            reason == MoodleReasoning.Reflush
+        )
+        {
+            return;
+        }
+
         SpawnSHE(moodle.VFXPath, forAddress);
     }
 
@@ -78,9 +89,9 @@ internal class SHEHook : CommonMoodleHook
         SpawnSHE(moodle.VFXPath, forAddress);
     }
 
-    protected override void OnMoodleRemoved(nint forAddress, MoodleRemoveReason reason, IMoodle moodle, WorldMoodle wMoodle, IMoodleStatusManager statusManager)
+    protected override void OnMoodleRemoved(nint forAddress, MoodleReasoning reason, IMoodle moodle, WorldMoodle wMoodle, IMoodleStatusManager statusManager)
     {
-        if (reason == MoodleRemoveReason.Reflush) return;
+        if (reason == MoodleReasoning.Reflush) return;
 
         SpawnSHE("dk04ht_canc0h", forAddress);
     }
