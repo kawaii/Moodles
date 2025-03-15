@@ -77,13 +77,13 @@ internal class DatabaseApplier
 
         List<WorldMoodle> heldMoodles = statusManager.WorldMoodles.ToList();
 
-        statusManager.WorldMoodles.Clear();
-
         PluginLog.LogInfo($"Status Manager: [{statusManager.ContentID}] [{statusManager.SkeletonID}] world moodles stored and cleared.");
 
-        Database.RegisterStatusManager(statusManager, fromIPC);
+        IMoodleStatusManager currentManager = Database.GetPetStatusManager(statusManager.ContentID, statusManager.SkeletonID);
 
-        PluginLog.LogInfo($"Status Manager: [{statusManager.ContentID}] [{statusManager.SkeletonID}] finalized registry.");
+        currentManager.WorldMoodles.Clear();
+
+        PluginLog.LogInfo($"Status Manager: [{currentManager.ContentID}] [{currentManager.SkeletonID}] finalized registry.");
 
         int worldMoodleCount = heldMoodles.Count;
 
@@ -103,12 +103,12 @@ internal class DatabaseApplier
             if (!mirrorMoodle.CountsDownWhenOffline)
             {
                 PluginLog.LogInfo($"Moodle doestn count down offline so it has been applied.");
-                statusManager.ApplyMoodle(mirrorMoodle, moodle, MoodleReasoning.Reflush, Services.MoodleValidator, UserList, Services.Mediator);
+                currentManager.ApplyMoodle(mirrorMoodle, moodle, MoodleReasoning.Reflush, Services.MoodleValidator, UserList, Services.Mediator);
             }
             else
             {
                 PluginLog.LogInfo($"Moodle DOES count down when offline, we are entering advanced setup mode.");
-                AdvancedApplyMoodle(statusManager, moodle, mirrorMoodle);
+                AdvancedApplyMoodle(currentManager, moodle, mirrorMoodle);
             }
         }
     }
@@ -137,6 +137,13 @@ internal class DatabaseApplier
 
         PluginLog.LogInfo($"MoodleTicker is {moodleTicker}. Moodle is: [{mirrorMoodle.Identifier}] [{mirrorMoodle.Title}]");
 
+        if (!mirrorMoodle.CountsDownWhenOffline)
+        {
+            PluginLog.LogInfo($"Moodle doestn count down offline so it has been applied.");
+            statusManager.ApplyMoodle(mirrorMoodle, moodle, MoodleReasoning.ManualFlag, Services.MoodleValidator, UserList, Services.Mediator);
+            return ApplyStatus.Applied;
+        }
+
         if (mirrorMoodle.StatusOnDispell == Guid.Empty)     // End of the chain
         {
             PluginLog.LogInfo($"StatusOnDispell is {Guid.Empty}. The moodle has been removed");
@@ -150,7 +157,7 @@ internal class DatabaseApplier
         {
             PluginLog.LogInfo($"moodleTicker is over the limit [{PluginConstants.MaxTimerDepthSearch}]. We stop the search and apply the last applicable moodle.");
 
-            statusManager.ApplyMoodle(mirrorMoodle, MoodleReasoning.Reflush, Services.MoodleValidator, UserList, Services.Mediator);       // No mediator. This is a formality because you can only remove moodles that you have applied
+            statusManager.ApplyMoodle(mirrorMoodle, MoodleReasoning.ManualFlag, Services.MoodleValidator, UserList, Services.Mediator);       // No mediator. This is a formality because you can only remove moodles that you have applied
             return ApplyStatus.Clamped;
         }
 
@@ -176,7 +183,7 @@ internal class DatabaseApplier
             Identifier = mirrorMoodle.StatusOnDispell,
             AppliedOn = DateTime.Now.Ticks - overTime,
             StackCount = moodle.StackCount,
-            TickedTime = -overTime,
+            TickedTime = 0,
             AppliedBy = moodle.AppliedBy,
         };
 
