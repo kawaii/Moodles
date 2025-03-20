@@ -17,6 +17,7 @@ internal interface ISheets
 
     ClassJob? GetJob(uint id);
     Status? GetStatusFromIconId(uint iconId);
+    Status? GetStatus(uint statusId);
 
     uint? GetStackCount(uint iconId);
 

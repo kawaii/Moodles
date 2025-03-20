@@ -4,6 +4,7 @@ using Moodles.Moodles.Services.Interfaces;
 using System.Collections.Generic;
 using Moodles.Moodles.Services.Structs;
 using Dalamud.Utility;
+using Dalamud.Interface.FontIdentifier;
 
 namespace Moodles.Moodles.Services.Wrappers;
 
@@ -223,6 +224,20 @@ internal class SheetsWrapper : ISheets
         foreach (Status status in statuses)
         {
             if (status.Icon != iconId) continue;
+
+            return status;
+        }
+
+        return null;
+    }
+
+    public Status? GetStatus(uint statusId)
+    {
+        if (statuses == null) return null;
+
+        foreach (Status status in statuses)
+        {
+            if (status.RowId != statusId) continue;
 
             return status;
         }

@@ -2,6 +2,7 @@
 using Moodles.Moodles.MoodleUsers.Interfaces;
 using Moodles.Moodles.Services.Data;
 using Moodles.Moodles.Services.Interfaces;
+using Moodles.Moodles.StatusManaging;
 using Moodles.Moodles.StatusManaging.Interfaces;
 
 namespace Moodles.Moodles.Services;
@@ -50,6 +51,12 @@ internal class MoodleHelper : MoodleSubscriber
         DalamudServices.Framework.Run(() =>
         {
             statusManager.ApplyMoodle(nextMoodle, MoodleReasoning.ManualFlag, MoodleServices.MoodleValidator, UserList, Mediator);
+            
+            WorldMoodle? wMoodle = statusManager.GetMoodle(nextMoodle);
+            if (wMoodle != null)
+            {
+                wMoodle.AppliedBy = message.WorldMoodle.AppliedBy;
+            }
         });
     }
 }

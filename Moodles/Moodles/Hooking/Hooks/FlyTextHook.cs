@@ -1,7 +1,13 @@
-﻿using Dalamud.Game.Gui.FlyText;
+﻿using Dalamud.Game.ClientState.Objects.SubKinds;
+using Dalamud.Game.ClientState.Objects.Types;
+using Dalamud.Game.Gui.FlyText;
 using Dalamud.Game.Text.SeStringHandling;
 using Dalamud.Hooking;
 using Dalamud.Utility.Signatures;
+using FFXIVClientStructs.FFXIV.Client.Game.Object;
+using FFXIVClientStructs.FFXIV.Client.UI;
+using FFXIVClientStructs.FFXIV.Client.UI.Agent;
+using FFXIVClientStructs.FFXIV.Component.GUI;
 using Lumina.Excel.Sheets;
 using Moodles.Moodles.MoodleUsers.Interfaces;
 using Moodles.Moodles.Services;
@@ -14,7 +20,7 @@ using System.Collections.Generic;
 
 namespace Moodles.Moodles.Hooking.Hooks;
 
-internal class FlyTextHook : CommonMoodleHook
+internal unsafe class FlyTextHook : CommonMoodleHook
 {
     const double FlyTextLifeTime = 1.0;
 
@@ -22,8 +28,13 @@ internal class FlyTextHook : CommonMoodleHook
 
     delegate void AddToScreenLogWithScreenLogKindDelegate(nint target, nint source, FlyTextKind kind, byte a4, byte a5, int actionID, int statusID, int stackCount, int damageType);
 
+    delegate nint AddFlyText(AddonFlyText* thisPtr, uint actorIndex, uint messageMax, NumberArrayData* numberArrayData, uint offsetNum, uint offsetNumMax, StringArrayData* stringArrayData, uint offsetStr, uint offsetStrMax, int unknown);
+
     [Signature("48 85 C9 0F 84 ?? ?? ?? ?? 56 41 56", DetourName = nameof(AddToScreenLogWithScreenLogKindDetour))]
     readonly Hook<AddToScreenLogWithScreenLogKindDelegate>? AddToScreenLogWithScreenLogKindHook;
+
+    [Signature("E8 ?? ?? ?? ?? FF C7 41 D1 C7", DetourName = nameof(AddFlyTextDetour))]
+    readonly Hook<AddFlyText>? AddFlyTextHook;
 
     bool lastIsOurs = false;
 
@@ -33,14 +44,15 @@ internal class FlyTextHook : CommonMoodleHook
 
     public FlyTextHook(DalamudServices dalamudServices, IUserList userList, IMoodlesServices moodlesServices, IMoodlesDatabase database) : base(dalamudServices, userList, moodlesServices, database)
     {
-
+        //DalamudServices.Hooking.HookFromAddress<AddonFlyText.Delegates.AddFlyText>((nint)AddonFlyText.StaticVirtualTablePointer, );
     }
 
     public override void Init()
     {
         AddToScreenLogWithScreenLogKindHook?.Enable();
+        AddFlyTextHook?.Enable();
 
-        DalamudServices.FlyTextGui.FlyTextCreated += OnFlyTextCreated;
+        //DalamudServices.FlyTextGui.FlyTextCreated += OnFlyTextCreated;
     }
 
     void AddToScreenLogWithScreenLogKindDetour(nint target, nint source, FlyTextKind kind, byte a4, byte a5, int actionID, int statusID, int stackCount, int damageType)
@@ -48,10 +60,21 @@ internal class FlyTextHook : CommonMoodleHook
         if (IsHandledByEsuna(target, source, actionID, kind)) return;
 
         AddToScreenLogWithScreenLogKindHook?.Original(target, source, kind, a4, a5, actionID, statusID, stackCount, damageType);
+
+        PluginLog.LogFatal($"Add screen to log: {MoodlesServices.Sheets.GetStatus((uint)statusID)?.Icon}");
     }
 
+    nint AddFlyTextDetour(AddonFlyText* thisPtr, uint actorIndex, uint messageMax, NumberArrayData* numberArrayData, uint offsetNum, uint offsetNumMax, StringArrayData* stringArrayData, uint offsetStr, uint offsetStrMax, int unknown)
+    {
+        PluginLog.LogFatal($"ADDED FLYTEXT: {actorIndex}");
+
+        return AddFlyTextHook!.Original(thisPtr, actorIndex, messageMax, numberArrayData, offsetNum, offsetNumMax, stringArrayData, offsetStr, offsetStrMax, unknown);
+    }
+        
     void OnFlyTextCreated(ref FlyTextKind kind, ref int val1, ref int val2, ref SeString text1, ref SeString text2, ref uint color, ref uint icon, ref uint damageTypeIcon, ref float yOffset, ref bool handled)
     {
+        PluginLog.LogFatal($"Flytext: {icon}");
+
         if (!lastIsOurs)
         {
             return;
@@ -133,6 +156,11 @@ internal class FlyTextHook : CommonMoodleHook
 
         if (!ValidateSpawnViability()) return;
 
+        IGameObject? selfObject = DalamudServices.ObjectTable.CreateObjectReference(forAddress);
+        if (selfObject == null) return;
+
+        GameObject* gObj = (GameObject*)selfObject.Address;
+
         nint fromAddress = forAddress;
 
         IMoodleUser? user = UserList.GetUserFromContentID(wMoodle.AppliedBy);
@@ -144,6 +172,8 @@ internal class FlyTextHook : CommonMoodleHook
         lastIsOurs = true;
         lastUser = user;
         lastMoodle = moodle;
+
+        //DalamudServices.FlyTextGui.AddFlyText(kind, gObj->ObjectIndex, 0, 0, moodle.Title, user?.Name ?? string.Empty, 0, (uint)moodle.IconID, 0);
 
         AddToScreenLogWithScreenLogKindDetour(forAddress, fromAddress, kind, 5, 0, 0, (int)status.Value.RowId, (int)wMoodle.StackCount, 0);
     }
@@ -181,8 +211,9 @@ internal class FlyTextHook : CommonMoodleHook
 
     protected override void OnDispose()
     {
-        DalamudServices.FlyTextGui.FlyTextCreated -= OnFlyTextCreated;
+        //DalamudServices.FlyTextGui.FlyTextCreated -= OnFlyTextCreated;
 
+        AddFlyTextHook?.Dispose();
         AddToScreenLogWithScreenLogKindHook?.Dispose();
     }
 }
