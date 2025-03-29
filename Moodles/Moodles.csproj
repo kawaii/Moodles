@@ -2,7 +2,7 @@
 <Project Sdk="Dalamud.NET.SDK/12.0.2">
 	<PropertyGroup>
         <Authors>kawaii</Authors>
-        <Version>1.0.0.43</Version>
+        <Version>1.0.0.44</Version>
     </PropertyGroup>
 
     <PropertyGroup>
