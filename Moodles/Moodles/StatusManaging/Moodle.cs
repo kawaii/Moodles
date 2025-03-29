@@ -6,6 +6,8 @@ using Moodles.Moodles.Mediation.Interfaces;
 using Moodles.Moodles.Mediation;
 using Moodles.Moodles.Services.Data;
 using System.Collections.Generic;
+using FFXIVClientStructs.FFXIV.Client.UI.Agent;
+using FFXIVClientStructs.FFXIV.Client.Game;
 
 namespace Moodles.Moodles.StatusManaging;
 
