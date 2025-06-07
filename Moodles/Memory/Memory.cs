@@ -33,7 +33,7 @@ public unsafe partial class Memory : IDisposable
             }
             if (a2 == 9 && P.CommonProcessor.WasRightMousePressed)
             {
-                // Append the address to the cancelRequests for StatusManager updater in Tick Scheduler
+                // Append the address to the cancelRequests to expire the moodle on the next SetIcon() func.
                 P.CommonProcessor.CancelRequests.Add(a1);
                 P.CommonProcessor.HoveringOver = 0;
             }
