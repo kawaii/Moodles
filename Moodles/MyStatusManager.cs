@@ -18,6 +18,19 @@ public class MyStatusManager
     internal IPlayerCharacter Owner => (IPlayerCharacter)Svc.Objects.FirstOrDefault(x => x is IPlayerCharacter pc && pc.GetNameWithWorld() == C.StatusManagers.FirstOrDefault(s => s.Value == this).Key);
     [NonSerialized] internal bool NeedFireEvent = false;
 
+    public void Remove(MyStatus status, bool triggerEvent = true)
+    {
+        // If the status isn't in the Statuses, return.
+        if (!Statuses.Remove(status))
+            return;
+
+        // Otherwise, since it removed successfully, remove the TextShowns.
+        AddTextShown.Remove(status.GUID);
+        RemTextShown.Remove(status.GUID);
+
+        if (triggerEvent) NeedFireEvent = true;
+    }
+
     public void AddOrUpdate(MyStatus newStatus, UpdateSource source, bool Unchecked = false, bool triggerEvent = true)
     {
         // Do not add null statuses

@@ -17,6 +17,7 @@ public unsafe partial class Memory : IDisposable
     [EzHook("44 0F B7 C2 4D 8B D1")]
     private EzHook<AtkComponentIconText_ReceiveEvent> AtkComponentIconText_ReceiveEventHook;
 
+    // Handles the detour of when we hover over an icon in our positive, negative, or special status icons.
     private void AtkComponentIconText_ReceiveEventDetour(nint a1, short a2, nint a3, nint a4, nint a5)
     {
         try
@@ -32,6 +33,7 @@ public unsafe partial class Memory : IDisposable
             }
             if (a2 == 9 && P.CommonProcessor.WasRightMousePressed)
             {
+                // Append the address to the cancelRequests to expire the moodle on the next SetIcon() func.
                 P.CommonProcessor.CancelRequests.Add(a1);
                 P.CommonProcessor.HoveringOver = 0;
             }

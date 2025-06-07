@@ -35,8 +35,6 @@ public unsafe class CommonProcessor : IDisposable
     public bool NewMethod = true;
     private nint TooltipMemory;
 
-    public List<(MyStatusManager StatusManager, MyStatus Status)> CleanupQueue = [];
-
     public CommonProcessor()
     {
         foreach (var x in Svc.Data.GetExcelSheet<Status>())
@@ -115,87 +113,65 @@ public unsafe class CommonProcessor : IDisposable
 
     private void Tick()
     {
+        // List of VFX that should be handled by the StatusHitEffect.
         List<(IPlayerCharacter Player, string customPath)> SHECandidates = [];
+
         if (HoveringOver != 0)
         {
             if (IsKeyPressed(LimitedKeys.LeftMouseButton)) WasRightMousePressed = false;
             if (IsKeyPressed(LimitedKeys.RightMouseButton)) WasRightMousePressed = true;
         }
-        foreach (var x in CleanupQueue)
-        {
-            x.StatusManager.AddTextShown.Remove(x.Status.GUID);
-            x.StatusManager.RemTextShown.Remove(x.Status.GUID);
-            x.StatusManager.Statuses.Remove(x.Status);
-            if (x.StatusManager.Owner != null)
-            {
-                if (x.StatusManager.Owner.ObjectIndex == 0 && x.Status.StatusOnDispell != Guid.Empty)
-                {
-                    foreach (var status in C.SavedStatuses)
-                    {
-                        if (status.GUID != x.Status.StatusOnDispell) continue;
 
-                        x.StatusManager.AddOrUpdate(status.PrepareToApply(status.Persistent ? PrepareOptions.Persistent : PrepareOptions.NoOption), UpdateSource.StatusTuple);
-                    }
-                }
-            }
-        }
-        CleanupQueue.Clear();
+        // Check all status managers for any statuses that need to be applied or removed.
         foreach (var statusManager in C.StatusManagers)
         {
+            // track removed statuses, so we can reapply statuses marked for ApplyOnDispel safely.
+            var removed = new List<MyStatus>();
+
+            // Handle Status Apply/Remove logic.
             foreach (var x in statusManager.Value.Statuses)
             {
                 var rem = x.ExpiresAt - Utils.Time;
                 if (rem > 0)
                 {
-                    if (!statusManager.Value.AddTextShown.Contains(x.GUID))
-                    {
-                        if (P.CanModifyUI() && Utils.TryFindPlayer(statusManager.Key, out var pc))
-                        {
-                            if (Utils.CanSpawnFlytext(pc))
-                            {
-                                FlyPopupTextProcessor.Enqueue(new(x, true, pc.EntityId));
-                            }
-                            if (Utils.CanSpawnVFX(pc))
-                            {
-                                if (!SHECandidates.Any(s => s.Player.AddressEquals(pc)))
-                                {
-                                    if (x.CustomFXPath.IsNullOrWhitespace())
-                                    {
-                                        SHECandidates.Add((pc, Utils.FindVFXPathByIconID((uint)x.IconID)));
-                                    }
-                                    else
-                                    {
-                                        SHECandidates.Add((pc, x.CustomFXPath));
-                                    }
-                                }
-                            }
-                        }
-                        statusManager.Value.AddTextShown.Add(x.GUID);
-                    }
+                    EnsureAddTextWasShown(statusManager.Value, x);
                 }
                 else
                 {
-                    if (!statusManager.Value.RemTextShown.Contains(x.GUID))
-                    {
-                        if (P.CanModifyUI() && Utils.TryFindPlayer(statusManager.Key, out var pc))
-                        {
-                            if (Utils.CanSpawnFlytext(pc))
-                            {
-                                FlyPopupTextProcessor.Enqueue(new(x, false, pc.EntityId));
-                            }
-                            if (Utils.CanSpawnVFX(pc))
-                            {
-                                if (!SHECandidates.Any(s => s.Player.AddressEquals(pc)))
-                                {
-                                    SHECandidates.Add((pc, "kill"));
-                                }
-                            }
-                        }
-                        statusManager.Value.RemTextShown.Add(x.GUID);
-                    }
-                    CleanupQueue.Add((statusManager.Value, x));
+                    EnsureRemTextWasShown(statusManager.Value, x);
+                    removed.Add(x);
                 }
             }
+
+            // Process the SHECandidates for the initial pass.
+            HandleSHECandidates();
+
+            // Check removed statuses for any that need to be applied another status on dispel.
+            if (removed.Count > 0)
+            {
+                // Process the removals.
+                foreach (var status in removed)
+                {
+                    statusManager.Value.Remove(status);
+
+                    // If there is an additional status to apply on dispel, apply it, and then ensure its add text is shown.
+                    if (statusManager.Value.Owner?.ObjectIndex == 0 && status.StatusOnDispell != Guid.Empty)
+                    {
+                        foreach (var s in C.SavedStatuses)
+                        {
+                            if (s.GUID != status.StatusOnDispell) continue;
+
+                            statusManager.Value.AddOrUpdate(s.PrepareToApply(s.Persistent ? PrepareOptions.Persistent : PrepareOptions.NoOption), UpdateSource.StatusTuple);
+                            EnsureAddTextWasShown(statusManager.Value, s);
+                            break;
+                        }
+                    }
+                }
+                // Process the SHECandidates for any statuses that were reapplied after removal, if any.
+                HandleSHECandidates();
+            }
+
+            // If the Status manager has changed and needs to fire an event, handle it here.
             if (statusManager.Value.NeedFireEvent)
             {
                 statusManager.Value.NeedFireEvent = false;
@@ -205,25 +181,86 @@ public unsafe class CommonProcessor : IDisposable
                 }
             }
         }
+
+        // Clear any remaining Cancel Requests not yet processed before iterating SHECandidates
         CancelRequests.Clear();
-        foreach (var x in SHECandidates)
+
+        // Helper function to process the SHECandidates.
+        void HandleSHECandidates()
         {
-            if (!C.RestrictSHE || x.Player.AddressEquals(Player.Object) || Utils.GetFriendlist().Contains(x.Player.GetNameWithWorld()) || UniversalParty.Members.Any(z => z.NameWithWorld == x.Player.GetNameWithWorld()) || Vector3.Distance(Player.Object.Position, x.Player.Position) < 15f)
+            foreach (var x in SHECandidates)
             {
-                PluginLog.Debug($"StatusHitEffect on: {x.Player} / {x.customPath}");
-                if (x.customPath == "kill")
+                if (!C.RestrictSHE || x.Player.AddressEquals(Player.Object) || Utils.GetFriendlist().Contains(x.Player.GetNameWithWorld()) || UniversalParty.Members.Any(z => z.NameWithWorld == x.Player.GetNameWithWorld()) || Vector3.Distance(Player.Object.Position, x.Player.Position) < 15f)
                 {
-                    P.Memory.SpawnSHE("dk04ht_canc0h", x.Player.Address, x.Player.Address, -1, char.MinValue, 0, char.MinValue);
+                    PluginLog.Debug($"StatusHitEffect on: {x.Player} / {x.customPath}");
+                    if (x.customPath == "kill")
+                    {
+                        P.Memory.SpawnSHE("dk04ht_canc0h", x.Player.Address, x.Player.Address, -1, char.MinValue, 0, char.MinValue);
+                    }
+                    else
+                    {
+                        P.Memory.SpawnSHE(x.customPath, x.Player.Address, x.Player.Address, -1, char.MinValue, 0, char.MinValue);
+                    }
                 }
                 else
                 {
-                    P.Memory.SpawnSHE(x.customPath, x.Player.Address, x.Player.Address, -1, char.MinValue, 0, char.MinValue);
+                    PluginLog.Debug($"Skipping SHE on {x.Player} / {x.customPath}");
                 }
             }
-            else
+            SHECandidates.Clear();
+        }
+
+        // Internal helper function that handles logic for AddText & VFX
+        void EnsureAddTextWasShown(MyStatusManager manager, MyStatus status)
+        {
+            if (manager.AddTextShown.Contains(status.GUID))
+                return;
+
+            if (P.CanModifyUI() && manager.Owner != null)
             {
-                PluginLog.Debug($"Skipping SHE on {x.Player} / {x.customPath}");
+                if (Utils.CanSpawnFlytext(manager.Owner))
+                {
+                    FlyPopupTextProcessor.Enqueue(new(status, true, manager.Owner.EntityId));
+                }
+                if (Utils.CanSpawnVFX(manager.Owner))
+                {
+                    if (!SHECandidates.Any(s => s.Player.AddressEquals(manager.Owner)))
+                    {
+                        if (status.CustomFXPath.IsNullOrWhitespace())
+                        {
+                            SHECandidates.Add((manager.Owner, Utils.FindVFXPathByIconID((uint)status.IconID)));
+                        }
+                        else
+                        {
+                            SHECandidates.Add((manager.Owner, status.CustomFXPath));
+                        }
+                    }
+                }
             }
+            manager.AddTextShown.Add(status.GUID);
+        }
+
+        // Internal helper function that handles logic for RemText & kill VFX
+        void EnsureRemTextWasShown(MyStatusManager manager, MyStatus status)
+        {
+            if (manager.RemTextShown.Contains(status.GUID))
+                return;
+
+            if (P.CanModifyUI() && manager.Owner != null)
+            {
+                if (Utils.CanSpawnFlytext(manager.Owner))
+                {
+                    FlyPopupTextProcessor.Enqueue(new(status, false, manager.Owner.EntityId));
+                }
+                if (Utils.CanSpawnVFX(manager.Owner))
+                {
+                    if (!SHECandidates.Any(s => s.Player.AddressEquals(manager.Owner)))
+                    {
+                        SHECandidates.Add((manager.Owner, "kill"));
+                    }
+                }
+            }
+            manager.RemTextShown.Add(status.GUID);
         }
     }
 
@@ -291,11 +328,7 @@ public unsafe class CommonProcessor : IDisposable
         if (CancelRequests.Remove(addr))
         {
             var name = addon->NameString;
-            if (name.StartsWith("_StatusCustom") || name == "_Status")
-            {
-                status.ExpiresAt = 0;
-                P.IPCProcessor.StatusManagerModified(Player.Object);
-            }
+            if (name.StartsWith("_StatusCustom") || name == "_Status") status.ExpiresAt = 0;
         }
     }
 

@@ -94,7 +94,7 @@ public sealed class MoodleFileSystem : FileSystem<MyStatus>, IDisposable
 
     private (string, bool) SaveConverter(MyStatus status, string arg2)
     {
-        PluginLog.LogVerbose($"Saving {status.Title}  {status.ID}");
+        if (C.DebugSaves) PluginLog.LogVerbose($"Saving {status.Title}  {status.ID}");
         return (status.ID, true);
     }
 
