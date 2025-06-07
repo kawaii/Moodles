@@ -24,6 +24,7 @@ public class IPCTester
     private void StatusManagerModified(IPlayerCharacter character)
     {
         PluginLog.Debug($"IPC test: status manager modified {character}");
+        PluginLog.Information($"New StatusManager string: {character.GetMyStatusManager().SerializeToBase64()}");
     }
 
     [EzIPCEvent]

@@ -123,30 +123,34 @@ public unsafe class CommonProcessor : IDisposable
         }
         foreach (var x in CleanupQueue)
         {
-            x.StatusManager.AddTextShown.Remove(x.Status.GUID);
-            x.StatusManager.RemTextShown.Remove(x.Status.GUID);
-            x.StatusManager.Statuses.Remove(x.Status);
-            if (x.StatusManager.Owner != null)
-            {
-                if (x.StatusManager.Owner.ObjectIndex == 0 && x.Status.StatusOnDispell != Guid.Empty)
-                {
-                    foreach (var status in C.SavedStatuses)
-                    {
-                        if (status.GUID != x.Status.StatusOnDispell) continue;
+            var isPlayerObj = x.StatusManager.Owner?.ObjectIndex == 0;
 
-                        x.StatusManager.AddOrUpdate(status.PrepareToApply(status.Persistent ? PrepareOptions.Persistent : PrepareOptions.NoOption), UpdateSource.StatusTuple);
-                    }
+            x.StatusManager.Remove(x.Status, isPlayerObj);
+
+            if (isPlayerObj && x.Status.StatusOnDispell != Guid.Empty)
+            {
+                foreach (var status in C.SavedStatuses)
+                {
+                    if (status.GUID != x.Status.StatusOnDispell) continue;
+
+                    x.StatusManager.AddOrUpdate(status.PrepareToApply(status.Persistent ? PrepareOptions.Persistent : PrepareOptions.NoOption), UpdateSource.StatusTuple);
                 }
             }
         }
+
+        // Clear the cleanup queue after processing all statuses.
         CleanupQueue.Clear();
+
+        // Check all status managers for any statuses that need to be applied or removed.
         foreach (var statusManager in C.StatusManagers)
         {
             foreach (var x in statusManager.Value.Statuses)
             {
                 var rem = x.ExpiresAt - Utils.Time;
+                // IF true, status needs to be applied or is active. Otherwise, remove it.
                 if (rem > 0)
                 {
+                    // Show the status text / VFX if they have not yet been shown.
                     if (!statusManager.Value.AddTextShown.Contains(x.GUID))
                     {
                         if (P.CanModifyUI() && Utils.TryFindPlayer(statusManager.Key, out var pc))
@@ -170,11 +174,14 @@ public unsafe class CommonProcessor : IDisposable
                                 }
                             }
                         }
+
+                        // Now that initial application text / VFX is handled, mark it in the StatusManager
                         statusManager.Value.AddTextShown.Add(x.GUID);
                     }
                 }
                 else
                 {
+                    // If the manager hasnt yet handled RemText / VFX, do that here.
                     if (!statusManager.Value.RemTextShown.Contains(x.GUID))
                     {
                         if (P.CanModifyUI() && Utils.TryFindPlayer(statusManager.Key, out var pc))
@@ -193,9 +200,13 @@ public unsafe class CommonProcessor : IDisposable
                         }
                         statusManager.Value.RemTextShown.Add(x.GUID);
                     }
+
+                    // Regardless, add it to the cleanup queue.
                     CleanupQueue.Add((statusManager.Value, x));
                 }
             }
+
+            // If the Status manager has changed and needs to fire an event, handle it here.
             if (statusManager.Value.NeedFireEvent)
             {
                 statusManager.Value.NeedFireEvent = false;
@@ -205,7 +216,11 @@ public unsafe class CommonProcessor : IDisposable
                 }
             }
         }
+
+        // Clear any remaining Cancel Requests not yet processed before iterating SHECandidates
         CancelRequests.Clear();
+
+        // Iterate through all SHECandidates and spawn the appropriate VFX.
         foreach (var x in SHECandidates)
         {
             if (!C.RestrictSHE || x.Player.AddressEquals(Player.Object) || Utils.GetFriendlist().Contains(x.Player.GetNameWithWorld()) || UniversalParty.Members.Any(z => z.NameWithWorld == x.Player.GetNameWithWorld()) || Vector3.Distance(Player.Object.Position, x.Player.Position) < 15f)
@@ -291,11 +306,7 @@ public unsafe class CommonProcessor : IDisposable
         if (CancelRequests.Remove(addr))
         {
             var name = addon->NameString;
-            if (name.StartsWith("_StatusCustom") || name == "_Status")
-            {
-                status.ExpiresAt = 0;
-                P.IPCProcessor.StatusManagerModified(Player.Object);
-            }
+            if (name.StartsWith("_StatusCustom") || name == "_Status") status.ExpiresAt = 0;
         }
     }
 
