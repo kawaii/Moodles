@@ -19,8 +19,9 @@ public unsafe partial class Memory
     {
         try
         {
-            PluginLog.Debug($"BattleLog_AddActionLogMessageDetour: {target:X16}, {source:X16}, {kind}, {a4}, {a5}, {actionID}, {statusID}, {stackCount}, {damageType}");
-
+            if (C.Debug) {
+                PluginLog.Debug($"BattleLog_AddActionLogMessageDetour: {target:X16}, {source:X16}, {kind}, {a4}, {a5}, {actionID}, {statusID}, {stackCount}, {damageType}");
+            }
             if (C.MoodlesCanBeEsunad)
             {
                 // If action is Esuna
