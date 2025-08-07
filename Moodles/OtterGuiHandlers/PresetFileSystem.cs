@@ -113,6 +113,8 @@ public sealed class PresetFileSystem : FileSystem<Preset>, IDisposable
             //AddButton(CopyToClipboardButton, 20);
             AddButton(DeleteButton, 1000);
         }
+        protected override float CurrentWidth
+         => 200f;
 
         protected override uint CollapsedFolderColor => ImGuiColors.DalamudViolet.ToUint();
         protected override uint ExpandedFolderColor => CollapsedFolderColor;

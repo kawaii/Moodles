@@ -28,7 +28,7 @@ public static class TabMoodles
 
     public static void DrawSelected()
     {
-        using var child = ImRaii.Child("##Panel", -Vector2.One, true);
+        using var child = ImRaii.Child("##Panel", new(600, 600), true);
         if (!child || Selected == null)
             return;
         {
