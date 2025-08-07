@@ -8,6 +8,7 @@ public unsafe class ArtificialAddonArgs : AddonArgs
 {
     public ArtificialAddonArgs(AtkUnitBase* addon)
     {
+        // This is a terrible horrible awful hack! (Does it work? Nobody knows!)
         var prop = typeof(AddonArgs).GetProperty("Addon", BindingFlags.Instance | BindingFlags.NonPublic);
         prop?.SetValue(Addon, (nint)addon);
     }
