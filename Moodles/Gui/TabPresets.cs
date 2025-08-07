@@ -22,11 +22,11 @@ public static class TabPresets
     {
         if(IsMoodleSelection)
         {
-            P.OtterGuiHandler.MoodleFileSystem.Selector.Draw(200f);
+            P.OtterGuiHandler.MoodleFileSystem.Selector.Draw();
         }
         else
         {
-            P.OtterGuiHandler.PresetFileSystem.Selector.Draw(200f);
+            P.OtterGuiHandler.PresetFileSystem.Selector.Draw();
         }
         ImGui.SameLine();
         using var group = ImRaii.Group();
@@ -114,7 +114,7 @@ public static class TabPresets
                             }
                             if(ThreadLoadImageHandler.TryGetIconTextureWrap(x.AdjustedIconID, false, out var tex))
                             {
-                                ImGui.Image(tex.ImGuiHandle, UI.StatusIconSize * 0.5f);
+                                ImGui.Image(tex.Handle, UI.StatusIconSize * 0.5f);
                                 ImGui.SameLine();
                             }
                             if(ImGui.Selectable($"{name}##{x.ID}", false, ImGuiSelectableFlags.DontClosePopups))
@@ -194,7 +194,7 @@ public static class TabPresets
 
                         if(ThreadLoadImageHandler.TryGetIconTextureWrap(status.AdjustedIconID, false, out var tex))
                         {
-                            ImGui.Image(tex.ImGuiHandle, UI.StatusIconSize * 0.75f);
+                            ImGui.Image(tex.Handle, UI.StatusIconSize * 0.75f);
                             ImGui.SameLine();
                         }
                         ImGuiEx.TextV($"{statusPath}");
@@ -228,7 +228,7 @@ public static class TabPresets
                 ImGuiEx.HelpMarker("Used in commands to apply preset.");
                 ImGui.TableNextColumn();
                 ImGuiEx.SetNextItemFullWidth();
-                ImGui.InputText($"##id-text", Encoding.UTF8.GetBytes(Selected.ID), 36, ImGuiInputTextFlags.ReadOnly);
+                ImGui.InputText($"##id-text", Encoding.UTF8.GetBytes(Selected.ID), ImGuiInputTextFlags.ReadOnly);
 
                 ImGui.EndTable();
                 foreach(var x in MoveCommands)

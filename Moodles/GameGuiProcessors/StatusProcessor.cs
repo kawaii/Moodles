@@ -39,8 +39,8 @@ public unsafe class StatusProcessor : IDisposable
     private void OnStatusRequestedUpdate(AddonEvent type, AddonArgs args)
     {
         if(P == null) return;
-        var addon = (AtkUnitBase*)args.Addon;
-        if(addon != null && IsAddonReady(addon) && P.CanModifyUI())
+        var addon = (AtkUnitBase*)args.Addon.Address;
+        if (addon != null && IsAddonReady(addon) && P.CanModifyUI())
         {
             NumStatuses = 0;
             for(var i = 25; i >= 1; i--)
@@ -60,7 +60,7 @@ public unsafe class StatusProcessor : IDisposable
         if(!Player.Available) return;
         if(!P.CanModifyUI()) return;
         var validStatuses = Utils.GetMyStatusManager(Player.NameWithWorld).Statuses;
-        UpdateStatus((AtkUnitBase*)args.Addon, validStatuses, NumStatuses);
+        UpdateStatus((AtkUnitBase*)args.Addon.Address, validStatuses, NumStatuses);
     }
 
     public void UpdateStatus(AtkUnitBase* addon, IEnumerable<MyStatus> statuses, int StatusCnt, bool hideAll = false)

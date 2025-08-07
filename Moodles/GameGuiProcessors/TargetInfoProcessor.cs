@@ -36,7 +36,7 @@ public unsafe class TargetInfoProcessor
     private void OnTargetInfoRequestedUpdate(AddonEvent type, AddonArgs args)
     {
         if(P == null) return;
-        var addon = (AtkUnitBase*)args.Addon;
+        var addon = (AtkUnitBase*)args.Addon.Address;
         if(addon != null && IsAddonReady(addon))
         {
             NumStatuses = 0;
@@ -57,7 +57,7 @@ public unsafe class TargetInfoProcessor
         if(P == null) return;
         if(!Player.Available) return;
         if(!P.CanModifyUI()) return;
-        UpdateAddon((AtkUnitBase*)args.Addon);
+        UpdateAddon((AtkUnitBase*)args.Addon.Address);
     }
 
     public void UpdateAddon(AtkUnitBase* addon, bool hideAll = false)

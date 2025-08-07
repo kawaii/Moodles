@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="utf-8"?>
-<Project Sdk="Dalamud.NET.SDK/12.0.2">
+<Project Sdk="Dalamud.NET.SDK/13.0.0">
 	<PropertyGroup>
         <Authors>kawaii</Authors>
         <Version>1.0.0.45</Version>
@@ -26,7 +26,6 @@
     </ItemGroup>
 
     <ItemGroup>
-        <PackageReference Include="DalamudPackager" Version="12.0.0" />
         <PackageReference Include="MemoryPack" Version="1.10.0" />
         <PackageReference Include="MemoryPack.Core" Version="1.10.0" />
         <PackageReference Include="MemoryPack.Generator" Version="1.10.0">

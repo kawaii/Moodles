@@ -14,7 +14,7 @@ public static class TabMoodles
     private static string Filter = "";
     public static void Draw()
     {
-        P.OtterGuiHandler.MoodleFileSystem.Selector.Draw(200f);
+        P.OtterGuiHandler.MoodleFileSystem.Selector.Draw();
         ImGui.SameLine();
         using var group = ImRaii.Group();
         DrawHeader();
@@ -328,7 +328,7 @@ public static class TabMoodles
                                 }
                                 if (ThreadLoadImageHandler.TryGetIconTextureWrap(x.AdjustedIconID, false, out var tex))
                                 {
-                                    ImGui.Image(tex.ImGuiHandle, UI.StatusIconSize * 0.5f);
+                                    ImGui.Image(tex.Handle, UI.StatusIconSize * 0.5f);
                                     ImGui.SameLine();
                                 }
                                 if (ImGui.Selectable($"{name}##{x.ID}", false, ImGuiSelectableFlags.None))
@@ -358,7 +358,7 @@ public static class TabMoodles
                 ImGuiEx.HelpMarker("Used in commands to apply moodle.");
                 ImGui.TableNextColumn();
                 ImGuiEx.SetNextItemFullWidth();
-                ImGui.InputText($"##id-text", Encoding.UTF8.GetBytes(Selected.ID), 36, ImGuiInputTextFlags.ReadOnly);
+                ImGui.InputText($"##id-text", Encoding.UTF8.GetBytes(Selected.ID), ImGuiInputTextFlags.ReadOnly);
 
                 ImGui.EndTable();
             }
@@ -366,7 +366,7 @@ public static class TabMoodles
             if (Selected.IconID != 0 && ThreadLoadImageHandler.TryGetIconTextureWrap(Selected.AdjustedIconID, true, out var image))
             {
                 ImGui.SetCursorPos(cur);
-                ImGui.Image(image.ImGuiHandle, UI.StatusIconSize * 2);
+                ImGui.Image(image.Handle, UI.StatusIconSize * 2);
             }
         }
     }

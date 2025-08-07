@@ -286,7 +286,7 @@ public static unsafe class UI
                     {
                         if(ThreadLoadImageHandler.TryGetIconTextureWrap(x, false, out var t))
                         {
-                            ImGui.Image(t.ImGuiHandle, new(24, 32));
+                            ImGui.Image(t.Handle, new Vector2(24, 32));
                             if(ImGuiEx.HoveredAndClicked())
                             {
                                 Status.IconID = (int)x;
@@ -377,7 +377,7 @@ public static unsafe class UI
                 {
                     if(ThreadLoadImageHandler.TryGetIconTextureWrap((uint)x.IconID, false, out var icon))
                     {
-                        ImGui.Image(icon.ImGuiHandle, new Vector2(24, 32) * 0.75f);
+                        ImGui.Image(icon.Handle, new Vector2(24, 32) * 0.75f);
                     }
                 }));
                 entries.Add(new("Name", delegate

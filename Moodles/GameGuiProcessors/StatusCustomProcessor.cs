@@ -85,21 +85,21 @@ public unsafe class StatusCustomProcessor : IDisposable
     private void OnStatusCustom0RequestedUpdate(AddonEvent type, AddonArgs args)
     {
         if(P == null) return;
-        RequestedUpdateStatusCustom((AtkUnitBase*)args.Addon, ref NumStatuses0);
+        RequestedUpdateStatusCustom((AtkUnitBase*)args.Addon.Address, ref NumStatuses0);
         InternalLog.Verbose($"StatusCustom0 Requested update: {NumStatuses0}");
     }
 
     private void OnStatusCustom1RequestedUpdate(AddonEvent type, AddonArgs args)
     {
         if(P == null) return;
-        RequestedUpdateStatusCustom((AtkUnitBase*)args.Addon, ref NumStatuses1);
+        RequestedUpdateStatusCustom((AtkUnitBase*)args.Addon.Address, ref NumStatuses1);
         InternalLog.Verbose($"StatusCustom1 Requested update: {NumStatuses1}");
     }
 
     private void OnStatusCustom2RequestedUpdate(AddonEvent type, AddonArgs args)
     {
         if(P == null) return;
-        RequestedUpdateStatusCustom((AtkUnitBase*)args.Addon, ref NumStatuses2);
+        RequestedUpdateStatusCustom((AtkUnitBase*)args.Addon.Address, ref NumStatuses2);
         InternalLog.Verbose($"StatusCustom2 Requested update: {NumStatuses2}");
     }
 
@@ -136,7 +136,7 @@ public unsafe class StatusCustomProcessor : IDisposable
         if(!P.CanModifyUI()) return;
         //PluginLog.Verbose($"Post1 update {args.Addon:X16}");
         var validStatuses = Utils.GetMyStatusManager(Player.NameWithWorld).Statuses.Where(x => x.Type == StatusType.Special);
-        UpdateStatusCustom((AtkUnitBase*)args.Addon, validStatuses, P.CommonProcessor.SpecialStatuses, NumStatuses2);
+        UpdateStatusCustom((AtkUnitBase*)args.Addon.Address, validStatuses, P.CommonProcessor.SpecialStatuses, NumStatuses2);
     }
 
     //debuffs
@@ -147,7 +147,7 @@ public unsafe class StatusCustomProcessor : IDisposable
         if(!P.CanModifyUI()) return;
         //PluginLog.Verbose($"Post1 update {args.Addon:X16}");
         var validStatuses = Utils.GetMyStatusManager(Player.NameWithWorld).Statuses.Where(x => x.Type == StatusType.Negative);
-        UpdateStatusCustom((AtkUnitBase*)args.Addon, validStatuses, P.CommonProcessor.NegativeStatuses, NumStatuses1);
+        UpdateStatusCustom((AtkUnitBase*)args.Addon.Address, validStatuses, P.CommonProcessor.NegativeStatuses, NumStatuses1);
     }
 
     //buffs
@@ -158,7 +158,7 @@ public unsafe class StatusCustomProcessor : IDisposable
         if(!P.CanModifyUI()) return;
         //PluginLog.Verbose($"Post0 update {args.Addon:X16}");
         var validStatuses = Utils.GetMyStatusManager(Player.NameWithWorld).Statuses.Where(x => x.Type == StatusType.Positive);
-        UpdateStatusCustom((AtkUnitBase*)args.Addon, validStatuses, P.CommonProcessor.PositiveStatuses, NumStatuses0);
+        UpdateStatusCustom((AtkUnitBase*)args.Addon.Address, validStatuses, P.CommonProcessor.PositiveStatuses, NumStatuses0);
     }
 
     public void UpdateStatusCustom(AtkUnitBase* addon, IEnumerable<MyStatus> statuses, IEnumerable<uint> userStatuses, int StatusCnt, bool hideAll = false)

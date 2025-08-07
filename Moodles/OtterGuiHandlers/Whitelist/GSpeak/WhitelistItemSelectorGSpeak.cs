@@ -95,7 +95,7 @@ public class WhitelistItemSelectorGSpeak<T>
             return;
 
         _dragDropData = data;
-        ImGui.SetDragDropPayload(DragDropLabel, nint.Zero, 0);
+        ImGui.SetDragDropPayload(DragDropLabel, default, 0);
         ImGui.TextUnformatted(tooltip);
     }
 
@@ -225,7 +225,7 @@ public class WhitelistItemSelectorGSpeak<T>
             if(source)
             {
                 _dragDropData = idx;
-                ImGui.SetDragDropPayload(MoveLabel, nint.Zero, 0);
+                ImGui.SetDragDropPayload(MoveLabel, default, 0);
                 ImGui.TextUnformatted($"Reordering {idx + 1}...");
             }
         }
