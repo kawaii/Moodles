@@ -58,7 +58,7 @@ public class StatusSelector : Window
                 var name = cond.ToString().Replace("_", " ");
                 if(ThreadLoadImageHandler.TryGetIconTextureWrap((uint)cond.GetIcon(), false, out var texture))
                 {
-                    ImGui.Image(texture.ImGuiHandle, TabAutomation.JobIconSize);
+                    ImGui.Image(texture.Handle, TabAutomation.JobIconSize);
                     ImGui.SameLine();
                 }
                 ImGuiEx.CollectionCheckbox(name, cond, Jobs);
@@ -124,7 +124,7 @@ public class StatusSelector : Window
                 ImGui.TableNextColumn();
                 if(ThreadLoadImageHandler.TryGetIconTextureWrap(info.IconID, false, out var tex))
                 {
-                    ImGui.Image(tex.ImGuiHandle, UI.StatusIconSize);
+                    ImGui.Image(tex.Handle, UI.StatusIconSize);
                     ImGui.SameLine();
                     ImGuiEx.Tooltip($"{info.IconID}");
                     if(ImGui.RadioButton($"{info.Name}##{info.IconID}", Delegate.IconID == info.IconID))

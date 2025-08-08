@@ -39,7 +39,7 @@ public unsafe class PartyListProcessor : IDisposable
     {
         if(P == null) return;
         if(!Player.Available) return;
-        var addon = (AtkUnitBase*)args.Addon;
+        var addon = (AtkUnitBase*)args.Addon.Address;
         if(addon != null && IsAddonReady(addon) && P.CanModifyUI())
         {
             for(var i = 0; i < NumStatuses.Length; i++)
@@ -69,7 +69,7 @@ public unsafe class PartyListProcessor : IDisposable
     private void OnPartyListUpdate(AddonEvent type, AddonArgs args)
     {
         if(P == null) return;
-        UpdatePartyList((AtkUnitBase*)args.Addon);
+        UpdatePartyList((AtkUnitBase*)args.Addon.Address);
     }
 
     public void UpdatePartyList(AtkUnitBase* addon, bool hideAll = false)

@@ -5,6 +5,7 @@ using OtterGui.Classes;
 using OtterGui.Filesystem;
 using OtterGui.FileSystem.Selector;
 using OtterGui.Raii;
+using OtterGui.Text;
 using System.IO;
 
 namespace Moodles.OtterGuiHandlers;
@@ -113,6 +114,9 @@ public sealed class MoodleFileSystem : FileSystem<MyStatus>, IDisposable
             AddButton(CopyToClipboardButton, 20);
             AddButton(DeleteButton, 1000);
         }
+
+        protected override float CurrentWidth
+            => 200f;
 
         protected override uint CollapsedFolderColor => ImGuiColors.DalamudViolet.ToUint();
         protected override uint ExpandedFolderColor => CollapsedFolderColor;

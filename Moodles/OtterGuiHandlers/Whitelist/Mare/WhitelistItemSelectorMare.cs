@@ -97,7 +97,7 @@ public class WhitelistItemSelectorMare<T>
             return;
 
         _dragDropData = data;
-        ImGui.SetDragDropPayload(DragDropLabel, IntPtr.Zero, 0);
+        ImGui.SetDragDropPayload(DragDropLabel, default, 0);
         ImGui.TextUnformatted(tooltip);
     }
 
@@ -227,7 +227,7 @@ public class WhitelistItemSelectorMare<T>
             if(source)
             {
                 _dragDropData = idx;
-                ImGui.SetDragDropPayload(MoveLabel, IntPtr.Zero, 0);
+                ImGui.SetDragDropPayload(MoveLabel, default, 0);
                 ImGui.TextUnformatted($"Reordering {idx + 1}...");
             }
         }

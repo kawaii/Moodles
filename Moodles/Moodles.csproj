@@ -1,8 +1,8 @@
 <?xml version="1.0" encoding="utf-8"?>
-<Project Sdk="Dalamud.NET.SDK/12.0.2">
+<Project Sdk="Dalamud.NET.SDK/13.0.0">
 	<PropertyGroup>
         <Authors>kawaii</Authors>
-        <Version>1.0.0.45</Version>
+        <Version>1.0.0.46</Version>
     </PropertyGroup>
 
     <PropertyGroup>
@@ -26,10 +26,9 @@
     </ItemGroup>
 
     <ItemGroup>
-        <PackageReference Include="DalamudPackager" Version="12.0.0" />
-        <PackageReference Include="MemoryPack" Version="1.10.0" />
-        <PackageReference Include="MemoryPack.Core" Version="1.10.0" />
-        <PackageReference Include="MemoryPack.Generator" Version="1.10.0">
+        <PackageReference Include="MemoryPack" Version="1.21.4" />
+        <PackageReference Include="MemoryPack.Core" Version="1.21.4" />
+        <PackageReference Include="MemoryPack.Generator" Version="1.21.4">
             <PrivateAssets>all</PrivateAssets>
             <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
         </PackageReference>
