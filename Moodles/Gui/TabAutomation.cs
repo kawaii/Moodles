@@ -197,7 +197,7 @@ public static class TabAutomation
                         var directory = split[0..^1].Join(@"/");
                         if(directory != name)
                         {
-                            ImGuiEx.RightFloat($"Selector{x.GUID}", () => ImGuiEx.Text(ImGuiColors.DalamudGrey, directory));
+                            ImGuiEx.RightFloat($"Selector{x.GUID}", () => ImGuiEx.TextV(ImGuiColors.DalamudGrey, directory));
                         }
                         if(ImGui.Selectable($"{name}##{x.GUID}", combo.Preset == x.GUID))
                         {
@@ -231,7 +231,7 @@ public static class TabAutomation
                         var directory = split[0..^1].Join(@"/");
                         if(directory != name)
                         {
-                            ImGuiEx.RightFloat($"Selector{x.GUID}", () => ImGuiEx.Text(ImGuiColors.DalamudGrey, directory));
+                            ImGuiEx.RightFloat($"Selector{x.GUID}", () => ImGuiEx.TextV(ImGuiColors.DalamudGrey, directory));
                         }
                         if(ImGui.Selectable($"{name}##{x.GUID}"))
                         {

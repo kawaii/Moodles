@@ -33,7 +33,7 @@ public class StatusSelector : Window
     {
         if(!Valid)
         {
-            ImGuiEx.Text(EColor.RedBright, "Edited status no longer seems to exist.");
+            ImGuiEx.TextV(EColor.RedBright, "Edited status no longer seems to exist.");
         }
 
         var statusInfos = IconArray.Select(Utils.GetIconInfo).Where(x => x.HasValue).Cast<IconInfo>();
@@ -107,7 +107,7 @@ public class StatusSelector : Window
         if(C.IconSortOption == SortOption.Numerical) infos = infos.OrderBy(x => x.IconID);
         if(!infos.Any())
         {
-            ImGuiEx.Text(EColor.RedBright, $"There are no elements that match filter conditions.");
+            ImGuiEx.TextV(EColor.RedBright, $"There are no elements that match filter conditions.");
         }
         var cols = Math.Clamp((int)(ImGui.GetWindowSize().X / 200f), 1, 10);
         if(ImGui.BeginTable("StatusTable", cols, ImGuiTableFlags.RowBg | ImGuiTableFlags.SizingStretchSame))
@@ -140,7 +140,7 @@ public class StatusSelector : Window
                     ImGui.SameLine();
                     ImGui.PushFont(UiBuilder.IconFont);
                     var col = C.FavIcons.Contains(info.IconID);
-                    ImGuiEx.Text(col ? ImGuiColors.ParsedGold : ImGuiColors.DalamudGrey3, "\uf005");
+                    ImGuiEx.TextV(col ? ImGuiColors.ParsedGold : ImGuiColors.DalamudGrey3, "\uf005");
                     if(ImGuiEx.HoveredAndClicked())
                     {
                         C.FavIcons.Toggle(info.IconID);

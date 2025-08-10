@@ -6,9 +6,6 @@
     </PropertyGroup>
 
     <PropertyGroup>
-        <TargetFramework>net9.0-windows</TargetFramework>
-        <Platforms>x64</Platforms>
-        <LangVersion>preview</LangVersion>
         <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
         <ProduceReferenceAssembly>false</ProduceReferenceAssembly>
         <CopyLocalLockFileAssemblies>true</CopyLocalLockFileAssemblies>

@@ -18,7 +18,7 @@ internal class MareWhitelist : PluginWhitelist
             ImGui.TableNextRow();
             ImGui.TableNextColumn();
             ImGui.TableSetBgColor(ImGuiTableBgTarget.CellBg, EColor.RedBright.ToUint());
-            ImGuiEx.LineCentered(() => ImGuiEx.Text(EColor.White, "None of this stuff works yet, oh well. :)"));
+            ImGuiEx.LineCentered(() => ImGuiEx.TextV(EColor.White, "None of this stuff works yet, oh well. :)"));
             ImGui.EndTable();
         }
 

@@ -324,7 +324,7 @@ public static class TabMoodles
                                 var directory = split[0..^1].Join(@"/");
                                 if (directory != name)
                                 {
-                                    ImGuiEx.RightFloat($"Selector{x.ID}", () => ImGuiEx.Text(ImGuiColors.DalamudGrey, directory));
+                                    ImGuiEx.RightFloat($"Selector{x.ID}", () => ImGuiEx.TextV(ImGuiColors.DalamudGrey, directory));
                                 }
                                 if (ThreadLoadImageHandler.TryGetIconTextureWrap(x.AdjustedIconID, false, out var tex))
                                 {
