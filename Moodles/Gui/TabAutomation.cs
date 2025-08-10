@@ -1,4 +1,5 @@
 ﻿using Dalamud.Game.ClientState.Objects.SubKinds;
+using ECommons;
 using ECommons.ExcelServices;
 using ECommons.GameHelpers;
 using Moodles.Data;
