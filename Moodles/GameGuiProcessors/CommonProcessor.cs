@@ -52,7 +52,7 @@ public unsafe class CommonProcessor : IDisposable
             }
 
             var fxpath = x.HitEffect.ValueNullable?.Location.ValueNullable?.Location.ExtractText();
-            if (!StatusEffectPaths.Contains(fxpath) && !fxpath.IsNullOrWhitespace())
+            if (!fxpath.IsNullOrWhitespace() && !StatusEffectPaths.Contains(fxpath))
             {
                 StatusEffectPaths.Add(fxpath);
             }

@@ -39,7 +39,7 @@ public static unsafe partial class Utils
         }
         if(list.Count > 0)
         {
-            if(P.IPCProcessor.ApplyStatusesToGSpeakPair.TryInvoke(Player.NameWithWorld, target.GetNameWithWorld(), list, false))
+            if(P.IPCProcessor.ApplyStatusesToGSpeakPair.TryInvoke(Player.NameWithWorld ?? "", target.GetNameWithWorld(), list, false))
             {
                 Notify.Info($"Broadcast success");
             }
@@ -60,7 +60,7 @@ public static unsafe partial class Utils
         }
         else
         {
-            if(P.IPCProcessor.ApplyStatusesToGSpeakPair.TryInvoke(Player.NameWithWorld, target.GetNameWithWorld(), [preparedStatus.ToStatusInfoTuple()], true))
+            if(P.IPCProcessor.ApplyStatusesToGSpeakPair.TryInvoke(Player.NameWithWorld ?? "", target.GetNameWithWorld(), [preparedStatus.ToStatusInfoTuple()], true))
             {
                 Notify.Info($"Broadcast success");
             }
@@ -154,7 +154,7 @@ public static unsafe partial class Utils
         if(Frame != GSpeakPlayersUpdated)
         {
             GSpeakPlayersUpdated = Frame;
-            if(P.IPCProcessor.GetGSpeakPlayers.TryInvoke(out var ret))
+            if(P.IPCProcessor.GetGSpeakPlayers.TryInvoke(out var ret) && ret != null)
             {
                 GSpeakPlayers = ret;
                 WhitelistGSpeak.SyncWithGSpeakPlayers(GSpeakPlayers);
@@ -209,7 +209,7 @@ public static unsafe partial class Utils
 
     public static string PrintRange(this IEnumerable<string> s, out string FullList, string noneStr = "Any")
     {
-        FullList = null;
+        FullList = null!;
         var list = s.ToArray();
         if(list.Length == 0) return noneStr;
         if(list.Length == 1) return list[0].ToString();
@@ -227,7 +227,7 @@ public static unsafe partial class Utils
         return C.Censor ? s.Split(" ").Where(x => x.Length > 0).Select(x => $"{x[0]}.").Join(" ") : s;
     }
 
-    public static IEnumerable<AutomationCombo> GetSuitableAutomation(IPlayerCharacter pc = null)
+    public static IEnumerable<AutomationCombo> GetSuitableAutomation(IPlayerCharacter pc = null!)
     {
         pc ??= Player.Object;
         foreach(var x in C.AutomationProfiles)
@@ -263,7 +263,7 @@ public static unsafe partial class Utils
                 }
             }
         }
-        pcr = null;
+        pcr = null!;
         return false;
     }
 

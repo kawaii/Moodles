@@ -58,15 +58,15 @@ public class IPCTester
             }
             if(ImGui.Button("Apply (PC)"))
             {
-                SetStatusManagerByPC(pc, Paste());
+                SetStatusManagerByPC(pc, Paste() ?? "");
             }
             if(ImGui.Button("Apply (ptr)"))
             {
-                SetStatusManagerByPtr(pc.Address, Paste());
+                SetStatusManagerByPtr(pc.Address, Paste() ?? "");
             }
             if(ImGui.Button("Apply (name)"))
             {
-                SetStatusManagerByName(pc.Name.ToString(), Paste());
+                SetStatusManagerByName(pc.Name.ToString(), Paste() ?? "");
             }
             if(ImGui.Button("Clear (PC)"))
             {
