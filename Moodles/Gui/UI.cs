@@ -33,7 +33,7 @@ public static unsafe class UI
             ("Moodles", TabMoodles.Draw, null, true),
             ("Presets", TabPresets.Draw, null, true),
             ("Automation", TabAutomation.Draw, null, true),
-            (Utils.GSpeakAvailable?"Whitelist":null, TabWhitelist.Draw, null, true),
+            ("Whitelist", TabWhitelist.Draw, null, true),
             ("Settings", TabSettings.Draw, null, true),
             (C.Debug?"Debugger":null, DrawDebugger, ImGuiColors.DalamudGrey, true),
             InternalLog.ImGuiTab(C.Debug),
