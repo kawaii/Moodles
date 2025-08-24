@@ -27,12 +27,6 @@ public class IPCProcessor : IDisposable
     /// </summary>
     [EzIPCEvent] public readonly Action<Guid> PresetModified;
 
-
-    /// <summary>
-    /// Obtains the actively managed player object addresses by Mare Synchronos.
-    /// </summary>
-    [EzIPC("MareSynchronos.GetHandledAddresses", false)] public readonly Func<List<nint>> GetMarePlayers;
-
     /// <summary>
     ///     Retrieves the list of Project GSpeak's visible pairs, with the bi-directional permissions. <para />
     ///     Each pair's string holds the <c>playername@world</c>
@@ -64,6 +58,7 @@ public class IPCProcessor : IDisposable
         new TickScheduler(() =>
         {
             PluginLog.LogDebug("GagSpeak Initialized, Fetching Initial List of Pairs.");
+            Utils.GSpeakAvailable = true;
             Utils.GetGSpeakPlayers();
         });
     }
@@ -78,6 +73,7 @@ public class IPCProcessor : IDisposable
         {
             PluginLog.LogDebug("GagSpeak Disposed / Disabled. Clearing List of GSpeak Players.");
             Utils.ClearGSpeakPlayers();
+            Utils.GSpeakAvailable = false;
         });
     }
 

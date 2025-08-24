@@ -9,7 +9,6 @@ public sealed class OtterGuiHandler : IDisposable
     public Logger Logger;
     public AutomationList AutomationList;
     public WhitelistGSpeak WhitelistGSpeak;
-    public WhitelistMare WhitelistMare;
     public OtterGuiHandler()
     {
         try
@@ -18,7 +17,6 @@ public sealed class OtterGuiHandler : IDisposable
             MoodleFileSystem = new(this);
             PresetFileSystem = new(this);
             AutomationList = new();
-            WhitelistMare = new();
             WhitelistGSpeak = new();
         }
         catch(Exception ex)

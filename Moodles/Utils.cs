@@ -9,6 +9,7 @@ using FFXIVClientStructs.FFXIV.Component.GUI;
 using Moodles.Data;
 using Moodles.OtterGuiHandlers.Whitelist.GSpeak;
 using System.Text.RegularExpressions;
+using System.Windows.Forms;
 using Status = Lumina.Excel.Sheets.Status;
 using UIColor = ECommons.ChatMethods.UIColor;
 
@@ -131,23 +132,10 @@ public static unsafe partial class Utils
         return ret;
     }
 
-    private static List<nint> MarePlayers = [];
-    private static ulong MarePlayersUpdated = 0;
-    public static List<nint> GetMarePlayers()
-    {
-        if(Frame != MarePlayersUpdated)
-        {
-            MarePlayersUpdated = Frame;
-            if(P.IPCProcessor.GetMarePlayers.TryInvoke(out var ret))
-            {
-                MarePlayers = ret;
-            }
-        }
-        return MarePlayers;
-    }
-
-    // TODO: Update this from nint to playername@world eventually.
+    // is automatically updated by GSpeak's VisiblePairsUpdated event call, and does not need to be called every frame.
+    public static bool GSpeakAvailable = false;
     public static List<(string, MoodlesGSpeakPairPerms, MoodlesGSpeakPairPerms)> GSpeakPlayers = [];
+    public static List<string> GSpeakPlayerNames = [];
     public static ulong GSpeakPlayersUpdated = 0;
     public static List<(string, MoodlesGSpeakPairPerms, MoodlesGSpeakPairPerms)> GetGSpeakPlayers()
     {
@@ -157,6 +145,7 @@ public static unsafe partial class Utils
             if(P.IPCProcessor.GetGSpeakPlayers.TryInvoke(out var ret) && ret != null)
             {
                 GSpeakPlayers = ret;
+                GSpeakPlayerNames = ret.Select(x => x.Item1).ToList();
                 WhitelistGSpeak.SyncWithGSpeakPlayers(GSpeakPlayers);
             }
         }
@@ -169,9 +158,15 @@ public static unsafe partial class Utils
         {
             GSpeakPlayersUpdated = Frame;
             GSpeakPlayers = [];
+            GSpeakPlayerNames = [];
             // update the whitelist
             WhitelistGSpeak.SyncWithGSpeakPlayers(GSpeakPlayers);
         }
+    }
+    public static void SyncGSpeakAvailable()
+    {
+        var gSpeak = Svc.PluginInterface.InstalledPlugins.FirstOrDefault(p => string.Equals(p.InternalName, "ProjectGagSpeak", StringComparison.OrdinalIgnoreCase));
+        GSpeakAvailable = gSpeak is { } plugin && plugin.IsLoaded; 
     }
 
     public static bool IsNotNull(this MyStatus status)

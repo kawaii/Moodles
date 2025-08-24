@@ -33,7 +33,7 @@ public static unsafe class UI
             ("Moodles", TabMoodles.Draw, null, true),
             ("Presets", TabPresets.Draw, null, true),
             ("Automation", TabAutomation.Draw, null, true),
-            ("Whitelist", TabWhitelist.Draw, null, true),
+            (Utils.GSpeakAvailable?"Whitelist":null, TabWhitelist.Draw, null, true),
             ("Settings", TabSettings.Draw, null, true),
             (C.Debug?"Debugger":null, DrawDebugger, ImGuiColors.DalamudGrey, true),
             InternalLog.ImGuiTab(C.Debug),
@@ -105,17 +105,10 @@ public static unsafe class UI
         {
             ImGuiEx.Text(Utils.GetFriendlist().Print("\n"));
         }
-        if(ImGui.CollapsingHeader("Mare players"))
-        {
-            if(P.IPCProcessor.GetMarePlayers.TryInvoke(out var list))
-            {
-                ImGuiEx.Text(list.Print("\n"));
-            }
-        }
         if(ImGui.CollapsingHeader("GSpeak players"))
         {
             ImGui.Text("GSpeakPlayers (From IPC Call)");
-            if(P.IPCProcessor.GetGSpeakPlayers.TryInvoke(out var list))
+            if(P.IPCProcessor.GetGSpeakPlayers.TryInvoke(out var list) && list != null)
             {
                 ImGuiEx.Text(list.Print("\n"));
             }

@@ -29,7 +29,6 @@ public class Config : IEzConfig
     public bool OthersCanEsunaMoodles = true;
     public SortOption IconSortOption = SortOption.Numerical;
     public List<WhitelistEntryGSpeak> WhitelistGSpeak = [];
-    public List<WhitelistEntryMare> WhitelistMare = [];
 
     public bool BroadcastAllowAll = false;
     public bool BroadcastAllowFriends = false;
