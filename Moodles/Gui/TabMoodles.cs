@@ -39,7 +39,7 @@ public static class TabMoodles
             }
             ImGui.SameLine();
 
-            var isGSpeak = Svc.Targets.Target is IPlayerCharacter pc && Utils.GSpeakPlayers.Any(player => player.Item1 == pc.GetNameWithWorld());
+            var isGSpeak = Svc.Targets.Target is IPlayerCharacter pc && Utils.GSpeakPlayerNames.Contains(pc.GetNameWithWorld());
             var dis = Svc.Targets.Target is not IPlayerCharacter;
             if (dis) ImGui.BeginDisabled();
             var buttonText = dis ? "No Target Selected" : $"Apply to Target ({(isGSpeak ? "via GagSpeak" : "Locally")})";

@@ -137,7 +137,7 @@ public static class MoodleCommandProcessor
 
             if (moodleState == MoodleState.Apply)
             {
-                if (Utils.GSpeakPlayers.Any(s => s.Item1 == statusManager.Owner.GetNameWithWorld()))
+                if (Utils.GSpeakPlayerNames.Contains(statusManager.Owner.GetNameWithWorld()))
                 {
                     myStatus.SendGSpeakMessage(statusManager.Owner);
                 }
@@ -148,7 +148,7 @@ public static class MoodleCommandProcessor
             }
             else if (moodleState == MoodleState.Remove)
             {
-                if (Utils.GSpeakPlayers.Any(s => s.Item1 == statusManager.Owner.GetNameWithWorld()))
+                if (Utils.GSpeakPlayerNames.Contains(statusManager.Owner.GetNameWithWorld()))
                 {
                     var newStatus = myStatus.JSONClone();
                     newStatus.ExpiresAt = 0;
