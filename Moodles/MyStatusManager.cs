@@ -58,17 +58,19 @@ public class MyStatusManager
                 {
                     if (source is UpdateSource.StatusTuple)
                     {
-                        // grab the current stack count.
-                        var newStackCount = Statuses[i].Stacks;
-                        // fetch what the max stack count for the icon is.
+                        // check if stackable.
                         if (P.CommonProcessor.IconStackCounts.TryGetValue((uint)newStatus.IconID, out var max))
                         {
-                            // if the stack count is less than the max, increase it by newStatus.StacksIncOnReapply.
-                            // After, remove it from addTextShown to display the new stack.
-                            if (Statuses[i].Stacks + newStatus.StacksIncOnReapply <= max)
+                            var curStacks = Statuses[i].Stacks;
+                            // keep at max if already at max. (update stacks to max since it applies stack count to avoid rolling over)
+                            if (curStacks == max)
                             {
-                                newStackCount += newStatus.StacksIncOnReapply;
-                                newStatus.Stacks = newStackCount;
+                                newStatus.Stacks = (int)max;
+                            }
+                            // increase and redisplay text with updated stacks if applicable.
+                            else if (curStacks + newStatus.StacksIncOnReapply <= max)
+                            {
+                                newStatus.Stacks = curStacks + newStatus.StacksIncOnReapply;
                                 AddTextShown.Remove(newStatus.GUID);
                             }
                         }

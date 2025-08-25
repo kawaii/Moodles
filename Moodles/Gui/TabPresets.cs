@@ -52,19 +52,16 @@ public static class TabPresets
             }
             ImGui.SameLine();
 
-            var isMare = Utils.GetMarePlayers().Contains(Svc.Targets.Target?.Address ?? -1);
-            var isGSpeak = Svc.Targets.Target is IPlayerCharacter pc && Utils.GSpeakPlayers.Any(player => player.Item1 == pc.GetNameWithWorld());
-            var dis = Svc.Targets.Target is not IPlayerCharacter || (isMare && !isGSpeak);
+            var isGSpeak = Svc.Targets.Target is IPlayerCharacter pc && Utils.GSpeakPlayerNames.Contains(pc.GetNameWithWorld());
+            var dis = Svc.Targets.Target is not IPlayerCharacter;
             if(dis) ImGui.BeginDisabled();
-            var buttonText = Svc.Targets.Target is not IPlayerCharacter
-                ? "No Target Selected" : isMare && !isGSpeak
-                    ? "Cannot Apply To Mare User" : $"Apply to Target ({(isGSpeak ? "via GagSpeak" : "Locally")})";
+            var buttonText = dis ? "No Target Selected" : $"Apply to Target ({(isGSpeak ? "via GagSpeak" : "Locally")})";
             if(ImGui.Button(buttonText))
             {
                 try
                 {
-                    var target = (IPlayerCharacter)Svc.Targets.Target;
-                    if(!isMare)
+                    var target = (IPlayerCharacter)Svc.Targets.Target!;
+                    if(!isGSpeak)
                     {
                         Utils.GetMyStatusManager(target.GetNameWithWorld()).ApplyPreset(Selected);
                     }

@@ -105,17 +105,10 @@ public static unsafe class UI
         {
             ImGuiEx.Text(Utils.GetFriendlist().Print("\n"));
         }
-        if(ImGui.CollapsingHeader("Mare players"))
-        {
-            if(P.IPCProcessor.GetMarePlayers.TryInvoke(out var list))
-            {
-                ImGuiEx.Text(list.Print("\n"));
-            }
-        }
         if(ImGui.CollapsingHeader("GSpeak players"))
         {
             ImGui.Text("GSpeakPlayers (From IPC Call)");
-            if(P.IPCProcessor.GetGSpeakPlayers.TryInvoke(out var list))
+            if(P.IPCProcessor.GetGSpeakPlayers.TryInvoke(out var list) && list != null)
             {
                 ImGuiEx.Text(list.Print("\n"));
             }
