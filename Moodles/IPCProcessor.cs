@@ -129,32 +129,23 @@ public class IPCProcessor : IDisposable
     ///     Applies the requested statuses to the client player from the sender.
     /// </summary>
     /// <param name="senderNameWorld"> The name of the sender player. </param>
-    /// <param name="intendedRecipient"> The intended recipient (Should always match client player) </param>
     /// <param name="statusesToApply"> The list of statuses to apply to the client player. </param>
     /// <returns> True if the client is a mare user. False if they are not. (Us, not the sender) </returns>
-    [EzIPC("ApplyStatusesFromGSpeakPair")]
-    private void ApplyStatusesFromGSpeakPair(string senderNameWorld, string intendedRecipient, List<MoodlesStatusInfo> statusesToApply)
+    [EzIPCEvent("GagSpeak.StatusesAppliedByPair", false)]
+    private void StatusesAppliedByPair(string senderNameWorld, List<MoodlesStatusInfo> statusesToApply)
     {
-        if(!(intendedRecipient == Player.NameWithWorld))
+        // see if the sender is in our list of GSpeak players.
+        var gSpeakPlayer = Utils.GSpeakPlayers.FirstOrDefault(w => w.Item1 == senderNameWorld);
+        if (gSpeakPlayer != default)
         {
-            PluginLog.Warning("An update to your status was recieved, but the intended recipient was not you.");
-            return;
-        }
-        else
-        {
-            // see if the sender is in our list of GSpeak players.
-            var gSpeakPlayer = Utils.GSpeakPlayers.FirstOrDefault(w => w.Item1 == senderNameWorld);
-            if(gSpeakPlayer != default)
+            // Fetch the status manager of our player object.
+            var sm = Utils.GetMyStatusManager(Player.Object);
+            var perms = gSpeakPlayer.Item2; // client perms for pair.
+            foreach (var x in statusesToApply)
             {
-                // Fetch the status manager of our player object.
-                var sm = Utils.GetMyStatusManager(Player.Object);
-                var perms = gSpeakPlayer.Item2; // client perms for pair.
-                foreach(var x in statusesToApply)
+                if (C.WhitelistGSpeak.Any(w => w.CheckStatus(perms, x.NoExpire)))
                 {
-                    if(C.WhitelistGSpeak.Any(w => w.CheckStatus(perms, x.NoExpire)))
-                    {
-                        sm.AddOrUpdate(MyStatus.FromStatusInfoTuple(x).PrepareToApply(), UpdateSource.StatusTuple, false, true);
-                    }
+                    sm.AddOrUpdate(MyStatus.FromStatusInfoTuple(x).PrepareToApply(), UpdateSource.StatusTuple, false, true);
                 }
             }
         }
@@ -174,7 +165,7 @@ public class IPCProcessor : IDisposable
     ///     Attempts to clear the active Moodles on a player using their name. <para />
     ///     Does not complete if a player by this name is not found within the object table.
     /// </summary>
-    [EzIPC("ClearStatusManagerByName")]
+    [EzIPCEvent("GagSpeak.ClearStatusManagerByName", false)]
     private void ClearStatusManager(string name)
     {
         var obj = Svc.Objects.FirstOrDefault(x => x is IPlayerCharacter pc && pc.GetNameWithWorld() == name);
@@ -188,32 +179,32 @@ public class IPCProcessor : IDisposable
     ///     This address is used to obtain a IPlayerCharacter object reference.
     /// </summary>
     /// <param name="ptr"> The object address to search for in the object table. </param>
-    [EzIPC("ClearStatusManagerByPtr")]
-    private void ClearStatusManager(nint ptr)
-    {
-        if (ptr == nint.Zero)
-        {
-            PluginLog.LogWarning("[IPC] Clear Status Manager Ptr is 0");
-            return;
-        }
+    //[EzIPC("ClearStatusManagerByPtr")]
+    //private void ClearStatusManager(nint ptr)
+    //{
+    //    if (ptr == nint.Zero)
+    //    {
+    //        PluginLog.LogWarning("[IPC] Clear Status Manager Ptr is 0");
+    //        return;
+    //    }
 
-        var gameObjectReference = Svc.Objects.CreateObjectReference(ptr);
-        if (gameObjectReference == null)
-        {
-            PluginLog.LogWarning("[IPC] Clear Status Manager Game Object Reference is NULL");
-            return;
-        }
+    //    var gameObjectReference = Svc.Objects.CreateObjectReference(ptr);
+    //    if (gameObjectReference == null)
+    //    {
+    //        PluginLog.LogWarning("[IPC] Clear Status Manager Game Object Reference is NULL");
+    //        return;
+    //    }
 
-        var ipc = (IPlayerCharacter)gameObjectReference;
-        ClearStatusManager(ipc);
-    }
+    //    var ipc = (IPlayerCharacter)gameObjectReference;
+    //    ClearStatusManager(ipc);
+    //}
 
     /// <summary> 
     ///     Attempts to clear the active Moodles on a player using the IPlayerCharacter object reference. <para /> 
     ///     If the object is null or not present, this method will do nothing.
     /// </summary>
     /// <param name="pc"> The PlayerCharacter object to clear the status from. </param>
-    [EzIPC("ClearStatusManagerByPC")]
+    // [EzIPC("ClearStatusManagerByPC")]
     private void ClearStatusManager(IPlayerCharacter pc)
     {
         if (pc == null)
@@ -240,7 +231,7 @@ public class IPCProcessor : IDisposable
     /// </summary>
     /// <param name="name"> The object name to search for in the object table. </param>
     /// <param name="data"> The base64 encoded status manager data to apply to the player. </param>
-    [EzIPC("SetStatusManagerByName")]
+    [EzIPCEvent("GagSpeak.SetStatusManagerByName", false)]
     private void SetStatusManager(string name, string data)
     {
         var obj = Svc.Objects.FirstOrDefault(x => x is IPlayerCharacter pc && pc.GetNameWithWorld() == name);
@@ -256,8 +247,8 @@ public class IPCProcessor : IDisposable
     /// </summary>
     /// <param name="ptr"> The object address to search for in the object table. </param>
     /// <param name="data"> The base64 encoded status manager data to apply to the player. </param>
-    [EzIPC("SetStatusManagerByPtr")]
-    private void SetStatusManager(nint ptr, string data) => SetStatusManager((IPlayerCharacter)Svc.Objects.CreateObjectReference(ptr), data);
+    //[EzIPC("SetStatusManagerByPtr")]
+    //private void SetStatusManager(nint ptr, string data) => SetStatusManager((IPlayerCharacter)Svc.Objects.CreateObjectReference(ptr), data);
 
 
     /// <summary> 
@@ -266,7 +257,7 @@ public class IPCProcessor : IDisposable
     /// </summary>
     /// <param name="pc"> The PlayerCharacter object to apply the status manager data to. </param>
     /// <param name="data"> The base64 encoded status manager data to apply to the player. </param>
-    [EzIPC("SetStatusManagerByPC")]
+    // [EzIPC("SetStatusManagerByPC")]
     private void SetStatusManager(IPlayerCharacter pc, string data)
     {
         pc.GetMyStatusManager().Apply(data);
@@ -466,20 +457,20 @@ public class IPCProcessor : IDisposable
     /// <summary>
     ///     Appends a Status from the client's Status List to the status manager of a visible player.
     /// </summary>
-    [EzIPC("AddOrUpdateMoodleByGUIDByName")]
-    private void AddOrUpdateMoodleByGUID(Guid guid, string name)
+    [EzIPCEvent("GagSpeak.AddOrUpdateMoodleByName", false)]
+    private void AddOrUpdateMoodleByName(Guid guid, string name)
     {
         var obj = Svc.Objects.FirstOrDefault(x => x is IPlayerCharacter pc && pc.GetNameWithWorld() == name);
         obj ??= Svc.Objects.FirstOrDefault(x => x is IPlayerCharacter pc && pc.Name.ToString() == name);
         if(obj == null) return;
-        AddOrUpdateMoodleByGUID(guid, (IPlayerCharacter)obj);
+        AddOrUpdateMoodleByPC(guid, (IPlayerCharacter)obj);
     }
 
     /// <summary>
     ///     Appends a Preset from the client's Preset List to the status manager of a visible player.
     /// </summary>
-    [EzIPC]
-    private void AddOrUpdateMoodleByGUID(Guid guid, IPlayerCharacter pc)
+    [EzIPCEvent("DynamicBridge.AddOrUpdateMoodleByPC", false)]
+    private void AddOrUpdateMoodleByPC(Guid guid, IPlayerCharacter pc)
     {
         if(C.SavedStatuses.TryGetFirst(x => x.GUID == guid, out var status))
         {
@@ -496,20 +487,20 @@ public class IPCProcessor : IDisposable
     /// <summary>
     ///     Appends a Preset from the client's Preset List to the status manager of a visible player.
     /// </summary>
-    [EzIPC("ApplyPresetByGUIDByName")]
-    private void ApplyPresetByGUID(Guid guid, string name)
+    [EzIPCEvent("GagSpeak.ApplyPresetByName", false)]
+    private void ApplyPresetByName(Guid guid, string name)
     {
         var obj = Svc.Objects.FirstOrDefault(x => x is IPlayerCharacter pc && pc.GetNameWithWorld() == name);
         obj ??= Svc.Objects.FirstOrDefault(x => x is IPlayerCharacter pc && pc.Name.ToString() == name);
         if(obj == null) return;
-        ApplyPresetByGUID(guid, (IPlayerCharacter)obj);
+        ApplyPresetByPC(guid, (IPlayerCharacter)obj);
     }
 
     /// <summary>
     ///     Appends a Preset from the client's Preset List to the status manager of a visible player.
     /// </summary>
-    [EzIPC]
-    private void ApplyPresetByGUID(Guid guid, IPlayerCharacter pc)
+    [EzIPCEvent("DynamicBridge.ApplyPresetByPC", false)]
+    private void ApplyPresetByPC(Guid guid, IPlayerCharacter pc)
     {
         if(C.SavedPresets.TryGetFirst(x => x.GUID == guid, out var preset))
         {
@@ -524,7 +515,7 @@ public class IPCProcessor : IDisposable
     /// <summary>
     ///     Removes a Status from the client's Status List from the status manager of a visible player.
     /// </summary>
-    [EzIPC]
+    [EzIPCEvent("DynamicBridge.RemoveMoodleByPC", false)]
     private void RemoveMoodleByGUID(Guid guid, IPlayerCharacter pc)
     {
         var sm = pc.GetMyStatusManager();
@@ -543,20 +534,20 @@ public class IPCProcessor : IDisposable
     /// <summary>
     ///     Removes a Status from the a visible players active status manager.
     /// </summary>
-    [EzIPC("RemoveMoodlesByGUIDByName")]
-    private void RemoveMoodlesByGUID(List<Guid> guids, string name)
+    [EzIPCEvent("GagSpeak.RemoveMoodlesByName", false)]
+    private void RemoveMoodlesByName(List<Guid> guids, string name)
     {
         var obj = Svc.Objects.FirstOrDefault(x => x is IPlayerCharacter pc && pc.GetNameWithWorld() == name);
         obj ??= Svc.Objects.FirstOrDefault(x => x is IPlayerCharacter pc && pc.Name.ToString() == name);
         if(obj == null) return;
-        RemoveMoodlesByGUID(guids, (IPlayerCharacter)obj);
+        RemoveMoodlesByPC(guids, (IPlayerCharacter)obj);
     }
 
     /// <summary>
     ///     Removes a list of Statuses from the a visible players active status manager.
     /// </summary>
-    [EzIPC]
-    private void RemoveMoodlesByGUID(List<Guid> guids, IPlayerCharacter pc)
+    [EzIPCEvent("DynamicBridge.RemoveMoodlesByPC", false)]
+    private void RemoveMoodlesByPC(List<Guid> guids, IPlayerCharacter pc)
     {
         var sm = pc.GetMyStatusManager();
         foreach(var guid in guids)
@@ -577,8 +568,8 @@ public class IPCProcessor : IDisposable
     /// <summary>
     ///     Removes a list of Statuses contained in the preset GUID from the a visible players active status manager.
     /// </summary>
-    [EzIPC]
-    private void RemovePresetByGUID(Guid guid, IPlayerCharacter pc)
+    [EzIPCEvent("DynamicBridge.RemovePresetByPC", false)]
+    private void RemovePresetByPC(Guid guid, IPlayerCharacter pc)
     {
         // preset must exist in our saved presets since presets are not stored in the Status Manager
         if(C.SavedPresets.TryGetFirst(x => x.GUID == guid, out var preset))
