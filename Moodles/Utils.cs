@@ -40,7 +40,7 @@ public static unsafe partial class Utils
         }
         if(list.Count > 0)
         {
-            if(P.IPCProcessor.ApplyStatusesToGSpeakPair.TryInvoke(Player.NameWithWorld ?? "", target.GetNameWithWorld(), list, false))
+            if(P.IPCProcessor.ApplyStatusesToPair.TryInvoke(Player.NameWithWorld ?? "", target.GetNameWithWorld(), list, false))
             {
                 Notify.Info($"Broadcast success");
             }
@@ -61,7 +61,7 @@ public static unsafe partial class Utils
         }
         else
         {
-            if(P.IPCProcessor.ApplyStatusesToGSpeakPair.TryInvoke(Player.NameWithWorld ?? "", target.GetNameWithWorld(), [preparedStatus.ToStatusInfoTuple()], true))
+            if(P.IPCProcessor.ApplyStatusesToPair.TryInvoke(Player.NameWithWorld ?? "", target.GetNameWithWorld(), [preparedStatus.ToStatusInfoTuple()], true))
             {
                 Notify.Info($"Broadcast success");
             }
