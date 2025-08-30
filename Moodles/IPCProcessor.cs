@@ -157,7 +157,7 @@ public class IPCProcessor : IDisposable
     [EzIPC]
     private int Version()
     {
-        return 2;
+        return 3;
     }
 
     #region StatusManager
