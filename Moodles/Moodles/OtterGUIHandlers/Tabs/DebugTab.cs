@@ -3,7 +3,7 @@ using Moodles.Moodles.Services.Interfaces;
 using Moodles.Moodles.Services;
 using Moodles.Moodles.StatusManaging.Interfaces;
 using Moodles.Moodles.StatusManaging;
-using ImGuiNET;
+using Dalamud.Bindings.ImGui;
 using System;
 using Moodles.Moodles.MoodleUsers.Interfaces;
 using Moodles.Moodles.TempWindowing;

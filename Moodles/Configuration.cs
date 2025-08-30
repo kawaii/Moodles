@@ -38,6 +38,8 @@ internal class Configuration : IPluginConfiguration
 
     [JsonIgnore] readonly Stopwatch stopwatch = new Stopwatch();
 
+    public float CurrentMoodleTabWidth = 200;
+
     public void Initialise(IDalamudPluginInterface moodlesPlugin, IMoodlesDatabase database)
     {
         MoodlesPlugin = moodlesPlugin;

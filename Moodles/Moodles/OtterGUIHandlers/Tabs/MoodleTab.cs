@@ -2,7 +2,7 @@
 using Dalamud.Interface.Colors;
 using Dalamud.Interface.Utility;
 using Dalamud.Interface;
-using ImGuiNET;
+using Dalamud.Bindings.ImGui;
 using Dalamud.Interface.Utility.Raii;
 using Moodles.Moodles.StatusManaging.Interfaces;
 using OtterGui.Filesystem;
@@ -19,27 +19,25 @@ using System.Linq;
 using Moodles.Moodles.StatusManaging;
 using ECommons;
 using System;
-using System.Text;
 using Moodles.Moodles.MoodleUsers.Interfaces;
 using Moodles.Moodles.TempWindowing;
-using Dalamud.Game.ClientState.Objects.Types;
 
 namespace Moodles.Moodles.OtterGUIHandlers.Tabs;
 
 internal class MoodleTab
 {
-    string Filter = "";
+    private string Filter = "";
 
-    IMoodle? Selected => OtterGuiHandler.MoodleFileSystem.Selector?.Selected;
+    private IMoodle? Selected => OtterGuiHandler.MoodleFileSystem.Selector?.Selected;
 
-    readonly OtterGuiHandler OtterGuiHandler;
-    readonly IMoodlesServices Services;
-    readonly DalamudServices DalamudServices;
-    readonly IMoodlesMediator Mediator;
-    readonly IMoodlesDatabase Database;
-    readonly IUserList UserList;
+    private readonly OtterGuiHandler    OtterGuiHandler;
+    private readonly IMoodlesServices   Services;
+    private readonly DalamudServices    DalamudServices;
+    private readonly IMoodlesMediator   Mediator;
+    private readonly IMoodlesDatabase   Database;
+    private readonly IUserList          UserList;
 
-    readonly StatusSelector StatusSelector;
+    private readonly StatusSelector StatusSelector;
 
     public MoodleTab(OtterGuiHandler otterGuiHandler, IMoodlesServices services, DalamudServices dalamudServices, IMoodlesDatabase database, IUserList userList)
     {
@@ -55,9 +53,12 @@ internal class MoodleTab
 
     public void Draw()
     {
-        OtterGuiHandler.MoodleFileSystem.Selector!.Draw(200f);
+        OtterGuiHandler.MoodleFileSystem.Selector!.Draw();
 
-        if (Selected == null) return;
+        if (Selected == null)
+        {
+            return;
+        }
 
         ImGui.SameLine();
         using ImRaii.IEndObject group = ImRaii.Group();
@@ -65,7 +66,7 @@ internal class MoodleTab
         DrawSelected();
     }
 
-    void DrawHeader()
+    private void DrawHeader()
     {
         if (Selected == null) return;
 
@@ -109,7 +110,9 @@ internal class MoodleTab
             ImGuiEx.HelpMarker("Used in commands to apply moodle.");
             ImGui.TableNextColumn();
             ImGuiEx.SetNextItemFullWidth();
-            ImGui.InputText($"##id-text", Encoding.UTF8.GetBytes(Selected.ID), 36, ImGuiInputTextFlags.ReadOnly);
+
+            string ID = Selected.ID;
+            ImGui.InputText($"##id-text", ref ID, 36, ImGuiInputTextFlags.ReadOnly);
             ImGui.TableNextColumn();
 
             // Title Field
@@ -417,7 +420,7 @@ internal class MoodleTab
                             IDalamudTextureWrap? tWrap = GetTextureWrapFor(Selected);
                             if (tWrap != null)
                             {
-                                ImGui.Image(tWrap.ImGuiHandle, PluginConstants.StatusIconSize * 0.5f);
+                                ImGui.Image(tWrap.Handle, PluginConstants.StatusIconSize * 0.5f);
                                 ImGui.SameLine();
                             }
 
@@ -467,7 +470,7 @@ internal class MoodleTab
         DrawSelectedIcon(statusIconCursorPos);
     }
 
-    void DrawSelectedIcon(Vector2 statusIconCursorPos)
+    private void DrawSelectedIcon(Vector2 statusIconCursorPos)
     {
         if (Selected == null) return;
 
@@ -475,10 +478,10 @@ internal class MoodleTab
         if (tWrap == null) return;
 
         ImGui.SetCursorPos(statusIconCursorPos);
-        ImGui.Image(tWrap.ImGuiHandle, PluginConstants.StatusIconSize * 2);
+        ImGui.Image(tWrap.Handle, PluginConstants.StatusIconSize * 2);
     }
 
-    IDalamudTextureWrap? GetTextureWrapFor(IMoodle moodle)
+    private IDalamudTextureWrap? GetTextureWrapFor(IMoodle moodle)
     {
         if (Selected == null) return null;
 
@@ -489,7 +492,7 @@ internal class MoodleTab
         return image;
     }
 
-    void DrawTargetButton(IMoodleHolder? target, string targetName)
+    private void DrawTargetButton(IMoodleHolder? target, string targetName)
     {
         if (Selected == null) return;
 
@@ -518,12 +521,12 @@ internal class MoodleTab
         ImGui.EndDisabled();
     }
 
-    void Formatting()
+    private void Formatting()
     {
         ImGuiEx.HelpMarker($"This field supports formatting tags.\n[color=red]...[/color], [color=5]...[/color] - colored text.\n[glow=blue]...[/glow], [glow=7]...[/glow] - glowing text outline\nThe following colors are available:\n{Enum.GetValues<ECommons.ChatMethods.UIColor>().Select(x => x.ToString()).Where(x => !x.StartsWith("_")).Print()}\nFor extra color, look up numeric value with \"/xldata uicolor\" command\n[i]...[/i] - italic text", ImGuiColors.DalamudWhite, FontAwesomeIcon.Code.ToIconString());
     }
 
-    bool DurationSelector(string PermanentTitle, ref bool NoExpire, ref int Days, ref int Hours, ref int Minutes, ref int Seconds, ref bool countDownWhenOffline)
+    private bool DurationSelector(string PermanentTitle, ref bool NoExpire, ref int Days, ref int Hours, ref int Minutes, ref int Seconds, ref bool countDownWhenOffline)
     {
         var modified = false;
 

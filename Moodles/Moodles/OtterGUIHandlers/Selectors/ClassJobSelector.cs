@@ -1,7 +1,7 @@
 ﻿using Dalamud.Interface.Textures;
 using ECommons.ExcelServices;
 using ECommons.ImGuiMethods;
-using ImGuiNET;
+using Dalamud.Bindings.ImGui;
 using Lumina.Excel.Sheets;
 using Moodles.Moodles.Services;
 using Moodles.Moodles.Services.Interfaces;
@@ -44,7 +44,7 @@ internal class ClassJobSelector
         {
             foreach (SelectableJob sJob in SelectableJobs)
             {
-                ImGui.Image(sJob.JobIcon.GetWrapOrEmpty().ImGuiHandle, PluginConstants.JobIconSize);
+                ImGui.Image(sJob.JobIcon.GetWrapOrEmpty().Handle, PluginConstants.JobIconSize);
                 ImGui.SameLine();
                 
                 changed |= ImGuiEx.CollectionCheckbox(sJob.Abbreviation, sJob, SelectedJobs);

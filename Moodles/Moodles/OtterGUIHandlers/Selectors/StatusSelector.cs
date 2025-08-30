@@ -4,7 +4,7 @@ using Dalamud.Interface.Textures;
 using Dalamud.Interface.Textures.TextureWraps;
 using Dalamud.Interface.Windowing;
 using ECommons.ImGuiMethods;
-using ImGuiNET;
+using Dalamud.Bindings.ImGui;
 using Moodles.Moodles.Mediation.Interfaces;
 using Moodles.Moodles.Services;
 using Moodles.Moodles.Services.Data;
@@ -188,7 +188,7 @@ internal class StatusSelector : Window
             if (!DalamudServices.TextureProvider.TryGetFromGameIcon(info.IconID, out ISharedImmediateTexture? iconTexture)) continue;
             if (!iconTexture.TryGetWrap(out IDalamudTextureWrap? wrap, out _)) continue;
 
-            ImGui.Image(wrap.ImGuiHandle, PluginConstants.StatusIconSize);
+            ImGui.Image(wrap.Handle, PluginConstants.StatusIconSize);
             
             ImGui.SameLine();
 

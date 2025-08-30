@@ -1,44 +1,47 @@
-﻿using Dalamud.Interface.Colors;
+﻿using Dalamud.Bindings.ImGui;
 using Dalamud.Interface;
-using ImGuiNET;
+using Dalamud.Interface.Colors;
+using Moodles.Moodles.MoodleUsers.Interfaces;
+using Moodles.Moodles.Services;
+using Moodles.Moodles.Services.Interfaces;
+using Moodles.Moodles.StatusManaging;
+using Moodles.Moodles.StatusManaging.Interfaces;
+using Newtonsoft.Json;
 using OtterGui;
 using OtterGui.Classes;
 using OtterGui.Filesystem;
 using OtterGui.FileSystem.Selector;
 using OtterGui.Raii;
+using OtterGui.Text;
 using System;
+using System.Collections.Generic;
+using System.Diagnostics.CodeAnalysis;
 using System.IO;
 using System.Linq;
-using Moodles.Moodles.Services.Interfaces;
-using Moodles.Moodles.StatusManaging;
-using System.Diagnostics.CodeAnalysis;
 using System.Numerics;
-using Newtonsoft.Json;
-using Moodles.Moodles.Services;
-using Moodles.Moodles.StatusManaging.Interfaces;
-using Moodles.Moodles.MoodleUsers.Interfaces;
-using System.Collections.Generic;
 
 namespace Moodles.Moodles.OtterGUIHandlers;
 
 internal sealed class MoodleFileSystem : FileSystem<IMoodle>, IDisposable
 {
-    readonly string FilePath;
-    public readonly FileSystemSelector? Selector;
+    private readonly string FilePath;
 
-    readonly DalamudServices DalamudServices;
-    readonly OtterGuiHandler OtterGuiHandler;
-    readonly IMoodlesServices Services;
-    readonly IMoodlesDatabase Database;
+    public readonly MoodleFileSystemSelector? Selector;
+
+    private readonly DalamudServices    DalamudServices;
+    private readonly OtterGuiHandler    OtterGuiHandler;
+    private readonly IMoodlesServices   Services;
+    private readonly IMoodlesDatabase   Database;
+
 
     public MoodleFileSystem(DalamudServices dalamudServices, OtterGuiHandler otterGuiHandler, IMoodlesServices services, IMoodlesDatabase database, IUserList userList)
     {
         DalamudServices = dalamudServices;
-        Services = services;
+        Services        = services;
         OtterGuiHandler = otterGuiHandler;
-        Database = database;
+        Database        = database;
 
-        FilePath = Path.Combine(DalamudServices.DalamudPlugin.ConfigDirectory.FullName, "NewMoodleFileSystem.json");
+        FilePath        = Path.Combine(DalamudServices.DalamudPlugin.ConfigDirectory.FullName, "NewMoodleFileSystem.json");
 
         Changed += (_, _, _, _) => Save();
 
@@ -59,7 +62,7 @@ internal sealed class MoodleFileSystem : FileSystem<IMoodle>, IDisposable
 
                 Load(info, validMoodles, ConvertToIdentifier, ConvertToName);
             }
-            Selector = new FileSystemSelector(this, otterGuiHandler, dalamudServices, services, Database, userList);
+            Selector = new MoodleFileSystemSelector(this, otterGuiHandler, dalamudServices, services, Database, userList);
         }
         catch (Exception e)
         {
@@ -144,19 +147,19 @@ internal sealed class MoodleFileSystem : FileSystem<IMoodle>, IDisposable
         return (status.ID, true);
     }
 
-    public class FileSystemSelector : FileSystemSelector<IMoodle, FileSystemSelector.State>
+    public class MoodleFileSystemSelector : FileSystemSelector<IMoodle, MoodleFileSystemSelector.State>
     {
-        string NewName = "";
-        string? ClipboardText = null;
+        private string NewName = "";
+        private string? ClipboardText = null;
 
         public override ISortMode<IMoodle> SortMode => ISortMode<IMoodle>.FoldersFirst;
 
-        readonly MoodleFileSystem MoodleFileSystem;
-        readonly IMoodlesServices Services;
-        readonly IMoodlesDatabase Database;
-        readonly IUserList UserList;
+        private readonly MoodleFileSystem MoodleFileSystem;
+        private readonly IMoodlesServices Services;
+        private readonly IMoodlesDatabase Database;
+        private readonly IUserList        UserList;
 
-        public FileSystemSelector(MoodleFileSystem fileSystem, OtterGuiHandler otterGuiHandler, DalamudServices services, IMoodlesServices moodlesServices, IMoodlesDatabase database, IUserList userList) : base(fileSystem, services.KeyState, otterGuiHandler.Logger, PluginLog.LogException)
+        public MoodleFileSystemSelector(MoodleFileSystem fileSystem, OtterGuiHandler otterGuiHandler, DalamudServices services, IMoodlesServices moodlesServices, IMoodlesDatabase database, IUserList userList) : base(fileSystem, services.KeyState, otterGuiHandler.Logger, PluginLog.LogException)
         {
             MoodleFileSystem = fileSystem;
             Services = moodlesServices;
@@ -167,6 +170,22 @@ internal sealed class MoodleFileSystem : FileSystem<IMoodle>, IDisposable
             AddButton(ImportButton, 10);
             AddButton(CopyToClipboardButton, 20);
             AddButton(DeleteButton, 1000);
+        }
+
+        protected override float CurrentWidth   => Services.Configuration.CurrentMoodleTabWidth * ImUtf8.GlobalScale;
+        protected override float MinimumAbsoluteRemainder => 300 * ImUtf8.GlobalScale;
+        protected override float MaximumScaling => 0.5f;
+        protected override float MinimumScaling => 0.1f;
+
+        protected override void SetSize(Vector2 size)
+        {
+            base.SetSize(size);
+            var adaptedSize = MathF.Round(size.X / ImUtf8.GlobalScale);
+            if (adaptedSize == Services.Configuration.CurrentMoodleTabWidth)
+                return;
+
+            Services.Configuration.CurrentMoodleTabWidth = adaptedSize;
+            Services.Configuration.Save();
         }
 
         protected override uint CollapsedFolderColor => ImGuiColors.DalamudViolet.ToUint();

@@ -1,5 +1,5 @@
 ﻿using Dalamud.Interface.Windowing;
-using ImGuiNET;
+using Dalamud.Bindings.ImGui;
 using Moodles.Moodles.TempWindowing.Interfaces;
 
 namespace Moodles.Moodles.TempWindowing;

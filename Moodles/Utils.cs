@@ -1,8 +1,7 @@
 ﻿using Dalamud.Game.Text.SeStringHandling;
 using ECommons;
 using ECommons.ChatMethods;
-using ECommons.DalamudServices;
-using ImGuiNET;
+using Dalamud.Bindings.ImGui;
 using Moodles.Moodles.Services;
 using Moodles.Moodles.StatusManaging;
 using Moodles.Moodles.StatusManaging.Interfaces;

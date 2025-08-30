@@ -1,4 +1,4 @@
-﻿using ImGuiNET;
+﻿using Dalamud.Bindings.ImGui;
 using Moodles.Moodles.StatusManaging.Interfaces;
 using Moodles.Moodles.OtterGUIHandlers;
 using Moodles.Moodles.OtterGUIHandlers.Tabs;

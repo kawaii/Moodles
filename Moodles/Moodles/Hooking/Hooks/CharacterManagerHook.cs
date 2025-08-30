@@ -1,5 +1,4 @@
 ﻿using Dalamud.Hooking;
-using Dalamud.Utility.Signatures;
 using FFXIVClientStructs.FFXIV.Client.Game.Character;
 using FFXIVClientStructs.FFXIV.Client.Game.Object;
 using Moodles.Moodles.MoodleUsers;
@@ -14,34 +13,25 @@ namespace Moodles.Moodles.Hooking.Hooks;
 
 internal unsafe class CharacterManagerHook : HookableElement
 {
-    delegate Companion* Companion_OnInitializeDelegate(Companion* companion);
-    delegate Companion* Companion_TerminateDelegate(Companion* companion);
-    delegate BattleChara* BattleChara_OnInitializeDelegate(BattleChara* battleChara);
-    delegate BattleChara* BattleChara_TerminateDelegate(BattleChara* battleChara);
-    delegate BattleChara* BattleChara_DestroyDelegate(BattleChara* battleChara, bool freeMemory);
+    private readonly Hook<Companion.Delegates.OnInitialize>?    OnInitializeCompanionHook;
+    private readonly Hook<Companion.Delegates.Terminate>?       OnTerminateCompanionHook;
+    private readonly Hook<BattleChara.Delegates.OnInitialize>   OnInitializeBattleCharaHook;
+    private readonly Hook<BattleChara.Delegates.Terminate>      OnTerminateBattleCharaHook;
+    private readonly Hook<BattleChara.Delegates.Dtor>           OnDestroyBattleCharaHook;
 
-    [Signature("48 89 5C 24 ?? 57 48 83 EC 20 33 FF 48 8B D9 48 89 B9 ?? ?? ?? ?? 66 89 B9 ?? ?? ?? ??", DetourName = nameof(InitializeCompanion))]
-    readonly Hook<Companion_OnInitializeDelegate>? OnInitializeCompanionHook = null;
+    private readonly IMoodlesDatabase Database;
 
-    [Signature("48 89 5C 24 ?? 48 89 6C 24 ?? 48 89 74 24 ?? 57 48 83 EC 20 33 ED 48 8D 99 ?? ?? ?? ?? 48 89 A9 ?? ?? ?? ??", DetourName = nameof(TerminateCompanion))]
-    readonly Hook<Companion_TerminateDelegate>? OnTerminateCompanionHook = null;
-
-    [Signature("48 89 5C 24 ?? 57 48 83 EC 20 48 8B F9 E8 ?? ?? ?? ?? 48 8D 8F ?? ?? ?? ?? E8 ?? ?? ?? ?? 48 8D 8F ?? ?? ?? ?? E8 ?? ?? ?? ?? 48 8B D7", DetourName = nameof(InitializeBattleChara))]
-    readonly Hook<BattleChara_OnInitializeDelegate>? OnInitializeBattleCharaHook = null;
-
-    [Signature("40 53 48 83 EC 20 8B 91 ?? ?? ?? ?? 48 8B D9 E8 ?? ?? ?? ?? 48 8D 8B ?? ?? ?? ??", DetourName = nameof(TerminateBattleChara))]
-    readonly Hook<BattleChara_TerminateDelegate>? OnTerminateBattleCharaHook = null;
-
-    [Signature("48 89 5C 24 08 57 48 83 EC 20 48 8D 05 ?? ?? ?? ?? 48 8B F9 48 89 01 8B DA 48 8D 05 ?? ?? ?? ?? 48 89 81 A0 01 00 00 48 81 C1 90 36 00 00", DetourName = nameof(DestroyBattleChara))]
-    readonly Hook<BattleChara_DestroyDelegate>? OnDestroyBattleCharaHook = null;
-
-    readonly IMoodlesDatabase Database;
-
-    readonly List<IntPtr> temporaryPets = new List<IntPtr>();
+    private readonly List<IntPtr> _temporaryPets = new List<IntPtr>();
 
     public CharacterManagerHook(DalamudServices services, IUserList userList, IMoodlesServices moodlesServices, IMoodlesDatabase database) : base(services, userList, moodlesServices)
     {
         Database = database;
+
+        OnInitializeCompanionHook   = DalamudServices.Hooking.HookFromAddress<Companion.Delegates.OnInitialize>     ((nint)Companion.StaticVirtualTablePointer->OnInitialize,   InitializeCompanion);
+        OnTerminateCompanionHook    = DalamudServices.Hooking.HookFromAddress<Companion.Delegates.Terminate>        ((nint)Companion.StaticVirtualTablePointer->Terminate,      TerminateCompanion);
+        OnInitializeBattleCharaHook = DalamudServices.Hooking.HookFromAddress<BattleChara.Delegates.OnInitialize>   ((nint)BattleChara.StaticVirtualTablePointer->OnInitialize, InitializeBattleChara);
+        OnTerminateBattleCharaHook  = DalamudServices.Hooking.HookFromAddress<BattleChara.Delegates.Terminate>      ((nint)BattleChara.StaticVirtualTablePointer->Terminate,    TerminateBattleChara);
+        OnDestroyBattleCharaHook    = DalamudServices.Hooking.HookFromAddress<BattleChara.Delegates.Dtor>           ((nint)BattleChara.StaticVirtualTablePointer->Dtor,         DestroyBattleChara);
     }
 
     public override void Init()
@@ -60,67 +50,113 @@ internal unsafe class CharacterManagerHook : HookableElement
         for (int i = 0; i < 100; i++)
         {
             BattleChara* bChara = CharacterManager.Instance()->BattleCharas[i];
-            if (bChara == null) continue;
+
+            if (bChara == null)
+            {
+                continue;
+            }
 
             ObjectKind charaKind = bChara->GetObjectKind();
-            if (charaKind != ObjectKind.Pc && charaKind != ObjectKind.BattleNpc) continue;
+
+            if (charaKind != ObjectKind.Pc && charaKind != ObjectKind.BattleNpc)
+            {
+                continue;
+            }
 
             HandleAsCreated(bChara);
         }
     }
-
-    Companion* InitializeCompanion(Companion* companion)
+    private void InitializeCompanion(Companion* companion)
     {
-        Companion* initializedCompanion = OnInitializeCompanionHook!.Original(companion);
+        try
+        {
+            OnInitializeCompanionHook!.OriginalDisposeSafe(companion);
+        }
+        catch (Exception e)
+        {
+            PluginLog.LogException(e);
+        }
 
         DalamudServices.Framework.Run(() => HandleAsCreatedCompanion(companion));
-
-        return initializedCompanion;
     }
 
-    Companion* TerminateCompanion(Companion* companion)
+    private void TerminateCompanion(Companion* companion)
     {
         HandleAsDeletedCompanion(companion);
 
-        return OnTerminateCompanionHook!.Original(companion);
+        try
+        {
+            OnTerminateCompanionHook!.OriginalDisposeSafe(companion);
+        }
+        catch (Exception e)
+        {
+            PluginLog.LogException(e);
+        }
     }
 
-    BattleChara* InitializeBattleChara(BattleChara* bChara)
+    private void InitializeBattleChara(BattleChara* bChara)
     {
-        BattleChara* initializedBattleChara = OnInitializeBattleCharaHook!.Original(bChara);
+        try
+        {
+            OnInitializeBattleCharaHook!.OriginalDisposeSafe(bChara);
+        }
+        catch (Exception e)
+        {
+            PluginLog.LogException(e);
+        }
 
         DalamudServices.Framework.Run(() => HandleAsCreated(bChara));
-
-        return initializedBattleChara;
     }
 
-    BattleChara* TerminateBattleChara(BattleChara* bChara)
+    private void TerminateBattleChara(BattleChara* bChara)
     {
         HandleAsDeleted(bChara);
 
-        return OnTerminateBattleCharaHook!.Original(bChara);
+        try
+        {
+            OnTerminateBattleCharaHook!.OriginalDisposeSafe(bChara);
+        }
+        catch (Exception e)
+        {
+            PluginLog.LogException(e);
+        }
     }
 
-    BattleChara* DestroyBattleChara(BattleChara* bChara, bool freeMemory)
+    private GameObject* DestroyBattleChara(BattleChara* bChara, byte freeMemory)
     {
         HandleAsDeleted(bChara);
 
-        return OnDestroyBattleCharaHook!.Original(bChara, freeMemory);
+        try
+        {
+            return OnDestroyBattleCharaHook!.OriginalDisposeSafe(bChara, freeMemory);
+        }
+        catch (Exception e)
+        {
+            PluginLog.LogException(e);
+        }
+
+        return null;
     }
 
-    void HandleAsCreatedCompanion(Companion* companion) => GetOwner(companion)?.SetCompanion(companion);
-    void HandleAsDeletedCompanion(Companion* companion) => GetOwner(companion)?.RemoveCompanion(companion);
+    private void HandleAsCreatedCompanion(Companion* companion) => GetOwner(companion)?.SetCompanion(companion);
+    private void HandleAsDeletedCompanion(Companion* companion) => GetOwner(companion)?.RemoveCompanion(companion);
 
-    IMoodleUser? GetOwner(Companion* companion)
+    private IMoodleUser? GetOwner(Companion* companion)
     {
-        if (companion == null) return null;
+        if (companion == null)
+        {
+            return null;
+        }
 
         return UserList.GetUserFromOwnerID(companion->CompanionOwnerId);
     }
 
-    void HandleAsCreated(BattleChara* newBattleChara)
+    private void HandleAsCreated(BattleChara* newBattleChara)
     {
-        if (newBattleChara == null) return;
+        if (newBattleChara == null)
+        {
+            return;
+        }
 
         ObjectKind actualObjectKind = newBattleChara->ObjectKind;
 
@@ -133,29 +169,33 @@ internal unsafe class CharacterManagerHook : HookableElement
         {
             uint owner = newBattleChara->OwnerId;
 
-            bool gotOwner = false;
-
             for (int i = 0; i < UserList.Users.Length; i++)
             {
                 IMoodleUser? user = UserList.Users[i];
-                if (user == null) continue;
-                if (user.ShortObjectID != owner) continue;
+
+                if (user == null)
+                {
+                    continue;
+                }
+
+                if (user.ShortObjectID != owner)
+                {
+                    continue;
+                }
 
                 user.SetBattlePet(newBattleChara);
-                gotOwner = true;
-                break;
-            }
 
-            if (!gotOwner)
-            {
-                temporaryPets.Add((nint)newBattleChara);
+                break;
             }
         }
     }
 
-    void HandleAsDeleted(BattleChara* newBattleChara)
+    private void HandleAsDeleted(BattleChara* newBattleChara)
     {
-        if (newBattleChara == null) return;
+        if (newBattleChara == null)
+        {
+            return;
+        }
 
         nint addressChara = (nint)newBattleChara;
 
@@ -166,53 +206,79 @@ internal unsafe class CharacterManagerHook : HookableElement
             for (int i = 0; i < UserList.Users.Length; i++)
             {
                 IMoodleUser? user = UserList.Users[i];
-                if (user == null) continue;
-                if (user.Self != newBattleChara) continue;
+                if (user == null)
+                {
+                    continue;
+                }
+
+                if (user.Address != (nint)newBattleChara)
+                {
+                    continue;
+                }
 
                 user?.Dispose();
                 UserList.Users[i] = null;
+
                 break;
             }
         }
 
         if (actualObjectKind == ObjectKind.BattleNpc)
         {
-            temporaryPets.Remove(addressChara);
+            _temporaryPets.Remove(addressChara);
 
             IMoodleUser? user = UserList.GetUser(addressChara);
-            if (user == null) return;
 
-            user.RemoveBattlePet(newBattleChara);
+            if (user == null)
+            {
+                return;
+            }
+
+            user.SetBattlePet(newBattleChara);
         }
     }
 
-    void AddTempPetsToUser(IMoodleUser user)
+    private void AddTempPetsToUser(IMoodleUser user)
     {
         uint userID = user.ShortObjectID;
 
-        for (int i = temporaryPets.Count - 1; i >= 0; i--)
+        for (int i = _temporaryPets.Count - 1; i >= 0; i--)
         {
-            nint tempPetPtr = temporaryPets[i];
-            if (tempPetPtr == 0) continue;
+            nint tempPetPtr = _temporaryPets[i];
+
+            if (tempPetPtr == 0)
+            {
+                continue;
+            }
 
             BattleChara* tempPet = (BattleChara*)tempPetPtr;
-            if (tempPet == null) continue;
-            if (tempPet->OwnerId != userID) continue;
+
+            if (tempPet == null)
+            {
+                continue;
+            }
+
+            if (tempPet->OwnerId != userID)
+            {
+                continue;
+            }
 
             user.SetBattlePet(tempPet);
-            temporaryPets.RemoveAt(i);
+
+            _temporaryPets.RemoveAt(i);
         }
     }
 
-    void CreateUser(BattleChara* newBattleChara)
+    private IMoodleUser? CreateUser(BattleChara* newBattleChara)
     {
-        if (newBattleChara == null) return;
-        if (newBattleChara->HomeWorld == ushort.MaxValue) return;
-
-        IMoodleUser? newUser = new MoodleUser(MoodlesServices, Database, newBattleChara);
-
         int actualIndex = CreateActualIndex(newBattleChara->ObjectIndex);
-        if (actualIndex < 0 || actualIndex >= 100) return;
+
+        if (actualIndex < 0 || actualIndex >= 100)
+        {
+            return null;
+        }
+
+        IMoodleUser newUser = new MoodleUser(MoodlesServices, Database, newBattleChara);
 
         UserList.Users[actualIndex] = newUser;
 
@@ -222,9 +288,14 @@ internal unsafe class CharacterManagerHook : HookableElement
         {
             newUser.SetCompanion(newBattleChara->CompanionData.CompanionObject);
         }
+
+        return newUser;
     }
 
-    int CreateActualIndex(ushort index) => (int)MathF.Floor(index * 0.5f);
+    private int CreateActualIndex(ushort index)
+    {
+        return (int)MathF.Floor(index * 0.5f);
+    }
 
     protected override void OnDispose()
     {
