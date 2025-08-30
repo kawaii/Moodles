@@ -23,6 +23,7 @@ public class Config : IEzConfig
     public bool AutoFill = false;
     public int SelectorHeight = 33;
     public bool Debug = false;
+    public bool FuckupTab = false;
     public bool DebugSaves = true;
     public bool DisplayCommandFeedback = true;
     public bool MoodlesCanBeEsunad = true;
