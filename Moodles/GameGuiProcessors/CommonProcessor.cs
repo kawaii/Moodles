@@ -161,7 +161,37 @@ public unsafe class CommonProcessor : IDisposable
                         {
                             if (s.GUID != status.StatusOnDispell) continue;
 
-                            statusManager.Value.AddOrUpdate(s.PrepareToApply(s.Persistent ? PrepareOptions.Persistent : PrepareOptions.NoOption), UpdateSource.StatusTuple);
+                            int lastStacks = status.Stacks;
+
+                            MyStatus? newStatus = statusManager.Value.AddOrUpdate(s.PrepareToApply(s.Persistent ? PrepareOptions.Persistent : PrepareOptions.NoOption), UpdateSource.StatusTuple);
+
+                            uint oldMaxStackCount = 1;
+
+                            if (P.CommonProcessor.IconStackCounts.TryGetValue((uint)status.IconID, out var sCount))
+                            {
+                                oldMaxStackCount = sCount;
+                            }
+
+                            if (status.TransferStacksOnDispell && oldMaxStackCount > 1 && status.Stacks > 1)
+                            {
+                                if (newStatus != null)
+                                {
+                                    uint maxStackCount = 1;
+
+                                    if (P.CommonProcessor.IconStackCounts.TryGetValue((uint)newStatus.IconID, out var count))
+                                    {
+                                        maxStackCount = count;
+                                    }
+
+                                    if (lastStacks > maxStackCount)
+                                    {
+                                        lastStacks = (int)maxStackCount;
+                                    }
+
+                                    newStatus.Stacks = lastStacks;
+                                }
+                            }
+
                             EnsureAddTextWasShown(statusManager.Value, s);
                             break;
                         }

@@ -31,13 +31,13 @@ public class MyStatusManager
         if (triggerEvent) NeedFireEvent = true;
     }
 
-    public void AddOrUpdate(MyStatus newStatus, UpdateSource source, bool Unchecked = false, bool triggerEvent = true)
+    public MyStatus? AddOrUpdate(MyStatus newStatus, UpdateSource source, bool Unchecked = false, bool triggerEvent = true)
     {
         // Do not add null statuses
         if (!newStatus.IsNotNull())
         {
             PluginLog.Error($"Status {newStatus} was not added because it is null");
-            return;
+            return null;
         }
         // Do not add statuses with invalid data
         if (!Unchecked)
@@ -45,7 +45,7 @@ public class MyStatusManager
             if (!newStatus.IsValid(out var error))
             {
                 Notify.Error(error);
-                return;
+                return null;
             }
         }
         // check to see if the status is already present.
@@ -88,12 +88,14 @@ public class MyStatusManager
                 Statuses[i] = newStatus;
                 // fire trigger if needed and then early return.
                 if (triggerEvent) NeedFireEvent = true;
-                return;
+                return Statuses[i];
             }
         }
         // if it was new, fire event if needed and add it.
         if (triggerEvent) NeedFireEvent = true;
         Statuses.Add(newStatus);
+
+        return newStatus;
     }
 
     public void Cancel(Guid id, bool triggerEvent = true)

@@ -339,6 +339,21 @@ public static class TabMoodles
                     ImGui.EndCombo();
                 }
 
+                if (Selected.StatusOnDispell != Guid.Empty)
+                {
+                    ImGui.BeginDisabled(maxStacks <= 1);
+                    ImGui.TableNextRow();
+                    ImGui.TableNextColumn();
+                    ImGuiEx.TextV($"Transfer Stacks On Dispell:");
+                    ImGui.TableNextColumn();
+                    if (ImGui.Checkbox("##TransferStacksOnDispell", ref Selected.TransferStacksOnDispell))
+                    {
+                        P.IPCProcessor.StatusModified(Selected.GUID);
+                    }
+                    ImGui.EndDisabled();
+                }
+
+                ImGui.TableNextRow();
                 ImGui.TableNextColumn();
                 ImGuiEx.TextV($"Applicant:");
                 ImGuiEx.HelpMarker("Indicates who applied the Moodle. Changes the colour of the duration counter to be green if the character name and world resolve to yourself.");
