@@ -16,7 +16,7 @@ public partial class MyStatus
     public bool Dispelable = false;
     public int Stacks = 1;
     public Guid StatusOnDispell = Guid.Empty;
-    public bool TransferStacksOnDispell = true;
+    public bool TransferStacksOnDispell = false;
     public string CustomFXPath = "";
     public bool StackOnReapply = false;
     public int StacksIncOnReapply = 1;
