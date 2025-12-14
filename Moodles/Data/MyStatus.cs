@@ -14,7 +14,7 @@ public partial class MyStatus
     public StatusType Type;
     public string Applier = "";
     public bool Dispelable = false;
-    public string Dispeller = ""; // New
+    public string Dispeller = "";
     public int Stacks = 1;
     public Guid StatusOnDispell = Guid.Empty;
     public bool TransferStacksOnDispell = false;
