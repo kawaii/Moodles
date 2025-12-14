@@ -137,9 +137,13 @@ public static class MoodleCommandProcessor
 
             if (moodleState == MoodleState.Apply)
             {
-                if (Utils.GSpeakPlayerNames.Contains(statusManager.Owner.GetNameWithWorld()))
+                if (Utils.GSpeakPlayerCache.ContainsKey(statusManager.Owner.Address))
                 {
                     myStatus.SendGSpeakMessage(statusManager.Owner);
+                }
+                else if (Utils.SundouleiaPlayerCache.ContainsKey(statusManager.Owner.Address))
+                {
+                    myStatus.SendSundouleiaMessage(statusManager.Owner);
                 }
                 else
                 {
@@ -148,11 +152,17 @@ public static class MoodleCommandProcessor
             }
             else if (moodleState == MoodleState.Remove)
             {
-                if (Utils.GSpeakPlayerNames.Contains(statusManager.Owner.GetNameWithWorld()))
+                if (Utils.GSpeakPlayerCache.ContainsKey(statusManager.Owner.Address))
                 {
                     var newStatus = myStatus.JSONClone();
                     newStatus.ExpiresAt = 0;
                     newStatus.SendGSpeakMessage(statusManager.Owner);
+                }
+                else if (Utils.SundouleiaPlayerCache.ContainsKey(statusManager.Owner.Address))
+                {
+                    var newStatus = myStatus.JSONClone();
+                    newStatus.ExpiresAt = 0;
+                    newStatus.SendSundouleiaMessage(statusManager.Owner);
                 }
                 else
                 {
@@ -203,7 +213,7 @@ public static class MoodleCommandProcessor
 
         if(targetState == TargetState.Self)
         {
-            playerCharacter = Svc.ClientState.LocalPlayer;
+            playerCharacter = Svc.Objects.LocalPlayer;
         }
         else if(targetState == TargetState.Target)
         {

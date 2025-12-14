@@ -6,6 +6,7 @@ using OtterGui.Filesystem;
 using OtterGui.FileSystem.Selector;
 using OtterGui.Raii;
 using System.IO;
+using static FFXIVClientStructs.FFXIV.Client.Game.StatusManager.Delegates;
 
 namespace Moodles.OtterGuiHandlers;
 public sealed class PresetFileSystem : FileSystem<Preset>, IDisposable
@@ -49,7 +50,8 @@ public sealed class PresetFileSystem : FileSystem<Preset>, IDisposable
     {
         PluginLog.Debug($"Deleting {item.ID}");
         C.SavedPresets.Remove(item);
-        if(FindLeaf(item, out var leaf))
+        P.IPCProcessor.PresetUpdated(item.GUID, true);
+        if (FindLeaf(item, out var leaf))
         {
             Delete(leaf);
         }
@@ -195,6 +197,7 @@ public sealed class PresetFileSystem : FileSystem<Preset>, IDisposable
                 {
                     var newItem = new Preset();
                     C.SavedPresets.Add(newItem);
+                    P.IPCProcessor.PresetUpdated(newItem.GUID, false);
                     FS.CreateLeaf(FS.Root, NewName, newItem);
                 }
                 catch(Exception e)

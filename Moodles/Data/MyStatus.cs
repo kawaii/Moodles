@@ -14,6 +14,7 @@ public partial class MyStatus
     public StatusType Type;
     public string Applier = "";
     public bool Dispelable = false;
+    public string Dispeller = ""; // New
     public int Stacks = 1;
     public Guid StatusOnDispell = Guid.Empty;
     public bool TransferStacksOnDispell = false;
@@ -78,16 +79,32 @@ public partial class MyStatus
                 return false;
             }
         }
-        error = null;
+        error = null!;
         return true;
     }
 
-    public MoodlesStatusInfo ToStatusInfoTuple()
-        => (GUID, IconID, Title, Description, Type, Applier, Dispelable, Stacks, Persistent, Days, Hours, 
-        Minutes, Seconds, NoExpire, AsPermanent, StatusOnDispell, CustomFXPath, StackOnReapply, StacksIncOnReapply);
+    public MoodlesStatusInfo ToStatusInfoTuple() => (
+        GUID, 
+        IconID,
+        Title, 
+        Description, 
+        Type,
+        CustomFXPath,
+        Stacks,
+        NoExpire ? -1 : TotalDurationSeconds,
+        Applier,
+        Dispelable,
+        Dispeller,
+        Persistent,
+        StatusOnDispell,
+        StackOnReapply,
+        StacksIncOnReapply,
+        TransferStacksOnDispell
+        );
 
-    public static MyStatus FromStatusInfoTuple(MoodlesStatusInfo statusInfo)
+    public static MyStatus FromTuple(MoodlesStatusInfo statusInfo)
     {
+        var totalTime = statusInfo.ExpireTicks == -1 ? TimeSpan.Zero : TimeSpan.FromMilliseconds(statusInfo.ExpireTicks);
         return new MyStatus
         {
             GUID = statusInfo.GUID,
@@ -97,18 +114,20 @@ public partial class MyStatus
             Type = statusInfo.Type,
             Applier = statusInfo.Applier,
             Dispelable = statusInfo.Dispelable,
+            Dispeller = statusInfo.Dispeller,
             Stacks = statusInfo.Stacks,
-            Persistent = statusInfo.Persistent,
-            Days = statusInfo.Days,
-            Hours = statusInfo.Hours,
-            Minutes = statusInfo.Minutes,
-            Seconds = statusInfo.Seconds,
-            NoExpire = statusInfo.NoExpire,
-            AsPermanent = statusInfo.AsPermanent,
             StatusOnDispell = statusInfo.StatusOnDispell,
+            TransferStacksOnDispell = statusInfo.UseStacksOnDispelStatus,
             CustomFXPath = statusInfo.CustomVFXPath,
-            StackOnReapply = statusInfo.StackOnReapply,
-            StacksIncOnReapply = statusInfo.StacksIncOnReapply
+            StackOnReapply = statusInfo.ReapplyIncStacks,
+            StacksIncOnReapply = statusInfo.StackIncCount,
+            // Additional variables we can run assumptions on.
+            Persistent = statusInfo.Permanent,
+            Days = totalTime.Days,
+            Hours = totalTime.Hours,
+            Minutes = totalTime.Minutes,
+            Seconds = totalTime.Seconds,
+            NoExpire = statusInfo.ExpireTicks == -1,
         };
     }
 }

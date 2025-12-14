@@ -2,9 +2,11 @@
 using OtterGui.Raii;
 using ImGuiClip = OtterGui.ImGuiClip;
 
-namespace Moodles.OtterGuiHandlers.Whitelist.GSpeak;
+namespace Moodles.OtterGuiHandlers.Whitelist;
 #nullable enable
-public class WhitelistItemSelectorGSpeak<T>
+
+// ItemSelector base for plugin whitelists.
+public class WhitelistItemSelector<T>
 {
     [Flags]
     public enum Flags : byte
@@ -58,7 +60,7 @@ public class WhitelistItemSelectorGSpeak<T>
     public readonly string DragDropLabel = "##ItemSelectorDragDrop";
     public readonly string MoveLabel = "##ItemSelectorMove";
 
-    public WhitelistItemSelectorGSpeak(IList<T> items, Flags flags = Flags.None)
+    public WhitelistItemSelector(IList<T> items, Flags flags = Flags.None)
     {
         Items = items;
         _lastSize = Items.Count;

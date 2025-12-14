@@ -8,7 +8,9 @@ public sealed class OtterGuiHandler : IDisposable
     public PresetFileSystem PresetFileSystem;
     public Logger Logger;
     public AutomationList AutomationList;
-    public WhitelistGSpeak WhitelistGSpeak;
+    // Not sure why we need these as item lists but sure.
+    public ItemSelectorGSpeak WhitelistGSpeak;
+    public ItemSelectorSundouleia WhitelistSundouleia;
     public OtterGuiHandler()
     {
         try
@@ -18,6 +20,7 @@ public sealed class OtterGuiHandler : IDisposable
             PresetFileSystem = new(this);
             AutomationList = new();
             WhitelistGSpeak = new();
+            WhitelistSundouleia = new();
         }
         catch(Exception ex)
         {

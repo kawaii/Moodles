@@ -1,39 +1,25 @@
 ﻿
-global using MoodlesGSpeakPairPerms = (
-    bool AllowPositive,
-    bool AllowNegative,
-    bool AllowSpecial,
-    bool AllowApplyingOwnMoodles,
-    bool AllowApplyingPairsMoodles,
-    System.TimeSpan MaxDuration,
-    bool AllowPermanent,
-    bool AllowRemoval
-    );
 global using MoodlesMoodleInfo = (System.Guid ID, uint IconID, string FullPath, string Title);
 global using MoodlesProfileInfo = (System.Guid ID, string FullPath);
-/// <summary>
-/// Intended to be used for IPC to transfer full data without need for serialization
-/// </summary>
+
+// Used for Tuple-Based IPC calls and associated data transfers.
 global using MoodlesStatusInfo = (
     System.Guid GUID,
     int IconID,
     string Title,
     string Description,
-    Moodles.Data.StatusType Type,
-    string Applier,
-    bool Dispelable,
-    int Stacks,
-    bool Persistent,
-    int Days,
-    int Hours,
-    int Minutes,
-    int Seconds,
-    bool NoExpire,
-    bool AsPermanent,
-    System.Guid StatusOnDispell,
-    string CustomVFXPath,
-    bool StackOnReapply,
-    int StacksIncOnReapply
+    Moodles.Data.StatusType Type,   // Moodles StatusType enum, as a byte.
+    string CustomVFXPath,           // What VFX to show on application.
+    int Stacks,                     // Usually 1 when no stacks are used.
+    long ExpireTicks,               // Permanent if -1, referred to as 'NoExpire' in MoodleStatus
+    string Applier,                 // Who applied the moodle. (Only relevant when updating active moodles)
+    bool Dispelable,                // Can be dispelled by others.
+    string Dispeller,               // When set, only this person can dispel your moodle.
+    bool Permanent,                 // Referred to as 'Sticky' in the Moodles UI
+    System.Guid StatusOnDispell,    // What status is applied upon the moodle being right-clicked off.
+    bool ReapplyIncStacks,          // If stacks increase on reapplication.
+    int StackIncCount,              // How many stacks get added on each reapplication.
+    bool UseStacksOnDispelStatus    // If dispelling transfers stacks to the dispel-applied moodle.
 );
 
 global using MoodlePresetInfo = (
@@ -41,6 +27,12 @@ global using MoodlePresetInfo = (
     System.Collections.Generic.List<System.Guid> Statuses,
     Moodles.Data.PresetApplicationType ApplicationType,
     string Title
+);
+
+// The IPC Tuple used to define MoodleAccess permission between recipient and client.
+global using IPCMoodleAccessTuple = (
+    Moodles.Data.MoodleAccess OtherAccess, long OtherMaxTime,
+    Moodles.Data.MoodleAccess CallerAccess, long CallerMaxTime
 );
 
 

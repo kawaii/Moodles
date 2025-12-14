@@ -37,30 +37,23 @@ public static class TabMoodles
             {
                 Utils.GetMyStatusManager(Player.NameWithWorld).AddOrUpdate(Selected.PrepareToApply(AsPermanent ? PrepareOptions.Persistent : PrepareOptions.NoOption), UpdateSource.StatusTuple);
             }
-            ImGui.SameLine();
 
-            var isGSpeak = Svc.Targets.Target is IPlayerCharacter pc && Utils.GSpeakPlayerNames.Contains(pc.GetNameWithWorld());
-            var dis = Svc.Targets.Target is not IPlayerCharacter;
+            ImGui.SameLine();
+            // Determine target state and application intent
+            var targetMode = Utils.GetApplyMode();
+            var buttonText = targetMode switch
+            {
+                TargetApplyMode.GSpeakPair => "Apply to Target (via GSpeak)",
+                TargetApplyMode.Sundesmo => "Apply to Target (via Sundouleia)",
+                TargetApplyMode.Local => "Apply to Target (Locally)",
+                _ => "No Target Selected"
+            };
+            var dis = targetMode is TargetApplyMode.NoTarget;
+
             if (dis) ImGui.BeginDisabled();
-            var buttonText = dis ? "No Target Selected" : $"Apply to Target ({(isGSpeak ? "via GagSpeak" : "Locally")})";
             if (ImGui.Button(buttonText))
             {
-                try
-                {
-                    var target = (IPlayerCharacter)Svc.Targets.Target!;
-                    if (!isGSpeak)
-                    {
-                        Utils.GetMyStatusManager(target.GetNameWithWorld()).AddOrUpdate(Selected.PrepareToApply(AsPermanent ? PrepareOptions.Persistent : PrepareOptions.NoOption), UpdateSource.StatusTuple);
-                    }
-                    else
-                    {
-                        Selected.SendGSpeakMessage(target);
-                    }
-                }
-                catch (Exception e)
-                {
-                    e.Log();
-                }
+                ApplyToTarget(targetMode);
             }
             if (dis) ImGui.EndDisabled();
 
@@ -90,7 +83,7 @@ public static class TabMoodles
                 ImGui.InputText("##name", ref Selected.Title, 150);
                 if (ImGui.IsItemDeactivatedAfterEdit())
                 {
-                    P.IPCProcessor.StatusModified(Selected.GUID);
+                    P.IPCProcessor.StatusUpdated(Selected.GUID, false);
                 }
 
                 // Icon Field
@@ -118,7 +111,7 @@ public static class TabMoodles
                 // post update to IPC if a new icon is selected.
                 if (Utils.GetIconInfo((uint)Selected.IconID)?.Name != selinfo?.Name)
                 {
-                    P.IPCProcessor.StatusModified(Selected.GUID);
+                    P.IPCProcessor.StatusUpdated(Selected.GUID, false);
                 }
 
 
@@ -167,7 +160,7 @@ public static class TabMoodles
                         {
                             Selected.Stacks = i;
                             // Inform IPC of change after adjusting stack count.
-                            P.IPCProcessor.StatusModified(Selected.GUID);
+                            P.IPCProcessor.StatusUpdated(Selected.GUID, false);
                         }
                     }
                     ImGui.EndCombo();
@@ -200,7 +193,7 @@ public static class TabMoodles
                 ImGuiEx.InputTextMultilineExpanding("##desc", ref Selected.Description, 500);
                 if (ImGui.IsItemDeactivatedAfterEdit())
                 {
-                    P.IPCProcessor.StatusModified(Selected.GUID);
+                    P.IPCProcessor.StatusUpdated(Selected.GUID, false);
                 }
                 ImGui.TableNextRow();
 
@@ -211,7 +204,7 @@ public static class TabMoodles
                 ImGuiEx.SetNextItemFullWidth();
                 if (ImGuiEx.EnumRadio(ref Selected.Type, true))
                 {
-                    P.IPCProcessor.StatusModified(Selected.GUID);
+                    P.IPCProcessor.StatusUpdated(Selected.GUID, false);
                 }
 
                 // Duration Field
@@ -225,7 +218,7 @@ public static class TabMoodles
                 ImGui.TableNextColumn();
                 if (Utils.DurationSelector("Permanent", ref Selected.NoExpire, ref Selected.Days, ref Selected.Hours, ref Selected.Minutes, ref Selected.Seconds))
                 {
-                    P.IPCProcessor.StatusModified(Selected.GUID);
+                    P.IPCProcessor.StatusUpdated(Selected.GUID, false);
                 }
 
                 // Sticky Field
@@ -237,7 +230,7 @@ public static class TabMoodles
                 ImGuiEx.SetNextItemFullWidth();
                 if (ImGui.Checkbox($"##sticky", ref Selected.AsPermanent))
                 {
-                    P.IPCProcessor.StatusModified(Selected.GUID);
+                    P.IPCProcessor.StatusUpdated(Selected.GUID, false);
                 }
 
                 // Dispelable Field
@@ -246,13 +239,14 @@ public static class TabMoodles
                     ImGui.TableNextRow();
 
                     ImGui.TableNextColumn();
-                    ImGuiEx.TextV($"Imply Dispellable:");
-                    ImGuiEx.HelpMarker("Applies the dispellable indicator to this Moodle implying it can be removed via the use of Esuna. Only available for icons representing negative status effects.");
+                    ImGuiEx.TextV($"Dispelable:");
+                    ImGuiEx.HelpMarker("Applies the dispelable indicator to this Moodle, implying it can be removed via the use of Esuna.\n" +
+                        "These moodles can be removed with Esuna if the config option is enabled. Only available for icons representing negative status effects.");
                     ImGui.TableNextColumn();
                     ImGuiEx.SetNextItemFullWidth();
                     if (ImGui.Checkbox("##dispel", ref Selected.Dispelable))
                     {
-                        P.IPCProcessor.StatusModified(Selected.GUID);
+                        P.IPCProcessor.StatusUpdated(Selected.GUID, false);
                     }
                 }
 
@@ -267,7 +261,7 @@ public static class TabMoodles
                     ImGuiEx.SetNextItemFullWidth();
                     if (ImGui.Checkbox("##stackonreapply", ref Selected.StackOnReapply))
                     {
-                        P.IPCProcessor.StatusModified(Selected.GUID);
+                        P.IPCProcessor.StatusUpdated(Selected.GUID, false);
                     }
                     // if the selected should reapply and we have a stacked moodle.
                     if (Selected.StackOnReapply && maxStacks > 1)
@@ -278,7 +272,7 @@ public static class TabMoodles
                         ImGui.DragInt("Increased Stack Count", ref Selected.StacksIncOnReapply, 0.1f, 0, maxStacks);
                         if (ImGui.IsItemDeactivatedAfterEdit())
                         {
-                            P.IPCProcessor.StatusModified(Selected.GUID);
+                            P.IPCProcessor.StatusUpdated(Selected.GUID, false);
                         }
                     }
                 }
@@ -306,7 +300,7 @@ public static class TabMoodles
                     if (ImGui.Selectable($"Clear", false, ImGuiSelectableFlags.None))
                     {
                         Selected.StatusOnDispell = Guid.Empty;
-                        P.IPCProcessor.StatusModified(Selected.GUID);
+                        P.IPCProcessor.StatusUpdated(Selected.GUID, false);
                     }
 
                     foreach (var x in C.SavedStatuses)
@@ -331,7 +325,7 @@ public static class TabMoodles
                                 if (ImGui.Selectable($"{name}##{x.ID}", false, ImGuiSelectableFlags.None))
                                 {
                                     Selected.StatusOnDispell = x.GUID;
-                                    P.IPCProcessor.StatusModified(Selected.GUID);
+                                    P.IPCProcessor.StatusUpdated(Selected.GUID, false);
                                 }
                             }
                         }
@@ -348,7 +342,7 @@ public static class TabMoodles
                     ImGui.TableNextColumn();
                     if (ImGui.Checkbox("##TransferStacksOnDispell", ref Selected.TransferStacksOnDispell))
                     {
-                        P.IPCProcessor.StatusModified(Selected.GUID);
+                        P.IPCProcessor.StatusUpdated(Selected.GUID, false);
                     }
                     ImGui.EndDisabled();
                 }
@@ -362,7 +356,23 @@ public static class TabMoodles
                 ImGui.InputTextWithHint("##applier", "Player Name@World", ref Selected.Applier, 150, C.Censor ? ImGuiInputTextFlags.Password : ImGuiInputTextFlags.None);
                 if (ImGui.IsItemDeactivatedAfterEdit())
                 {
-                    P.IPCProcessor.StatusModified(Selected.GUID);
+                    P.IPCProcessor.StatusUpdated(Selected.GUID, false);
+                }
+
+                if (Selected.Dispelable)
+                {
+                    ImGui.TableNextRow();
+                    ImGui.TableNextColumn();
+                    ImGuiEx.TextV($"Dispeller:");
+                    ImGuiEx.HelpMarker("Indicates who must dispel the moodle, preventing others from dispelling it.\n" +
+                        "This only works if the config option allowing others to dispel moodles is enabled.");
+                    ImGui.TableNextColumn();
+                    ImGuiEx.SetNextItemFullWidth();
+                    ImGui.InputTextWithHint("##dispeller", "Player Name@World", ref Selected.Dispeller, 150, C.Censor ? ImGuiInputTextFlags.Password : ImGuiInputTextFlags.None);
+                    if (ImGui.IsItemDeactivatedAfterEdit())
+                    {
+                        P.IPCProcessor.StatusUpdated(Selected.GUID, false);
+                    }
                 }
 
                 ImGui.TableNextColumn();
@@ -382,6 +392,29 @@ public static class TabMoodles
             }
         }
     }
+
+    public static void ApplyToTarget(TargetApplyMode mode)
+    {
+        if (Svc.Targets.Target is not IPlayerCharacter pc)
+            return;
+        try
+        {
+            switch (mode)
+            {
+                case TargetApplyMode.GSpeakPair:
+                    Selected.SendGSpeakMessage(pc); break;
+                case TargetApplyMode.Sundesmo:
+                    Selected.SendSundouleiaMessage(pc); break;
+                case TargetApplyMode.Local:
+                    Utils.GetMyStatusManager(pc.GetNameWithWorld()).AddOrUpdate(Selected.PrepareToApply(AsPermanent ? PrepareOptions.Persistent : PrepareOptions.NoOption), UpdateSource.StatusTuple); break;
+            }
+        }
+        catch (Exception e)
+        {
+            e.Log();
+        }
+    }
+
     public static void Formatting()
     {
         //ImGui.SetWindowFontScale(0.75f);

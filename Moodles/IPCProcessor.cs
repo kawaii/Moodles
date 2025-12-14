@@ -1,4 +1,5 @@
 ﻿using Dalamud.Game.ClientState.Objects.SubKinds;
+using ECommons;
 using ECommons.EzIpcManager;
 using ECommons.GameHelpers;
 using Moodles.Data;
@@ -7,112 +8,182 @@ using System.Collections.Immutable;
 namespace Moodles;
 public class IPCProcessor : IDisposable
 {
+    #region Moodles Events
     [EzIPCEvent] private readonly Action Ready;
     [EzIPCEvent] private readonly Action Unloading;
 
     /// <summary>
-    ///     Fired whenever the status manager being handled on any monitored player is modified.
+    ///     Triggered when a monitored player's Status Manager is changes.
     /// </summary>
     [EzIPCEvent] public readonly Action<IPlayerCharacter> StatusManagerModified;
 
     /// <summary>
-    ///     Event that fires whenever the client changes the settings of a moodle in their Moodles list. <para />
-    ///     Does not fire upon moodle application or removal. Only refers to client player.
+    ///     Triggered when a <see cref="MyStatus"/> is updated, added, or removed. (2nd parameter indicates removal)
     /// </summary>
-    [EzIPCEvent] public readonly Action<Guid> StatusModified;
+    [EzIPCEvent] public readonly Action<Guid, bool> StatusUpdated;
 
     /// <summary>
-    ///     Event that fires whenever the client updates the list of statuses a specific preset applies. <para /> 
-    ///     Does not fire upon preset activation or deactivation. Only refers to client player.
+    ///     Triggered when a <see cref="Preset"/> is updated, added, or removed. (2nd parameter indicates removal)
     /// </summary>
-    [EzIPCEvent] public readonly Action<Guid> PresetModified;
+    [EzIPCEvent] public readonly Action<Guid, bool> PresetUpdated;
+    #endregion Moodles Events
 
-    /// <summary>
-    ///     Retrieves the list of Project GSpeak's visible pairs, with the bi-directional permissions. <para />
-    ///     Each pair's string holds the <c>playername@world</c>
-    /// </summary>
-    [EzIPC("GagSpeak.GetHandledVisiblePairs", false)] public readonly Func<List<(string, MoodlesGSpeakPairPerms, MoodlesGSpeakPairPerms)>> GetGSpeakPlayers;
+    #region GSpeak & Sundouleia Getters
+    /// <summary> Gets all handled addresses managed by the IPC Source. (Could do name string if ptr is more annoying) </summary>
+    [EzIPC("Sundouleia.GetAllRendered", false)] public readonly Func<List<nint>> GetSundouleiaPlayers;
 
-    /// <summary>
-    ///     A request sourced from <b>Moodles</b> to apply a Status/Preset to another GSpeak pair. <para />
-    ///     This is <b>permission-validated by GSpeak</b> against the client and targets perms, ensuring valid application.
-    /// </summary>
-    [EzIPC("GagSpeak.ApplyStatusesToPairRequest", false)] public readonly Action<string, string, List<MoodlesStatusInfo>, bool> ApplyStatusesToPair;
+    /// <inheritdoc cref="GetSundouleiaPlayers"/>
+    [EzIPC("GagSpeak.GetAllRendered", false)] public readonly Func<List<nint>> GetGSpeakPlayers;
 
-    /// <summary>
-    ///     Event invoked by <b>GSpeak</b> whenever their list of visible pairs changed. <para />
-    ///     Helps keep Moodles whitelist cache for GSpeak synced without pulling the list every tick.
-    /// </summary>
-    [EzIPCEvent("GagSpeak.VisiblePairsUpdated", false)]
-    private void VisiblePairsUpdated()
+
+    /// <summary> Get the KVP's of handles addresses with their <see cref="IPCMoodleAccessTuple"/> (Usually on initialization)./> </summary>
+    [EzIPC("Sundouleia.GetAllRenderedInfo", false)] public readonly Func<Dictionary<nint, IPCMoodleAccessTuple>> GetAllSundouleiaInfo;
+
+    /// <inheritdoc cref="GetSundouleiaAccessPerms"/>
+    [EzIPC("GagSpeak.GetAllRenderedInfo", false)] public readonly Func<Dictionary<nint, IPCMoodleAccessTuple>> GetAllGSpeakInfo;
+
+
+    /// <summary> Get the <see cref="IPCMoodleAccessTuple"/> for a specific handled address. </summary>
+    [EzIPC("Sundouleia.GetAccessInfo", false)] public readonly Func<nint, IPCMoodleAccessTuple> GetSundouleiaAccessInfo;
+
+    /// <inheritdoc cref="GetSundouleiaAccessInfo"/>
+    [EzIPC("GagSpeak.GetAccessInfo", false)] public readonly Func<nint, IPCMoodleAccessTuple> GetGSpeakAccessInfo;
+    #endregion GSpeak & Sundouleia Getters
+
+    #region GSpeak & Sundouleia Listener Events
+    // Broadcasts to the IPC to apply the statuses to the pair.
+    [EzIPC("Sundouleia.ApplyToPairRequest", false)] public readonly Action<nint, List<MoodlesStatusInfo>, bool> GSpeakTryApplyToPair;
+    [EzIPC("GagSpeak.ApplyToPairRequest", false)] public readonly Action<nint, List<MoodlesStatusInfo>, bool> SundouleiaTryApplyToPair;
+
+
+    [EzIPCEvent("Sundouleia.Ready", false)]
+    private static void SundouleiaReady()
     {
-        new TickScheduler(() => Utils.GetGSpeakPlayers());
+        new TickScheduler(() =>
+        {
+            PluginLog.LogDebug("GSpeak Ready, Obtaining all handled player information.");
+            Utils.SundouleiaAvailable = true;
+            Utils.InitSundesmoCache();
+        });
     }
 
-    /// <summary>
-    ///     Fired when GSpeak's IPCProvider has finished initialization.
-    /// </summary>
     [EzIPCEvent("GagSpeak.Ready", false)]
-    private void GagSpeakReady()
+    private static void GSpeakReady()
     {
         new TickScheduler(() =>
         {
-            PluginLog.LogDebug("GagSpeak Initialized, Fetching Initial List of Pairs.");
+            PluginLog.LogDebug("GSpeak Ready, Obtaining all handled player information.");
             Utils.GSpeakAvailable = true;
-            Utils.GetGSpeakPlayers();
+            Utils.InitGSpeakCache();
         });
     }
 
-    /// <summary>
-    ///     Fired whenever GSpeak's IPCProvider has called its disposal method.
-    /// </summary>
-    [EzIPCEvent("GagSpeak.Disposing", false)]
-    private void GagSpeakDisposing()
+    [EzIPCEvent("Sundouleia.Disposing", false)]
+    private static void SundouleiaDisposing()
     {
-        new TickScheduler(() =>
-        {
-            PluginLog.LogDebug("GagSpeak Disposed / Disabled. Clearing List of GSpeak Players.");
-            Utils.ClearGSpeakPlayers();
-            Utils.GSpeakAvailable = false;
-        });
+        PluginLog.LogDebug("Sundouleia Disposed / Disabled. Clearing associated data.");
+        Utils.ClearSundesmos();
+        Utils.SundouleiaAvailable = false;
+    }
+
+    [EzIPCEvent("GagSpeak.Disposing", false)] 
+    private static void GSpeakDisposing()
+    {
+        PluginLog.LogDebug("GSpeak Disposed / Disabled. Clearing associated data.");
+        Utils.ClearGSpeakPairs();
+        Utils.GSpeakAvailable = false;
+    }
+
+    [EzIPCEvent("Sundouleia.PairRendered", false)]
+    private void SundouleiaPairRendered(nint address)
+    {
+        PluginLog.LogDebug($"Sundouleia handling new rendered player: {address:X}");
+        Utils.AddSundesmo(address, GetSundouleiaAccessInfo(address));
+    }
+
+    [EzIPCEvent("GagSpeak.PairRendered", false)]
+    private void GSpeakPairRendered(nint address)
+    {
+        PluginLog.LogDebug($"GSpeak handling new rendered player: {address:X}");
+        Utils.AddGSpeakPair(address, GetGSpeakAccessInfo(address));
+    }
+
+    [EzIPCEvent("Sundouleia.PairUnrendered", false)]
+    private static void SundouleiaPairUnrendered(nint address)
+    {
+        PluginLog.LogDebug($"Sundouleia removing unrendered player: {address:X}");
+        Utils.RemoveSundesmo(address);
+    }
+
+    [EzIPCEvent("GagSpeak.PairUnrendered", false)] 
+    private static void GSpeakPairUnrendered(nint address)
+    {
+        PluginLog.LogDebug($"GSpeak removing unrendered player: {address:X}");
+        Utils.RemoveGSpeakPair(address);
     }
 
     /// <summary>
-    ///     An event invoked by GSpeak to apply a MoodleStatus by its tuple information. <para />
-    ///     This does not require any permission checks because it can ONLY be applied to the client, not other players. <para />
-    ///     Sourced from GSpeak only, ensuring allowance for the action was validated. <para />
-    ///     Primarily used as a 'Try-On' feature to preview Moodles stored in GSpeak's Moodle ShareHub Database.
+    ///     Invoked whenever the IpcMoodleAccessTuple is updated for <paramref name="address"/>.
+    ///     Should obtain updated IpcMoodleAccessTuple for the address to stay updated.
     /// </summary>
+    /// <remarks> <b>Returned tuple is always in order of (CLIENT, PAIR(address))</b></remarks>
+    [EzIPCEvent("Sundouleia.AccessUpdated", false)]
+    private static void SundouleiaAccessUpdated(nint address)
+    {
+        // Can be done via utils
+    }
+
+    /// <inheritdoc cref="SundouleiaAccessUpdated(nint)"/>
+    [EzIPCEvent("GagSpeak.AccessUpdated", false)]
+    private static void GSpeakAccessUpdated(nint address)
+    {
+        // Can be done via utils
+    }
+
+    [EzIPCEvent("Sundouleia.ApplyStatusInfo", false)]
+    private static void SundouleiaApplyTuple(MoodlesStatusInfo status)
+    {
+        new TickScheduler(() => ApplyStatusTuples([ status ]));
+    }
+
+    /// <inheritdoc cref="ApplyStatusTuples(List{MoodlesStatusInfo})"/>
     [EzIPCEvent("GagSpeak.ApplyStatusInfo", false)]
-    private void ApplyMoodleStatus(MoodlesStatusInfo status)
+    private static void GSpeakApplyTuple(MoodlesStatusInfo status)
     {
-        new TickScheduler(() =>
-        {
-            if (Player.Object is null) return;
-            PluginLog.LogDebug($"GSpeak applied a status to the client: ({status.Title})");
-            var sm = Utils.GetMyStatusManager(Player.Object);
-            sm.AddOrUpdate(MyStatus.FromStatusInfoTuple(status).PrepareToApply(), UpdateSource.StatusTuple, false, true);
-        });
+        new TickScheduler(() => ApplyStatusTuples([ status ]));
+    }
+
+    /// <inheritdoc cref="ApplyStatusTuples(List{MoodlesStatusInfo})"/>
+    [EzIPCEvent("Sundouleia.ApplyStatusInfoList", false)]
+    private static void SundouleiaApplyTuples(List<MoodlesStatusInfo> statuses)
+    {
+        new TickScheduler(() => ApplyStatusTuples(statuses));
+    }
+
+    /// <inheritdoc cref="ApplyStatusTuples(List{MoodlesStatusInfo})"/>
+    [EzIPCEvent("GagSpeak.ApplyStatusInfoList", false)]
+    private static void GSpeakApplyTuples(List<MoodlesStatusInfo> statuses)
+    {
+        new TickScheduler(() => ApplyStatusTuples(statuses));
     }
 
     /// <summary>
-    ///     Effectively <c>ApplyMoodleStatus</c>, except with a list of StatusInfo's. <para />
-    ///     Primarily used as a 'Try-On' feature to preview Moodle Presets stored in GSpeak's Moodle ShareHub Database.
+    ///     <b>Primarily used for Apply-To-Pair functionality, or for Try-On features.</b> <para />
+    ///     By the time this method is called, any pair-applied tuples have been validated by 
+    ///     GSpeak for valid MoodleAccess and can be trusted.
     /// </summary>
-    [EzIPCEvent("GagSpeak.ApplyStatusInfoList", false)]
-    private void ApplyMoodleStatusList(List<MoodlesStatusInfo> statuses)
+    /// <remarks> Ensure this is called in a <see cref="TickScheduler"/> </remarks>
+    private static void ApplyStatusTuples(List<MoodlesStatusInfo> tuples)
     {
-        new TickScheduler(() =>
+        if (Player.Object is null) return;
+        PluginLog.LogDebug($"Applying statuses: ({string.Join(",", tuples.Select(s => s.Title))})");
+        var sm = Utils.GetMyStatusManager(Player.Object);
+        foreach (var status in tuples)
         {
-            if (Player.Object is null) return;
-            PluginLog.LogDebug($"GSpeak applied a list of statuses to the client: ({string.Join(",", statuses.Select(s => s.Title))})");
-            var sm = Utils.GetMyStatusManager(Player.Object);
-            foreach (var status in statuses)
-            {
-                sm.AddOrUpdate(MyStatus.FromStatusInfoTuple(status).PrepareToApply(), UpdateSource.StatusTuple, false, true);
-            }
-        });
+            sm.AddOrUpdate(MyStatus.FromTuple(status).PrepareToApply(), UpdateSource.StatusTuple, false, true);
+        }
     }
+    #endregion GSpeak & Sundouleia Listener Events
 
     public IPCProcessor()
     {
@@ -125,35 +196,6 @@ public class IPCProcessor : IDisposable
         Unloading();
     }
 
-    /// <summary>
-    ///     Applies the requested statuses to the client player from the sender.
-    /// </summary>
-    /// <param name="senderNameWorld"> The name of the sender player. </param>
-    /// <param name="statusesToApply"> The list of statuses to apply to the client player. </param>
-    /// <returns> True if the client is a mare user. False if they are not. (Us, not the sender) </returns>
-    [EzIPCEvent("GagSpeak.StatusInfoAppliedByPair", false)]
-    private void StatusInfoAppliedByPair(string senderNameWorld, List<MoodlesStatusInfo> statusesToApply)
-    {
-        // see if the sender is in our list of GSpeak players.
-        var gSpeakPlayer = Utils.GSpeakPlayers.FirstOrDefault(w => w.Item1 == senderNameWorld);
-        if (gSpeakPlayer != default)
-        {
-            // Fetch the status manager of our player object.
-            var sm = Utils.GetMyStatusManager(Player.Object);
-            var perms = gSpeakPlayer.Item2; // client perms for pair.
-            foreach (var x in statusesToApply)
-            {
-                if (C.WhitelistGSpeak.Any(w => w.CheckStatus(perms, x.NoExpire)))
-                {
-                    sm.AddOrUpdate(MyStatus.FromStatusInfoTuple(x).PrepareToApply(), UpdateSource.StatusTuple, false, true);
-                }
-            }
-        }
-    }
-
-    /// <summary> 
-    /// Returns the version of Moodle's IPC. 
-    /// </summary>
     [EzIPC]
     private int Version()
     {
@@ -178,7 +220,6 @@ public class IPCProcessor : IDisposable
     ///     Attempts to clear the active Moodles on a player using the objects address. <para />
     ///     This address is used to obtain a IPlayerCharacter object reference.
     /// </summary>
-    /// <param name="ptr"> The object address to search for in the object table. </param>
     [EzIPC("ClearStatusManagerByPtrV2")]
     private void ClearStatusManager(nint ptr)
     {
@@ -203,7 +244,6 @@ public class IPCProcessor : IDisposable
     ///     Attempts to clear the active Moodles on a player using the IPlayerCharacter object reference. <para /> 
     ///     If the object is null or not present, this method will do nothing.
     /// </summary>
-    /// <param name="pc"> The PlayerCharacter object to clear the status from. </param>
     [EzIPC("ClearStatusManagerByPlayerV2")]
     private void ClearStatusManager(IPlayerCharacter pc)
     {
@@ -229,8 +269,6 @@ public class IPCProcessor : IDisposable
     ///     Attempts to apply the encoded base64 status manager data to a visible player character object by their name. <para />
     ///     Does not complete if a player by this name is not found within the object table or the data is invalid.
     /// </summary>
-    /// <param name="name"> The object name to search for in the object table. </param>
-    /// <param name="data"> The base64 encoded status manager data to apply to the player. </param>
     [EzIPC("SetStatusManagerByNameV2")]
     private void SetStatusManager(string name, string data)
     {
@@ -245,8 +283,6 @@ public class IPCProcessor : IDisposable
     ///     Attempts to apply the encoded base64 status manager data to a visible player character object by their address. <para />
     ///     This address is used to obtain a IPlayerCharacter object reference, and is null if address is not in the object table.
     /// </summary>
-    /// <param name="ptr"> The object address to search for in the object table. </param>
-    /// <param name="data"> The base64 encoded status manager data to apply to the player. </param>
     [EzIPC("SetStatusManagerByPtrV2")]
     private void SetStatusManager(nint ptr, string data) => SetStatusManager((IPlayerCharacter)Svc.Objects.CreateObjectReference(ptr), data);
 
@@ -255,8 +291,6 @@ public class IPCProcessor : IDisposable
     ///     Attempts to apply the encoded base64 status manager data to a visible player character object by the object reference. <para />
     ///     If the object is null or not present, this method will do nothing.
     /// </summary>
-    /// <param name="pc"> The PlayerCharacter object to apply the status manager data to. </param>
-    /// <param name="data"> The base64 encoded status manager data to apply to the player. </param>
     [EzIPC("SetStatusManagerByPlayerV2")]
     private void SetStatusManager(IPlayerCharacter pc, string data)
     {
@@ -276,7 +310,6 @@ public class IPCProcessor : IDisposable
     ///     Fetches the current status manager data of a player character by their name.
     /// </summary>
     /// <returns> The base64 encoded status manager data of the player character. </returns>
-    /// <param name="name"> The object name to search for in the object table. </param>
     [EzIPC("GetStatusManagerByNameV2")]
     private string GetStatusManager(string name)
     {
@@ -291,7 +324,6 @@ public class IPCProcessor : IDisposable
     ///     Fetches the current status manager data of a player character by their address.
     /// </summary>
     /// <returns> The base64 encoded status manager data of the player character. </returns>
-    /// <param name="ptr"> The object address to search for in the object table. </param>
     [EzIPC("GetStatusManagerByPtrV2")]
     private string GetStatusManager(nint ptr) => GetStatusManager((IPlayerCharacter)Svc.Objects.CreateObjectReference(ptr));
 
@@ -300,7 +332,6 @@ public class IPCProcessor : IDisposable
     ///     Fetches the current status manager data of a player character by the IPlayerCharacter object reference.
     /// </summary>
     /// <returns> The base64 encoded status manager data of the player character. </returns>
-    /// <param name="pc"> The PlayerCharacter object to fetch the status manager data from. </param>
     [EzIPC("GetStatusManagerByPlayerV2")]
     private string GetStatusManager(IPlayerCharacter pc)
     {
@@ -318,7 +349,6 @@ public class IPCProcessor : IDisposable
     /// <summary>
     ///     Fetches the Info of the Statuses active on the StatusManager associated with the name.
     /// </summary>
-    /// <param name="name"> PlayerName used to locate which StatusManager we retrieve the tuple list from. </param>
     /// <returns> The status info tuple of the Statuses Active in the StatusManager. </returns>
     [EzIPC("GetStatusManagerInfoByNameV2")]
     private List<MoodlesStatusInfo> GetStatusManagerInfo(string name)
@@ -334,7 +364,6 @@ public class IPCProcessor : IDisposable
     ///     Fetches the Info of the Statuses active on the StatusManager associated with the Player Address.
     /// </summary>
     /// <returns> The status info tuple of the Statuses Active in the StatusManager. </returns>
-    /// <param name="ptr"> Address used to locate which StatusManager we retrieve the tuple list from. </param>
     [EzIPC("GetStatusManagerInfoByPtrV2")]
     private List<MoodlesStatusInfo> GetStatusManagerInfo(nint ptr) => GetStatusManagerInfo((IPlayerCharacter)Svc.Objects.CreateObjectReference(ptr));
 
@@ -343,7 +372,6 @@ public class IPCProcessor : IDisposable
     ///     Fetches the current status manager data of a player character by the IPlayerCharacter object reference.
     /// </summary>
     /// <returns> The base64 encoded status manager data of the player character. </returns>
-    /// <param name="pc"> The PlayerCharacter object to fetch the status manager data from. </param>
     [EzIPC("GetStatusManagerInfoByPlayerV2")]
     private List<MoodlesStatusInfo> GetStatusManagerInfo(IPlayerCharacter pc)
     {
@@ -357,7 +385,6 @@ public class IPCProcessor : IDisposable
     ///     Fetches a client's Moodle Status information by the GUID of the Moodle.
     /// </summary>
     /// <returns> The status info tuple of the moodle if it exists, otherwise a default tuple. </returns>
-    /// <param name="guid"> The Identifier for the existing Moodle. </param>
     [EzIPC]
     private MoodlesStatusInfo GetStatusInfoV2(Guid guid)
     {
@@ -387,7 +414,6 @@ public class IPCProcessor : IDisposable
     ///     Fetches a client's Preset Profile information by the GUID of the Profile.
     /// </summary>
     /// <returns> The profile info tuple of the profile if it exists, otherwise a default tuple. </returns>
-    /// <param name="guid"> The Identifier for the existing Profile. </param>
     [EzIPC]
     private MoodlePresetInfo GetPresetInfoV2(Guid guid)
     {

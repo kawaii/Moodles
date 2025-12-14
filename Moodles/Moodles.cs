@@ -51,7 +51,8 @@ public class Moodles : IDalamudPlugin
             IPCProcessor = new();
             IPCTester = new();
             Utils.CleanupNulls();
-            Utils.SyncGSpeakAvailable();
+            // Check connected IPC states availability & data.
+            Utils.FetchInitialIpcInfo();
         });
     }
 
@@ -112,7 +113,9 @@ public class Moodles : IDalamudPlugin
                 //JobChange
                 ApplyAutomation();
             }
-            var gsPlayers = Utils.GSpeakPlayerNames;
+
+            // Process SundouleiaPlayers as ephemeral status managers
+            var sundouleiaPlayers = Utils.SundouleiaPlayerCache.Keys;
             foreach(var x in Svc.Objects)
             {
                 if(x is IPlayerCharacter pc)
@@ -120,11 +123,11 @@ public class Moodles : IDalamudPlugin
                     var m = pc.GetMyStatusManager(false);
                     if(m != null)
                     {
-                        if(gsPlayers.Contains(pc.GetNameWithWorld()))
+                        if(sundouleiaPlayers.Contains(pc.Address))
                         {
                             if(!m.Ephemeral)
                             {
-                                PluginLog.Debug($"{pc.GetNameWithWorld()} is now GSpeak player. Status manager ephemeral, automation disabled.");
+                                PluginLog.Debug($"{pc.GetNameWithWorld()} is now Sundouleia player. Status manager ephemeral, automation disabled.");
                                 m.Ephemeral = true;
                                 m.Statuses.Each(s => s.ExpiresAt = 0);
                             }
@@ -133,7 +136,7 @@ public class Moodles : IDalamudPlugin
                         {
                             if(m.Ephemeral)
                             {
-                                PluginLog.Debug($"{pc.GetNameWithWorld()} is no longer GSpeak player. Status manager persistent, automation enabled.");
+                                PluginLog.Debug($"{pc.GetNameWithWorld()} is no longer Sundouleia player. Status manager persistent, automation enabled.");
                                 m.Ephemeral = false;
                             }
                         }
@@ -194,14 +197,14 @@ public class Moodles : IDalamudPlugin
             if(q?.Address != Player.Object?.Address && q is IPlayerCharacter pc)
             {
                 var name = pc.GetNameWithWorld();
-                var identifier = (name, pc.GetJob());
+                var identifier = (name, (Job)pc.ClassJob.RowId);
                 if(!SeenPlayers.Contains(identifier))
                 {
                     PluginLog.Debug($"Begin apply automation for {identifier}");
                     var mgr = Utils.GetMyStatusManager(name);
-                    if(mgr.Ephemeral || Utils.GSpeakPlayerNames.Contains(pc.GetNameWithWorld()))
+                    if(mgr.Ephemeral || Utils.SundouleiaPlayerCache.Keys.Contains(pc.Address))
                     {
-                        PluginLog.Debug($"Skipping automation for {identifier} because status manager is controlled by an external plugin");
+                        PluginLog.Debug($"Skipping automation for {identifier} because status manager is controlled by Sundouleia");
                     }
                     else
                     {

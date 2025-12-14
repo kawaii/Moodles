@@ -40,6 +40,7 @@ public sealed class MoodleFileSystem : FileSystem<MyStatus>, IDisposable
     {
         PluginLog.Debug($"Deleting {status.ID}");
         C.SavedStatuses.Remove(status);
+        P.IPCProcessor.StatusUpdated(status.GUID, true);
         if(FindLeaf(status, out var leaf))
         {
             Delete(leaf);
@@ -192,6 +193,7 @@ public sealed class MoodleFileSystem : FileSystem<MyStatus>, IDisposable
                     {
                         FS.CreateLeaf(FS.Root, NewName, newStatus);
                         C.SavedStatuses.Add(newStatus);
+                        P.IPCProcessor.StatusUpdated(newStatus.GUID, false);
                     }
                     else
                     {
@@ -215,8 +217,9 @@ public sealed class MoodleFileSystem : FileSystem<MyStatus>, IDisposable
                     var newStatus = new MyStatus();
                     FS.CreateLeaf(FS.Root, NewName, newStatus);
                     C.SavedStatuses.Add(newStatus);
+                    P.IPCProcessor.StatusUpdated(newStatus.GUID, false);
                 }
-                catch(Exception e)
+                catch (Exception e)
                 {
                     e.LogVerbose();
                     Notify.Error($"This name already exists!");

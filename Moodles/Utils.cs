@@ -8,6 +8,7 @@ using FFXIVClientStructs.FFXIV.Client.UI.Info;
 using FFXIVClientStructs.FFXIV.Component.GUI;
 using Moodles.Data;
 using Moodles.OtterGuiHandlers.Whitelist.GSpeak;
+using System;
 using System.Text.RegularExpressions;
 using System.Windows.Forms;
 using Status = Lumina.Excel.Sheets.Status;
@@ -16,61 +17,17 @@ using UIColor = ECommons.ChatMethods.UIColor;
 namespace Moodles;
 public static unsafe partial class Utils
 {
-    /// <summary>
-    /// Sends a message to GSpeak to apply the preset's collective statuses to the target player.
-    /// <para> All Moodles Status's are applied directly to the status manager. And not to their Saved Moodles. </para>
-    /// </summary>
-    /// <param name="Preset"> The preset to apply. </param>
-    /// <param name="target"> The target player to apply the statuses to. </param>
-    public static void SendGSpeakMessage(this Preset Preset, IPlayerCharacter target)
+    public static TargetApplyMode GetApplyMode()
     {
-        var list = new List<MoodlesStatusInfo>();
-        foreach(var s in C.SavedStatuses.Where(x => Preset.Statuses.Contains(x.GUID)))
-        {
-            var preparedStatus = s.PrepareToApply();
-            preparedStatus.Applier = Player.NameWithWorld ?? "";
-            if(!preparedStatus.IsValid(out var error))
-            {
-                PluginLog.Error($"Could not apply status: {error}");
-            }
-            else
-            {
-                list.Add(preparedStatus.ToStatusInfoTuple());
-            }
-        }
-        if(list.Count > 0)
-        {
-            if(P.IPCProcessor.ApplyStatusesToPair.TryInvoke(Player.NameWithWorld ?? "", target.GetNameWithWorld(), list, false))
-            {
-                Notify.Info($"Broadcast success");
-            }
-            else
-            {
-                Notify.Error("Broadcast failed");
-            }
-        }
+        if (Svc.Targets.Target is not IPlayerCharacter pc)
+            return TargetApplyMode.NoTarget;
+        if (GSpeakAvailable && GSpeakPlayerCache.ContainsKey(pc.Address))
+            return TargetApplyMode.GSpeakPair;
+        if (SundouleiaAvailable && SundouleiaPlayerCache.ContainsKey(pc.Address))
+            return TargetApplyMode.Sundesmo;
+        return TargetApplyMode.Local;
     }
 
-    public static void SendGSpeakMessage(this MyStatus Status, IPlayerCharacter target)
-    {
-        var preparedStatus = Status.PrepareToApply();
-        preparedStatus.Applier = Player.NameWithWorld ?? "";
-        if(!preparedStatus.IsValid(out var error))
-        {
-            Notify.Error($"Could not apply status: {error}");
-        }
-        else
-        {
-            if(P.IPCProcessor.ApplyStatusesToPair.TryInvoke(Player.NameWithWorld ?? "", target.GetNameWithWorld(), [preparedStatus.ToStatusInfoTuple()], true))
-            {
-                Notify.Info($"Broadcast success");
-            }
-            else
-            {
-                Notify.Error("Broadcast failed");
-            }
-        }
-    }
 
     private static long LastChangeTime;
 
@@ -130,43 +87,6 @@ public static unsafe partial class Utils
             }
         }
         return ret;
-    }
-
-    // is automatically updated by GSpeak's VisiblePairsUpdated event call, and does not need to be called every frame.
-    public static bool GSpeakAvailable = false;
-    public static List<(string, MoodlesGSpeakPairPerms, MoodlesGSpeakPairPerms)> GSpeakPlayers = [];
-    public static List<string> GSpeakPlayerNames = [];
-    public static ulong GSpeakPlayersUpdated = 0;
-    public static List<(string, MoodlesGSpeakPairPerms, MoodlesGSpeakPairPerms)> GetGSpeakPlayers()
-    {
-        if(Frame != GSpeakPlayersUpdated)
-        {
-            GSpeakPlayersUpdated = Frame;
-            if(P.IPCProcessor.GetGSpeakPlayers.TryInvoke(out var ret) && ret != null)
-            {
-                GSpeakPlayers = ret;
-                GSpeakPlayerNames = ret.Select(x => x.Item1).ToList();
-                WhitelistGSpeak.SyncWithGSpeakPlayers(GSpeakPlayers);
-            }
-        }
-        return GSpeakPlayers;
-    }
-
-    public static void ClearGSpeakPlayers()
-    {
-        if(Frame != GSpeakPlayersUpdated)
-        {
-            GSpeakPlayersUpdated = Frame;
-            GSpeakPlayers = [];
-            GSpeakPlayerNames = [];
-            // update the whitelist
-            WhitelistGSpeak.SyncWithGSpeakPlayers(GSpeakPlayers);
-        }
-    }
-    public static void SyncGSpeakAvailable()
-    {
-        var gSpeak = Svc.PluginInterface.InstalledPlugins.FirstOrDefault(p => string.Equals(p.InternalName, "ProjectGagSpeak", StringComparison.OrdinalIgnoreCase));
-        GSpeakAvailable = gSpeak is { } plugin && plugin.IsLoaded; 
     }
 
     public static bool IsNotNull(this MyStatus status)
@@ -231,7 +151,7 @@ public static unsafe partial class Utils
             {
                 foreach(var c in x.Combos)
                 {
-                    if(c.Jobs.Count == 0 || c.Jobs.Contains(pc.GetJob()))
+                    if(c.Jobs.Count == 0 || c.Jobs.Contains((Job)pc.ClassJob.RowId))
                     {
                         yield return c;
                     }

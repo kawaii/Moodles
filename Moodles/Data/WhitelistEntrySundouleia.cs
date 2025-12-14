@@ -1,14 +1,13 @@
-﻿using InteropGenerator.Runtime;
-using System.Diagnostics.CodeAnalysis;
+﻿using System.Diagnostics.CodeAnalysis;
 
 namespace Moodles.Data;
 
 [Serializable]
-public class WhitelistEntryGSpeak
+public class WhitelistEntrySundouleia
 {
-    public WhitelistEntryGSpeak()
+    public WhitelistEntrySundouleia()
     {
-        PlayerName = "Unknown-GSpeak-Player";
+        PlayerName = "Unknown-Sundouleia-Player";
         Address = nint.Zero;
         Access = MoodleAccess.None;
         MaxTime = TimeSpan.Zero;
@@ -16,14 +15,13 @@ public class WhitelistEntryGSpeak
         ClientMaxTime = TimeSpan.Zero;
     }
 
-    public WhitelistEntryGSpeak(nint address, string nameWithWorld, IPCMoodleAccessTuple accessTuple)
+    public WhitelistEntrySundouleia(nint address, string nameWithWorld, IPCMoodleAccessTuple accessTuple)
     {
         PlayerName = nameWithWorld;
         Address = address;
         UpdateData(accessTuple);
     }
 
-    // The Player Name associated with this whitelist entry.
     public string PlayerName;
     public nint Address;
 
@@ -33,6 +31,7 @@ public class WhitelistEntryGSpeak
     public long TotalMaxTime => (long)MaxTime.TotalMilliseconds;
     public long MaxExpireTimeUnix => Access.HasAny(MoodleAccess.Permanent) ? long.MaxValue : Utils.Time + TotalMaxTime;
 
+
     // Client Access for this whitelist entry.
     public MoodleAccess ClientAccess;
     public TimeSpan ClientMaxTime;
@@ -41,12 +40,10 @@ public class WhitelistEntryGSpeak
 
     public void UpdateData(IPCMoodleAccessTuple latestAccessTuple)
     {
-        // Update the MoodleAccess first.
         ClientAccess = latestAccessTuple.CallerAccess;
         Access = latestAccessTuple.OtherAccess;
-        // Update the max times.
         ClientMaxTime = TimeSpan.FromMilliseconds(latestAccessTuple.CallerMaxTime);
-        MaxTime = TimeSpan.FromMilliseconds(latestAccessTuple.OtherMaxTime);    
+        MaxTime = TimeSpan.FromMilliseconds(latestAccessTuple.OtherMaxTime);
     }
 
     // Logic used to perform if a status is allowed to be applied to the entry by the client.
