@@ -240,8 +240,8 @@ public static class TabMoodles
 
                     ImGui.TableNextColumn();
                     ImGuiEx.TextV($"Dispelable:");
-                    ImGuiEx.HelpMarker("Applies the dispelable indicator to this Moodle, implying it can be removed via the use of Esuna.\n" +
-                        "These moodles can be removed with Esuna if the config option is enabled. Only available for icons representing negative status effects.");
+                    ImGuiEx.HelpMarker("Applies the dispelable indicator to this Moodle. Unless 'Moodles can be Esunad' is enabled in settings, this is only implied.\n" +
+                        "Only available for icons representing negative status effects.");
                     ImGui.TableNextColumn();
                     ImGuiEx.SetNextItemFullWidth();
                     if (ImGui.Checkbox("##dispel", ref Selected.Dispelable))
