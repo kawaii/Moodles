@@ -1,5 +1,6 @@
 ﻿using Dalamud.Game.ClientState.Objects.SubKinds;
 using ECommons.GameHelpers;
+using FFXIVClientStructs.FFXIV.Client.Game.Character;
 using FFXIVClientStructs.FFXIV.Client.Game.Object;
 using Lumina.Excel.Sheets;
 using Moodles.Data;
@@ -10,18 +11,20 @@ public static unsafe class TabFuckup
 {
     private static MyStatus Status = new();
     private static int Duration = 20;
-    private static string Owner = "";
+    private static string OwnerNameWorld = string.Empty;
     private static int Cnt = 10;
 
-    public static void Draw()
+    public static unsafe void Draw()
     {
-        if (ImGui.BeginCombo("Select status manager", $"{Owner}"))
+        var objManager = GameObjectManager.Instance();
+
+        if (ImGui.BeginCombo("Select status manager", $"{OwnerNameWorld}"))
         {
             foreach (var x in C.StatusManagers)
             {
                 if (ImGui.Selectable(x.Key))
                 {
-                    Owner = x.Key;
+                    OwnerNameWorld = x.Key;
                 }
             }
             ImGui.EndCombo();
@@ -29,23 +32,25 @@ public static unsafe class TabFuckup
 
         if (ImGui.Button("Self"))
         {
-            Owner = Player.NameWithWorld;
+            OwnerNameWorld = LocalPlayer.NameWithWorld;
         }
         ImGui.SameLine();
         if (ImGui.Button("Target") && Svc.Targets.Target is IPlayerCharacter pct)
         {
-            Owner = pct.GetNameWithWorld();
+            OwnerNameWorld = pct.GetNameWithWorld();
         }
         ImGui.SameLine();
         ImGui.SetNextItemWidth(200f);
         if (ImGui.BeginCombo("##Players around", "Players around"))
         {
-            foreach (var x in Svc.Objects)
+            for (int i = 0; i < 200; i++)
             {
-                if (x is IPlayerCharacter pc)
-                {
-                    if (ImGui.Selectable(pc.GetNameWithWorld())) Owner = pc.GetNameWithWorld();
-                }
+                GameObject* obj = objManager->Objects.IndexSorted[i];
+                if (obj == null) continue;
+                if (!obj->IsCharacter()) continue;
+
+                var nameWorld = ((Character*)obj)->GetNameWithWorld();
+                if (ImGui.Selectable(nameWorld)) OwnerNameWorld = nameWorld;
             }
             ImGui.EndCombo();
         }
@@ -57,7 +62,7 @@ public static unsafe class TabFuckup
             {
                 if (x.GameObject is IPlayerCharacter pc)
                 {
-                    if (ImGui.Selectable(pc.GetNameWithWorld())) Owner = pc.GetNameWithWorld();
+                    if (ImGui.Selectable(pc.GetNameWithWorld())) OwnerNameWorld = pc.GetNameWithWorld();
                 }
             }
             ImGui.EndCombo();
@@ -67,7 +72,7 @@ public static unsafe class TabFuckup
         {
             C.StatusManagers.Clear();
         }
-        if (C.StatusManagers.TryGetValue(Owner, out var manager))
+        if (C.StatusManagers.TryGetValue(OwnerNameWorld, out var manager))
         {
             if (ImGui.CollapsingHeader("Add##collap"))
             {
@@ -159,10 +164,16 @@ public static unsafe class TabFuckup
                         Status.Minutes = 0;
                         Status.Hours = 0;
                         Status.Seconds = Random.Shared.Next(5, 60);
+
                         if (Random.Shared.Next(20) == 0) Status.Minutes = Random.Shared.Next(5, 60);
                         if (Random.Shared.Next(100) == 0) Status.Hours = Random.Shared.Next(5, 60);
-                        var array = Svc.Objects.Where(x => x is IPlayerCharacter pc && pc.IsTargetable).Cast<IPlayerCharacter>().ToArray();
-                        Utils.GetMyStatusManager(array[Random.Shared.Next(array.Length)]).AddOrUpdate(Status.JSONClone().PrepareToApply(), UpdateSource.StatusTuple);
+
+                        // Get all targetable characters.
+                        var arr = CharacterUtils.GetTargetablePlayers();
+                        unsafe
+                        {
+                            ((Character*)arr[Random.Shared.Next(arr.Length)])->MyStatusManager().AddOrUpdate(Status.JSONClone().PrepareToApply(), UpdateSource.StatusTuple);
+                        }
                     }
                 }
                 ImGui.SameLine();
@@ -171,7 +182,7 @@ public static unsafe class TabFuckup
                     Copy(manager.BinarySerialize().ToHexString());
                 }
                 ImGui.SameLine();
-                if (ImGui.Button("Apply bin") && TryParseByteArray(Paste(), out var a))
+                if (ImGui.Button("Apply bin") && TryParseByteArray(Paste() ?? string.Empty, out var a))
                 {
                     manager.Apply(a, UpdateSource.DataString);
                 }
@@ -240,17 +251,17 @@ public static unsafe class TabFuckup
             {
                 MyStatusManager statusManager = new MyStatusManager();
 
-                C.StatusManagers[Owner] = statusManager;
+                C.StatusManagers[OwnerNameWorld] = statusManager;
             }
         }
 
-        if (C.StatusManagers.TryGetValue(Owner, out var sm))
+        if (C.StatusManagers.TryGetValue(OwnerNameWorld, out var sm))
         {
             if (sm != null)
             {
                 if (ImGui.Button("Remove Status Manager"))
                 {
-                    C.StatusManagers.Remove(Owner);
+                    C.StatusManagers.Remove(OwnerNameWorld);
                 }
             }
         }

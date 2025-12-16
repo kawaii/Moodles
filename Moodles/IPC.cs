@@ -1,16 +1,26 @@
-﻿using Dalamud.Game.ClientState.Objects.SubKinds;
-using ECommons.EzIpcManager;
+﻿using ECommons.EzIpcManager;
 using ECommons.GameHelpers;
 using Moodles.Data;
-using Status = Lumina.Excel.Sheets.Status;
 
 namespace Moodles;
-public static unsafe partial class Utils
+
+// Holds the internal IPC data and IPCProcesser logic.
+public static unsafe class IPC
 {
+    // Do not store personal information about IPC players in the config, store them internally during plugin lifetime.
+    internal static List<WhitelistEntryGSpeak>      WhitelistGSpeak     = [];
+    internal static List<WhitelistEntrySundouleia>  WhitelistSundouleia = [];
+
+    // Hold internal GSpeak & Sundouleia Data.
+    public static bool GSpeakAvailable      = false;
+    public static bool SundouleiaAvailable  = false;
+    public static Dictionary<nint, IPCMoodleAccessTuple> GSpeakPlayerCache      = [];
+    public static Dictionary<nint, IPCMoodleAccessTuple> SundouleiaPlayerCache  = [];
+
     // Faster bitwise check for MoodleAccess than .HasFlag()
     public static bool HasAny(this MoodleAccess flags, MoodleAccess check) => (flags & check) != 0;
 
-    public static void FetchInitialIpcInfo()
+    public static void FetchInitial()
     {
         var gSpeak = Svc.PluginInterface.InstalledPlugins.FirstOrDefault(p => string.Equals(p.InternalName, "ProjectGagSpeak", StringComparison.OrdinalIgnoreCase));
         var sundouleia = Svc.PluginInterface.InstalledPlugins.FirstOrDefault(p => string.Equals(p.InternalName, "Sundouleia", StringComparison.OrdinalIgnoreCase));
@@ -26,42 +36,38 @@ public static unsafe partial class Utils
         }
     }
 
-
-    // Pointers are retained by both IPC's via monitoring Object Initialize and Destroy calls, 
-    // and will inform moodles when an update occured to avoid per-frame checks.
     #region Sundouleia
-    public static bool SundouleiaAvailable = false;
-    public static Dictionary<nint, IPCMoodleAccessTuple> SundouleiaPlayerCache = [];
     public static void InitSundesmoCache()
     {
         if (P.IPCProcessor.GetAllSundouleiaInfo.TryInvoke(out var allInfo) && allInfo != null)
         {
             SundouleiaPlayerCache = allInfo;
-            C.WhitelistSundouleia.Clear();
+            WhitelistSundouleia.Clear();
             // Add or update existing entries.
             foreach (var (addr, info) in allInfo)
             {
-                if (Svc.Objects.CreateObjectReference(addr) is IPlayerCharacter pc)
+                if (CharaWatcher.Rendered.TryGetValue(addr, out var targetAddr))
                 {
-                    C.WhitelistSundouleia.Add(new WhitelistEntrySundouleia(addr, pc.GetNameWithWorld(), info));
+                    WhitelistSundouleia.Add(new WhitelistEntrySundouleia(addr, info));
                 }
             }
         }
     }
 
-    public static void AddSundesmo(nint addr, IPCMoodleAccessTuple info)
+    public static unsafe void AddOrUpdateSundesmo(nint addr, IPCMoodleAccessTuple info)
     {
+        PluginLog.Verbose($"Sundouleia Adding/Updating rendered player: {addr:X}");
         SundouleiaPlayerCache[addr] = info;
         // Add or update existing entry.
-        if (C.WhitelistSundouleia.FirstOrDefault(x => x.Address == addr) is { } existing)
+        if (WhitelistSundouleia.FirstOrDefault(x => x.Address == addr) is { } existing)
         {
             existing.UpdateData(info);
         }
         else
         {
-            if (Svc.Objects.CreateObjectReference(addr) is IPlayerCharacter pc)
+            if (CharaWatcher.Rendered.TryGetValue(addr, out var targetAddr))
             {
-                C.WhitelistSundouleia.Add(new WhitelistEntrySundouleia(addr, pc.GetNameWithWorld(), info));
+                WhitelistSundouleia.Add(new WhitelistEntrySundouleia(addr, info));
             }
         }
     }
@@ -69,21 +75,21 @@ public static unsafe partial class Utils
     public static void RemoveSundesmo(nint addr)
     {
         SundouleiaPlayerCache.Remove(addr);
-        if (C.WhitelistSundouleia.FirstOrDefault(x => x.Address == addr) is { } existing)
+        if (WhitelistSundouleia.FirstOrDefault(x => x.Address == addr) is { } existing)
         {
-            C.WhitelistSundouleia.Remove(existing);
+            WhitelistSundouleia.Remove(existing);
         }
     }
 
     public static void ClearSundesmos()
     {
         SundouleiaPlayerCache.Clear();
-        C.WhitelistSundouleia.Clear();
+        WhitelistSundouleia.Clear();
     }
 
-    public static void SendSundouleiaMessage(this Preset Preset, IPlayerCharacter target)
+    public static void SendSundouleiaMessage(this Preset Preset, nint targetAddr)
     {
-        if (C.WhitelistSundouleia.FirstOrDefault(x => x.Address == target.Address) is not { } entry)
+        if (WhitelistSundouleia.FirstOrDefault(x => x.Address == targetAddr) is not { } entry)
         {
             PluginLog.Error("Target player is not whitelisted for Sundouleia moodles.");
             return;
@@ -110,7 +116,7 @@ public static unsafe partial class Utils
         }
         if (list.Count > 0)
         {
-            if (P.IPCProcessor.SundouleiaTryApplyToPair.TryInvoke(target.Address, list, false))
+            if (P.IPCProcessor.SundouleiaTryApplyToPair.TryInvoke(targetAddr, list, false))
             {
                 Notify.Info($"Broadcast success");
             }
@@ -121,16 +127,16 @@ public static unsafe partial class Utils
         }
     }
 
-    public static void SendSundouleiaMessage(this MyStatus Status, IPlayerCharacter target)
+    public static void SendSundouleiaMessage(this MyStatus Status, nint targetAddr)
     {
-        if (C.WhitelistSundouleia.FirstOrDefault(x => x.Address == target.Address) is not { } entry)
+        if (WhitelistSundouleia.FirstOrDefault(x => x.Address == targetAddr) is not { } entry)
         {
             PluginLog.Error("Target player is not whitelisted for Sundouleia moodles.");
             return;
         }
 
         var preparedStatus = Status.PrepareToApply();
-        preparedStatus.Applier = Player.NameWithWorld ?? "";
+        preparedStatus.Applier = LocalPlayer.NameWithWorld ?? string.Empty;
         if (!preparedStatus.IsValid(out var error))
         {
             Notify.Error($"Could not apply status: {error}");
@@ -141,7 +147,7 @@ public static unsafe partial class Utils
         }
         else
         {
-            if (P.IPCProcessor.SundouleiaTryApplyToPair.TryInvoke(target.Address, [preparedStatus.ToStatusInfoTuple()], true))
+            if (P.IPCProcessor.SundouleiaTryApplyToPair.TryInvoke(targetAddr, [preparedStatus.ToStatusInfoTuple()], true))
             {
                 Notify.Info($"Broadcast success");
             }
@@ -154,38 +160,38 @@ public static unsafe partial class Utils
     #endregion Sundouleia
 
     #region GSpeak
-    public static bool GSpeakAvailable = false;
-    public static Dictionary<nint, IPCMoodleAccessTuple> GSpeakPlayerCache = [];
     public static void InitGSpeakCache()
     {
         if (P.IPCProcessor.GetAllGSpeakInfo.TryInvoke(out var allInfo) && allInfo != null)
         {
             GSpeakPlayerCache = allInfo;
-            C.WhitelistGSpeak.Clear();
+            WhitelistGSpeak.Clear();
             // Add or update existing entries.
             foreach (var (addr, info) in allInfo)
             {
-                if (Svc.Objects.CreateObjectReference(addr) is IPlayerCharacter pc)
+                if (CharaWatcher.Rendered.TryGetValue(addr, out var targetAddr))
                 {
-                    C.WhitelistGSpeak.Add(new WhitelistEntryGSpeak(addr, pc.GetNameWithWorld(), info));
+                    WhitelistGSpeak.Add(new WhitelistEntryGSpeak(addr, info));
                 }
             }
         }
     }
 
-    public static void AddGSpeakPair(nint addr, IPCMoodleAccessTuple info)
+    public static void AddOrUpdateGSpeakPair(nint addr, IPCMoodleAccessTuple info)
     {
+        PluginLog.Verbose($"GSpeak access Added/Updated for address: {addr:X}");
+
         GSpeakPlayerCache[addr] = info;
         // Add or update existing entry.
-        if (C.WhitelistGSpeak.FirstOrDefault(x => x.Address == addr) is { } existing)
+        if (WhitelistGSpeak.FirstOrDefault(x => x.Address == addr) is { } existing)
         {
             existing.UpdateData(info);
         }
         else
         {
-            if (Svc.Objects.CreateObjectReference(addr) is IPlayerCharacter pc)
+            if (CharaWatcher.Rendered.TryGetValue(addr, out var targetAddr))
             {
-                C.WhitelistGSpeak.Add(new WhitelistEntryGSpeak(addr, pc.GetNameWithWorld(), info));
+                WhitelistGSpeak.Add(new WhitelistEntryGSpeak(addr, info));
             }
         }
     }
@@ -193,21 +199,21 @@ public static unsafe partial class Utils
     public static void RemoveGSpeakPair(nint addr)
     {
         GSpeakPlayerCache.Remove(addr);
-        if (C.WhitelistGSpeak.FirstOrDefault(x => x.Address == addr) is { } existing)
+        if (WhitelistGSpeak.FirstOrDefault(x => x.Address == addr) is { } existing)
         {
-            C.WhitelistGSpeak.Remove(existing);
+            WhitelistGSpeak.Remove(existing);
         }
     }
 
     public static void ClearGSpeakPairs()
     {
         GSpeakPlayerCache.Clear();
-        C.WhitelistGSpeak.Clear();
+        WhitelistGSpeak.Clear();
     }
 
-    public static void SendGSpeakMessage(this Preset Preset, IPlayerCharacter target)
+    public static void SendGSpeakMessage(this Preset Preset, nint targetAddr)
     {
-        if (C.WhitelistGSpeak.FirstOrDefault(x => x.Address == target.Address) is not { } entry)
+        if (WhitelistGSpeak.FirstOrDefault(x => x.Address == targetAddr) is not { } entry)
         {
             PluginLog.Error("Target player is not whitelisted for GSpeak moodles.");
             return;
@@ -217,7 +223,7 @@ public static unsafe partial class Utils
         foreach (var s in C.SavedStatuses.Where(x => Preset.Statuses.Contains(x.GUID)))
         {
             var preparedStatus = s.PrepareToApply();
-            preparedStatus.Applier = Player.NameWithWorld ?? "";
+            preparedStatus.Applier = LocalPlayer.NameWithWorld ?? string.Empty;
             if (!preparedStatus.IsValid(out var error))
             {
                 PluginLog.Error($"Could not apply status: {error}");
@@ -234,7 +240,7 @@ public static unsafe partial class Utils
         }
         if (list.Count > 0)
         {
-            if (P.IPCProcessor.GSpeakTryApplyToPair.TryInvoke(target.Address, list, false))
+            if (P.IPCProcessor.GSpeakTryApplyToPair.TryInvoke(targetAddr, list, false))
             {
                 Notify.Info($"Broadcast success");
             }
@@ -245,9 +251,9 @@ public static unsafe partial class Utils
         }
     }
 
-    public static void SendGSpeakMessage(this MyStatus Status, IPlayerCharacter target)
+    public static unsafe void SendGSpeakMessage(this MyStatus Status, nint targetAddr)
     {
-        if (C.WhitelistGSpeak.FirstOrDefault(x => x.Address == target.Address) is not { } entry)
+        if (WhitelistGSpeak.FirstOrDefault(x => x.Address == targetAddr) is not { } entry)
         {
             PluginLog.Error("Target player is not whitelisted for GSpeak moodles.");
             return;
@@ -265,7 +271,7 @@ public static unsafe partial class Utils
         }
         else
         {
-            if (P.IPCProcessor.GSpeakTryApplyToPair.TryInvoke(target.Address, [preparedStatus.ToStatusInfoTuple()], true))
+            if (P.IPCProcessor.GSpeakTryApplyToPair.TryInvoke(targetAddr, [preparedStatus.ToStatusInfoTuple()], true))
             {
                 Notify.Info($"Broadcast success");
             }

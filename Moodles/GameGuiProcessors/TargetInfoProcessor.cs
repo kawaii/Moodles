@@ -2,6 +2,7 @@
 using Dalamud.Game.Addon.Lifecycle.AddonArgTypes;
 using Dalamud.Game.ClientState.Objects.SubKinds;
 using ECommons.GameHelpers;
+using FFXIVClientStructs.FFXIV.Client.Game.Character;
 using FFXIVClientStructs.FFXIV.Component.GUI;
 using Moodles.Data;
 
@@ -83,7 +84,8 @@ public unsafe class TargetInfoProcessor
                 }
                 if(!hideAll)
                 {
-                    foreach(var x in pc.GetMyStatusManager().Statuses)
+                    var sm = ((Character*)pc.Address)->MyStatusManager();
+                    foreach (var x in sm.Statuses)
                     {
                         if(baseCnt < 3) break;
                         var rem = x.ExpiresAt - Utils.Time;

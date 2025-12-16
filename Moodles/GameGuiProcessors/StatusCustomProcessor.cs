@@ -172,13 +172,13 @@ public unsafe class StatusCustomProcessor : IDisposable
             }
             else
             {
-                baseCnt = 24 - Player.Object.StatusList.Count(x => x.StatusId != 0 && userStatuses.Contains(x.StatusId));
+                baseCnt = 24 - LocalPlayer.StatusList.Count(x => x.StatusId != 0 && userStatuses.Contains(x.StatusId));
                 if(Svc.Condition[ConditionFlag.Mounted] && addon->NameString == "StatusCustom2") baseCnt--;
             }
             for(var i = baseCnt; i >= 5; i--)
             {
                 var c = addon->UldManager.NodeList[i];
-                if(c->IsVisible()) c->NodeFlags ^= NodeFlags.Visible;
+                if (c->IsVisible()) c->NodeFlags ^= NodeFlags.Visible;
             }
             if(!hideAll)
             {

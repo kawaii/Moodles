@@ -1,4 +1,6 @@
-﻿using System.Diagnostics.CodeAnalysis;
+﻿using FFXIVClientStructs.FFXIV.Client.Game.Character;
+using System.Diagnostics.CodeAnalysis;
+using System.Xml.Linq;
 
 namespace Moodles.Data;
 
@@ -7,6 +9,7 @@ public class WhitelistEntrySundouleia
 {
     public WhitelistEntrySundouleia()
     {
+        Name = "Unknown-Sundouleia";
         PlayerName = "Unknown-Sundouleia-Player";
         Address = nint.Zero;
         Access = MoodleAccess.None;
@@ -15,13 +18,15 @@ public class WhitelistEntrySundouleia
         ClientMaxTime = TimeSpan.Zero;
     }
 
-    public WhitelistEntrySundouleia(nint address, string nameWithWorld, IPCMoodleAccessTuple accessTuple)
+    public unsafe WhitelistEntrySundouleia(nint address, IPCMoodleAccessTuple accessTuple)
     {
-        PlayerName = nameWithWorld;
+        Name = ((Character*)address)->NameString;
+        PlayerName = ((Character*)address)->GetNameWithWorld();
         Address = address;
         UpdateData(accessTuple);
     }
 
+    public string Name;
     public string PlayerName;
     public nint Address;
 
@@ -38,10 +43,12 @@ public class WhitelistEntrySundouleia
     public long ClientTotalMaxTime => (long)ClientMaxTime.TotalMilliseconds;
     public long ClientMaxExpireTimeUnix => ClientAccess.HasAny(MoodleAccess.Permanent) ? long.MaxValue : Utils.Time + ClientTotalMaxTime;
 
+    public string CensoredName() => string.Concat(Name.Split(' ', StringSplitOptions.RemoveEmptyEntries).Select(w => char.ToUpper(w[0]) + "."));
+
     public void UpdateData(IPCMoodleAccessTuple latestAccessTuple)
     {
-        ClientAccess = latestAccessTuple.CallerAccess;
-        Access = latestAccessTuple.OtherAccess;
+        ClientAccess = (MoodleAccess)latestAccessTuple.CallerAccessFlags;
+        Access = (MoodleAccess)latestAccessTuple.OtherAccessFlags;
         ClientMaxTime = TimeSpan.FromMilliseconds(latestAccessTuple.CallerMaxTime);
         MaxTime = TimeSpan.FromMilliseconds(latestAccessTuple.OtherMaxTime);
     }

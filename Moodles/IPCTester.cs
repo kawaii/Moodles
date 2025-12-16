@@ -1,7 +1,9 @@
 ﻿using Dalamud.Game.ClientState.Objects.SubKinds;
 using ECommons.EzIpcManager;
+using FFXIVClientStructs.FFXIV.Client.Game.Character;
 
 namespace Moodles;
+#pragma warning disable CS0649, CS8618 // EzIPC makes these warnings like wild but its fine.
 public class IPCTester
 {
     [EzIPC] private readonly Func<int> Version;
@@ -14,28 +16,28 @@ public class IPCTester
     [EzIPC] private readonly Action<IPlayerCharacter> ClearStatusManagerByPC;
     [EzIPC] private readonly Action<nint> ClearStatusManagerByPtr;
     [EzIPC] private readonly Action<string> ClearStatusManagerByName;
-
     public IPCTester()
     {
         EzIPC.Init(this, "Moodles");
     }
 
     [EzIPCEvent]
-    private void StatusManagerModified(IPlayerCharacter character)
+    private unsafe void StatusManagerModified(nint charaPtr)
     {
-        PluginLog.Debug($"IPC test: status manager modified ({character}): {string.Join(", ", character.GetMyStatusManager().Statuses.Select(x => x.Title))}");
+        Character* chara = (Character*)charaPtr;
+        PluginLog.Verbose($"IPC test: status manager modified ({chara->GetNameWithWorld()}): {string.Join(", ", chara->MyStatusManager().Statuses.Select(x => x.Title))}");
     }
 
     [EzIPCEvent]
-    private void StatusModified(Guid statusGuid)
+    private void StatusUpdated(Guid statusGuid, bool wasDeleted)
     {
-        PluginLog.Debug($"IPC test: Moodle status modified {statusGuid}");
+        PluginLog.Verbose($"IPC test: Moodle status modified {statusGuid} (Deleted? {wasDeleted})");
     }
 
     [EzIPCEvent]
-    private void PresetModified(Guid presetGuid)
+    private void PresetUpdated(Guid presetGuid, bool wasDeleted)
     {
-        PluginLog.Debug($"IPC test: Preset status modified {presetGuid}");
+        PluginLog.Verbose($"IPC test: Preset status modified {presetGuid} (Deleted? {wasDeleted})");
     }
 
     public void Draw()
@@ -87,3 +89,5 @@ public class IPCTester
         }
     }
 }
+#pragma warning restore CS0649, CS8618 // EzIPC makes these warnings like wild but its fine.
+

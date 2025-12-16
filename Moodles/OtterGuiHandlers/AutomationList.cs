@@ -1,5 +1,6 @@
 ﻿using Dalamud.Game.ClientState.Objects.SubKinds;
 using ECommons.ExcelServices;
+using FFXIVClientStructs.FFXIV.Client.Game.Character;
 using Moodles.Data;
 using OtterGui;
 
@@ -28,16 +29,16 @@ public class AutomationList : ItemSelector<AutomationProfile>
         }
         else
         {
-            foreach(var x in Svc.Objects)
+            unsafe
             {
-                if(x is IPlayerCharacter pc)
+                foreach (Character* chara in CharaWatcher.Rendered)
                 {
-                    if(Utils.GetSuitableAutomation(pc).ContainsAny(p.Combos))
+                    if (chara->GetSuitableAutomation().ContainsAny(p.Combos))
                     {
                         col = true;
                         ImGui.PushStyleColor(ImGuiCol.Text, ImGuiEx.Vector4FromRGB(0x3fd969));
                     }
-                    if(!C.AutoOther) break;
+                    if (!C.AutoOther) break;
                 }
             }
         }

@@ -1,6 +1,7 @@
 ﻿using Dalamud.Game.ClientState.Objects.SubKinds;
 using ECommons;
 using ECommons.GameHelpers;
+using FFXIVClientStructs.FFXIV.Client.Game.Character;
 using Moodles.Data;
 using Moodles.OtterGuiHandlers;
 using OtterGui.Raii;
@@ -18,7 +19,7 @@ public static class TabPresets
     };
     private static string Filter = "";
 
-    private static Preset Selected => P.OtterGuiHandler.PresetFileSystem.Selector.Selected;
+    private static Preset Selected => P.OtterGuiHandler.PresetFileSystem.Selector.Selected!;
     public static void Draw()
     {
         if(IsMoodleSelection)
@@ -231,20 +232,20 @@ public static class TabPresets
         }
     }
 
-    public static void ApplyToTarget(TargetApplyMode mode)
+    public static unsafe void ApplyToTarget(TargetApplyMode mode)
     {
-        if (Svc.Targets.Target is not IPlayerCharacter pc)
+        if (!CharaWatcher.TryGetValue(Svc.Targets.Target?.Address ?? nint.Zero, out Character* chara))
             return;
         try
         {
             switch (mode)
             {
                 case TargetApplyMode.GSpeakPair:
-                    Selected.SendGSpeakMessage(pc); break;
+                    Selected.SendGSpeakMessage((nint)chara); break;
                 case TargetApplyMode.Sundesmo:
-                    Selected.SendSundouleiaMessage(pc); break;
+                    Selected.SendSundouleiaMessage((nint)chara); break;
                 case TargetApplyMode.Local:
-                    Utils.GetMyStatusManager(pc.GetNameWithWorld()).ApplyPreset(Selected); break;
+                    chara->MyStatusManager().ApplyPreset(Selected); break;
             }
         }
         catch (Exception e)

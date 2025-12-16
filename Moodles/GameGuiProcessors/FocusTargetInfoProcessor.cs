@@ -2,6 +2,7 @@
 using Dalamud.Game.Addon.Lifecycle.AddonArgTypes;
 using Dalamud.Game.ClientState.Objects.SubKinds;
 using ECommons.GameHelpers;
+using FFXIVClientStructs.FFXIV.Client.Game.Character;
 using FFXIVClientStructs.FFXIV.Component.GUI;
 using Moodles.Data;
 
@@ -74,7 +75,7 @@ public unsafe class FocusTargetInfoProcessor
             }
             else
             {
-                baseCnt = 8 - Player.Object.StatusList.Count(x => x.StatusId != 0 && !P.CommonProcessor.SpecialStatuses.Contains(x.StatusId));
+                baseCnt = 8 - LocalPlayer.StatusList.Count(x => x.StatusId != 0 && !P.CommonProcessor.SpecialStatuses.Contains(x.StatusId));
             }
             for(var i = baseCnt; i >= 4; i--)
             {
@@ -83,15 +84,19 @@ public unsafe class FocusTargetInfoProcessor
             }
             if(!hideAll)
             {
-                foreach(var x in pc.GetMyStatusManager().Statuses)
+                unsafe
                 {
-                    if(x.Type == StatusType.Special) continue;
-                    if(baseCnt < 4) break;
-                    var rem = x.ExpiresAt - Utils.Time;
-                    if(rem > 0)
+                    var sm = ((Character*)pc.Address)->MyStatusManager();
+                    foreach (var x in sm.Statuses)
                     {
-                        SetIcon(addon, baseCnt, x);
-                        baseCnt--;
+                        if (x.Type == StatusType.Special) continue;
+                        if (baseCnt < 4) break;
+                        var rem = x.ExpiresAt - Utils.Time;
+                        if (rem > 0)
+                        {
+                            SetIcon(addon, baseCnt, x);
+                            baseCnt--;
+                        }
                     }
                 }
             }

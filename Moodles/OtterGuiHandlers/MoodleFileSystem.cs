@@ -6,28 +6,33 @@ using OtterGui.Filesystem;
 using OtterGui.FileSystem.Selector;
 using OtterGui.Raii;
 using OtterGui.Text;
+using System.Diagnostics.CodeAnalysis;
+using System.Drawing;
 using System.IO;
 
 namespace Moodles.OtterGuiHandlers;
 public sealed class MoodleFileSystem : FileSystem<MyStatus>, IDisposable
 {
     private string FilePath = Path.Combine(Svc.PluginInterface.ConfigDirectory.FullName, "MoodleFileSystem.json");
-    public readonly MoodleFileSystem.FileSystemSelector Selector;
+    public readonly FileSystemSelector Selector;
     public MoodleFileSystem(OtterGuiHandler h)
     {
         EzConfig.OnSave += Save;
         try
         {
             var info = new FileInfo(FilePath);
-            if(info.Exists)
+            if (info.Exists)
             {
                 Load(info, C.SavedStatuses, ConvertToIdentifier, ConvertToName);
             }
-            Selector = new(this, h);
         }
-        catch(Exception e)
+        catch (Exception e)
         {
             e.Log();
+        }
+        finally
+        {
+            Selector = new(this, h);
         }
     }
 
@@ -48,7 +53,7 @@ public sealed class MoodleFileSystem : FileSystem<MyStatus>, IDisposable
         Save();
     }
 
-    public bool FindLeaf(MyStatus status, out Leaf leaf)
+    public bool FindLeaf(MyStatus status, [NotNullWhen(true)] out Leaf? leaf)
     {
         leaf = Root.GetAllDescendants(ISortMode<MyStatus>.Lexicographical)
             .OfType<Leaf>()
@@ -56,14 +61,18 @@ public sealed class MoodleFileSystem : FileSystem<MyStatus>, IDisposable
         return leaf != null;
     }
 
-    public bool TryGetPathByID(Guid id, out string path)
+    public bool TryGetPathByID(Guid id, [NotNullWhen(true)] out string? path)
     {
-        if(FindLeaf(C.SavedStatuses.FirstOrDefault(x => x.GUID == id), out var leaf))
+        path = default;
+        if (C.SavedStatuses.FirstOrDefault(x => x.GUID == id) is not { } status)
+            return false;
+
+        if (FindLeaf(status, out var leaf))
         {
             path = leaf.FullName();
             return true;
         }
-        path = default;
+        
         return false;
     }
 
@@ -103,8 +112,8 @@ public sealed class MoodleFileSystem : FileSystem<MyStatus>, IDisposable
     public class FileSystemSelector : FileSystemSelector<MyStatus, FileSystemSelector.State>
     {
         private string NewName = "";
-        private string ClipboardText = null;
-        private MyStatus CloneStatus = null;
+        private string ClipboardText = null!;
+        private MyStatus CloneStatus = null!;
         public override ISortMode<MyStatus> SortMode => ISortMode<MyStatus>.FoldersFirst;
 
         private static MoodleFileSystem FS => P.OtterGuiHandler.MoodleFileSystem;
@@ -135,7 +144,7 @@ public sealed class MoodleFileSystem : FileSystem<MyStatus>, IDisposable
             {
                 var copy = Selected.JSONClone();
                 copy.GUID = Guid.Empty;
-                Copy(EzConfig.DefaultSerializationFactory.Serialize(copy, false));
+                Copy(EzConfig.DefaultSerializationFactory.Serialize(copy, false) ?? string.Empty);
             }
         }
 
@@ -147,8 +156,8 @@ public sealed class MoodleFileSystem : FileSystem<MyStatus>, IDisposable
 
             try
             {
-                CloneStatus = null;
-                ClipboardText = Paste();
+                CloneStatus = null!;
+                ClipboardText = Paste() ?? string.Empty;
                 ImGui.OpenPopup("##NewMoodle");
             }
             catch
@@ -167,8 +176,8 @@ public sealed class MoodleFileSystem : FileSystem<MyStatus>, IDisposable
             if(ImGuiUtil.DrawDisabledButton(FontAwesomeIcon.Plus.ToIconString(), size, "Create new status", false,
                     true))
             {
-                ClipboardText = null;
-                CloneStatus = null;
+                ClipboardText = null!;
+                CloneStatus = null!;
                 ImGui.OpenPopup("##NewMoodle");
             }
         }
@@ -191,9 +200,9 @@ public sealed class MoodleFileSystem : FileSystem<MyStatus>, IDisposable
                     var newStatus = EzConfig.DefaultSerializationFactory.Deserialize<MyStatus>(ClipboardText);
                     if(newStatus.IsNotNull())
                     {
-                        FS.CreateLeaf(FS.Root, NewName, newStatus);
-                        C.SavedStatuses.Add(newStatus);
-                        P.IPCProcessor.StatusUpdated(newStatus.GUID, false);
+                        FS.CreateLeaf(FS.Root, NewName, newStatus!);
+                        C.SavedStatuses.Add(newStatus!);
+                        P.IPCProcessor.StatusUpdated(newStatus!.GUID, false);
                     }
                     else
                     {

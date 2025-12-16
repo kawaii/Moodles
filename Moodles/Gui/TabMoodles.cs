@@ -1,5 +1,6 @@
 ﻿using Dalamud.Game.ClientState.Objects.SubKinds;
 using ECommons.GameHelpers;
+using FFXIVClientStructs.FFXIV.Client.Game.Character;
 using Moodles.Data;
 using Moodles.OtterGuiHandlers;
 using OtterGui.Raii;
@@ -9,7 +10,7 @@ public static class TabMoodles
 {
     private static bool AsPermanent = false;
 
-    private static MyStatus Selected => P.OtterGuiHandler.MoodleFileSystem.Selector.Selected;
+    private static MyStatus Selected => P.OtterGuiHandler.MoodleFileSystem.Selector.Selected!;
 
     private static string Filter = "";
     public static void Draw()
@@ -393,20 +394,21 @@ public static class TabMoodles
         }
     }
 
-    public static void ApplyToTarget(TargetApplyMode mode)
+    public static unsafe void ApplyToTarget(TargetApplyMode mode)
     {
-        if (Svc.Targets.Target is not IPlayerCharacter pc)
+        if (!CharaWatcher.TryGetValue(Svc.Targets.Target?.Address ?? nint.Zero, out Character* chara))
             return;
+
         try
         {
             switch (mode)
             {
                 case TargetApplyMode.GSpeakPair:
-                    Selected.SendGSpeakMessage(pc); break;
+                    Selected.SendGSpeakMessage((nint)chara); break;
                 case TargetApplyMode.Sundesmo:
-                    Selected.SendSundouleiaMessage(pc); break;
+                    Selected.SendSundouleiaMessage((nint)chara); break;
                 case TargetApplyMode.Local:
-                    Utils.GetMyStatusManager(pc.GetNameWithWorld()).AddOrUpdate(Selected.PrepareToApply(AsPermanent ? PrepareOptions.Persistent : PrepareOptions.NoOption), UpdateSource.StatusTuple); break;
+                    chara->MyStatusManager().AddOrUpdate(Selected.PrepareToApply(AsPermanent ? PrepareOptions.Persistent : PrepareOptions.NoOption), UpdateSource.StatusTuple); break;
             }
         }
         catch (Exception e)

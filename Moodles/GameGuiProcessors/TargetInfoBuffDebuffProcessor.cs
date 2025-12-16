@@ -2,6 +2,7 @@
 using Dalamud.Game.Addon.Lifecycle.AddonArgTypes;
 using Dalamud.Game.ClientState.Objects.SubKinds;
 using ECommons.GameHelpers;
+using FFXIVClientStructs.FFXIV.Client.Game.Character;
 using FFXIVClientStructs.FFXIV.Component.GUI;
 using Moodles.Data;
 
@@ -35,7 +36,7 @@ public unsafe class TargetInfoBuffDebuffProcessor
 
     private void TargetInfoBuffDebuffRequestedUpdate(AddonEvent type, AddonArgs args)
     {
-        if(P == null) return;
+        if (P == null) return;
         var addon = (AtkUnitBase*)args.Addon.Address;
         if(addon != null && IsAddonReady(addon))
         {
@@ -60,7 +61,8 @@ public unsafe class TargetInfoBuffDebuffProcessor
         UpdateAddon((AtkUnitBase*)args.Addon.Address);
     }
 
-    public void UpdateAddon(AtkUnitBase* addon, bool hideAll = false)
+    // Didn't really know how to transfer to get the DalamudStatusList from here, so had to use IPlayerCharacter.
+    public unsafe void UpdateAddon(AtkUnitBase* addon, bool hideAll = false)
     {
         var target = Svc.Targets.SoftTarget! ?? Svc.Targets.Target!;
         if(target is IPlayerCharacter pc)
@@ -83,7 +85,8 @@ public unsafe class TargetInfoBuffDebuffProcessor
                 }
                 if(!hideAll)
                 {
-                    foreach(var x in pc.GetMyStatusManager().Statuses)
+                    var sm = ((Character*)pc.Address)->MyStatusManager();
+                    foreach (var x in sm.Statuses)
                     {
                         if(baseCnt > 32) break;
                         var rem = x.ExpiresAt - Utils.Time;

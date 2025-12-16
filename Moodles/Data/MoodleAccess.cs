@@ -4,7 +4,7 @@
 ///     Defines access permissions for moodle application and removal on others.
 /// </summary>
 [Flags]
-public enum MoodleAccess : short
+public enum MoodleAccess
 {
     None            = 0 << 0, // No Access
     AllowOwn        = 1 << 0, // The Access Owners own moodles can be applied.

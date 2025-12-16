@@ -1,7 +1,9 @@
 ﻿using Dalamud.Game.ClientState.Objects.SubKinds;
 using ECommons.GameHelpers;
+using FFXIVClientStructs.FFXIV.Client.Game.Character;
 using MemoryPack;
 using Moodles.Data;
+using static FFXIVClientStructs.FFXIV.Client.Game.StatusManager.Delegates;
 
 namespace Moodles;
 [Serializable]
@@ -11,12 +13,18 @@ public class MyStatusManager
     {
         StringEncoding = StringEncoding.Utf16,
     };
+    // Changing anything in here will break everyones configs, so do not do that.
     public HashSet<Guid> AddTextShown = [];
     public HashSet<Guid> RemTextShown = [];
     public List<MyStatus> Statuses = [];
     public bool Ephemeral = false;
-    internal IPlayerCharacter Owner => (IPlayerCharacter)Svc.Objects.FirstOrDefault(x => x is IPlayerCharacter pc && pc.GetNameWithWorld() == C.StatusManagers.FirstOrDefault(s => s.Value == this).Key);
+
+    /// <summary>
+    ///     Beware this was originally a =>, so any location where it assumes valid nature should be double checked.
+    /// </summary>
+    [NonSerialized] internal unsafe Character* Owner = null!;
     [NonSerialized] internal bool NeedFireEvent = false;
+    internal unsafe bool OwnerValid => Owner != null;
 
     public void Remove(MyStatus status, bool triggerEvent = true)
     {
@@ -31,6 +39,12 @@ public class MyStatusManager
         if (triggerEvent) NeedFireEvent = true;
     }
 
+    /// <summary>
+    ///     Primary pipeline that Moodle application runs though. <para />
+    ///     Updates set through DataStrings should not process stack changes, 
+    ///     as they are defining the stack count, where as new moodle or reapplied
+    ///     one must handle stack count updates.
+    /// </summary>
     public MyStatus? AddOrUpdate(MyStatus newStatus, UpdateSource source, bool Unchecked = false, bool triggerEvent = true)
     {
         // Do not add null statuses
@@ -48,43 +62,45 @@ public class MyStatusManager
                 return null;
             }
         }
-        // check to see if the status is already present.
+
         for (var i = 0; i < Statuses.Count; i++)
         {
             if (Statuses[i].GUID == newStatus.GUID)
             {
-                // use newStatus to check, in case we changed the setting between applications. Performs stack count updating.
+                // Need to handle special logic for stack reapplication.
                 if (newStatus.StackOnReapply)
                 {
-                    if (source is UpdateSource.StatusTuple)
+                    // If the source is a data string, we are only worried about setting the data.
+                    if (source is UpdateSource.DataString)
                     {
-                        // check if stackable.
-                        if (P.CommonProcessor.IconStackCounts.TryGetValue((uint)newStatus.IconID, out var max))
-                        {
-                            var curStacks = Statuses[i].Stacks;
-                            // keep at max if already at max. (update stacks to max since it applies stack count to avoid rolling over)
-                            if (curStacks == max)
-                            {
-                                newStatus.Stacks = (int)max;
-                            }
-                            // increase and redisplay text with updated stacks if applicable.
-                            else if (curStacks + newStatus.StacksIncOnReapply <= max)
-                            {
-                                newStatus.Stacks = curStacks + newStatus.StacksIncOnReapply;
-                                AddTextShown.Remove(newStatus.GUID);
-                            }
-                        }
-                    }
-                    // Handle sources that are from status manager sets.
-                    else if (source is UpdateSource.DataString)
-                    {
-                        // if the source is the data string, we simply apply the data string.
-                        // HOWEVER, if and only if the stack count is different, we need to remove it from addTextShown to display the new stack.
                         if (Statuses[i].Stacks != newStatus.Stacks)
                             AddTextShown.Remove(newStatus.GUID);
                     }
+                    // Otherwise, if a tuple and the status is stackable, handle the stack increase.
+                    else if (source is UpdateSource.StatusTuple && P.CommonProcessor.IconStackCounts.TryGetValue((uint)newStatus.IconID, out var max))
+                    {
+                        PluginLog.Debug($"{Statuses[i].Title} can have {max} stacks max. (ref: {newStatus.Stacks}) (SM: {Statuses[i].Stacks})");
+                        var curStacks = Statuses[i].Stacks;
+                        // If the current + the increase is <= max, add it.
+                        if (curStacks + newStatus.StacksIncOnReapply < max)
+                        {
+                            newStatus.Stacks = curStacks + newStatus.StacksIncOnReapply;
+                            AddTextShown.Remove(newStatus.GUID);
+                        }
+                        // If already at max, just keep it at max, and avoid playing any effect.
+                        else if (curStacks == max)
+                        {
+                            newStatus.Stacks = (int)max;
+                        }
+                        // If we increased the stacks to the point where we hit or went over the max, show the effect and set it to max.
+                        else if (curStacks + newStatus.StacksIncOnReapply >= max)
+                        {
+                            newStatus.Stacks = (int)max;
+                            AddTextShown.Remove(newStatus.GUID);
+                        }
+                    }
                 }
-                // then update the status with the new status.
+                // Update the status.
                 Statuses[i] = newStatus;
                 // fire trigger if needed and then early return.
                 if (triggerEvent) NeedFireEvent = true;
@@ -176,7 +192,7 @@ public class MyStatusManager
         return Statuses.Select(x => x.ToStatusInfoTuple()).ToList();
     }
 
-    public void Apply(byte[] data, UpdateSource source) => SetStatusesAsEphemeral(MemoryPackSerializer.Deserialize<List<MyStatus>>(data), source);
+    public void Apply(byte[] data, UpdateSource source) => SetStatusesAsEphemeral(MemoryPackSerializer.Deserialize<List<MyStatus>>(data)!, source);
 
     public void Apply(string base64string, UpdateSource source = UpdateSource.DataString)
     {

@@ -22,44 +22,45 @@ internal class SundouleiaPluginWhitelist : PluginWhitelist
 
     protected override void Draw()
     {
-        // if there are 0 entries in the whitelist, clear the current.
-        if(C.WhitelistSundouleia.Count == 0)
+        // Perform XOR logic to ensure selection validity. (Since these are mutually opposite states)
+        if ((IPC.WhitelistSundouleia.Count is 0) ^ (P.OtterGuiHandler.WhitelistSundouleia.Current is null))
         {
             P.OtterGuiHandler.WhitelistSundouleia.EnsureCurrent();
         }
 
-        if(Selected is null)
+        if (Selected is null)
         {
             using(var child = ImRaii.Child("##DefaultBox", -Vector2.One, true))
             {
                 if(!child) return;
-                ImGuiEx.Text($"Select a rendered pair to view permissions.");
+                ImGuiEx.TextCentered("No Pairs Rendered");
             }
         }
         else
         {
-            var selectedDispName = Selected.PlayerName.Censor($"Whitelist entry {C.WhitelistSundouleia.IndexOf(Selected) + 1}");
-            HeaderDrawer.Draw($"Your Permissions for {selectedDispName}", 0, ImGui.GetColorU32(ImGuiCol.FrameBg), 0, HeaderDrawer.Button.IncognitoButton(C.Censor, v => C.Censor = v));
+            var name = C.Censor ? Selected.CensoredName() : Selected.Name.Split(' ')[0];
+            var dispName = Selected.PlayerName.Censor(Selected.CensoredName());
+            HeaderDrawer.Draw($"Your Permissions for {dispName}", 0, ImGui.GetColorU32(ImGuiCol.FrameBg), 0, HeaderDrawer.Button.IncognitoButton(C.Censor, v => C.Censor = v));
             using(var child = ImRaii.Child("##Panel", new(ImGui.GetContentRegionAvail().X - 1f, ImGui.GetContentRegionAvail().Y / 2 - ImGui.GetFrameHeight()), true))
             {
                 if(!child) return;
-                DrawTableForPermissions(Selected.ClientAccess, Selected.ClientMaxTime, "AccessPermissionsForPair");
+                DrawTableForPermissions(Selected.ClientAccess, Selected.ClientMaxTime, name, true, "AccessPermissionsForPair");
             }
 
-            HeaderDrawer.Draw($"{selectedDispName}'s Permissions for You", 0, ImGui.GetColorU32(ImGuiCol.FrameBg), 0, HeaderDrawer.Button.IncognitoButton(C.Censor, v => C.Censor = v));
+            HeaderDrawer.Draw($"{dispName}'s Permissions for You", 0, ImGui.GetColorU32(ImGuiCol.FrameBg), 0, HeaderDrawer.Button.IncognitoButton(C.Censor, v => C.Censor = v));
             using(var child2 = ImRaii.Child("##Panel2", -Vector2.One, true))
             {
                 if(!child2) return;
-                DrawTableForPermissions(Selected.Access, Selected.MaxTime, "PairAccessPermsForClient");
+                DrawTableForPermissions(Selected.Access, Selected.MaxTime, name, false, "PairAccessPermsForClient");
             }
         }
     }
 
-    private void DrawTableForPermissions(MoodleAccess access, TimeSpan maxTime, string id)
+    private void DrawTableForPermissions(MoodleAccess access, TimeSpan maxTime, string dispName, bool isSelf, string id)
     {
         if(ImGui.BeginTable("##wl" + id, 2, ImGuiTableFlags.RowBg | ImGuiTableFlags.SizingFixedFit | ImGuiTableFlags.Borders))
         {
-            ImGui.TableSetupColumn("##txt" + id, ImGuiTableColumnFlags.WidthFixed, 200);
+            ImGui.TableSetupColumn("##txt" + id);
             ImGui.TableSetupColumn("##inp" + id, ImGuiTableColumnFlags.WidthStretch);
 
             ImGui.TableNextRow();
@@ -88,23 +89,23 @@ internal class SundouleiaPluginWhitelist : PluginWhitelist
 
             ImGui.TableNextRow();
             ImGui.TableNextColumn();
-            ImGuiEx.TextV($"Apply Direction:");
+            ImGuiEx.TextV($"{(isSelf ? dispName : "You")} can Apply:");
             ImGui.TableNextColumn();
 
             ImGui.BeginDisabled();
-            StaticCheckbox("Can Apply Client Moodles##" + id, access.HasAny(MoodleAccess.AllowOwn));
+            StaticCheckbox($"{(isSelf ? "Your" : $"{dispName}'s")} Moodles##ownAccess{id}", access.HasAny(MoodleAccess.AllowOwn));
             ImGui.SameLine();
-            StaticCheckbox("Can Apply Pairs Moodles##" + id, access.HasAny(MoodleAccess.AllowOther));
+            StaticCheckbox($"{(isSelf ? $"{dispName}'s" : "Your")} Moodles##otherAccess{id}", access.HasAny(MoodleAccess.AllowOther));
             ImGui.EndDisabled();
 
             ImGui.TableNextRow();
             ImGui.TableNextColumn();
-            ImGuiEx.TextV($"Status Removal:");
+            ImGuiEx.TextV($"{(isSelf ? dispName : "You")} can Remove:");
             ImGui.TableNextColumn();
             ImGui.BeginDisabled();
-            StaticCheckbox("Can Remove Moodles You Applied##" + id, access.HasAny(MoodleAccess.RemoveApplied));
+            StaticCheckbox($"{(isSelf ? $"Moodles {dispName} applied" : "Moodles you applied")}##limitedclr{id}", access.HasAny(MoodleAccess.RemoveApplied));
             ImGui.SameLine();
-            StaticCheckbox("Can Remove Any Moodles##" + id, access.HasAny(MoodleAccess.RemoveAny));
+            StaticCheckbox("Any Moodle##" + id, access.HasAny(MoodleAccess.RemoveAny));
             ImGui.EndDisabled();
             ImGui.EndTable();
         }

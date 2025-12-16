@@ -3,6 +3,7 @@ using Dalamud.Game.Addon.Lifecycle.AddonArgTypes;
 using Dalamud.Game.ClientState.Objects.SubKinds;
 using ECommons.GameFunctions;
 using ECommons.GameHelpers;
+using FFXIVClientStructs.FFXIV.Client.Game.Character;
 using FFXIVClientStructs.FFXIV.Component.GUI;
 using Moodles.Data;
 using Moodles.GameGuiProcessors;
@@ -48,10 +49,10 @@ public unsafe class PartyListProcessor : IDisposable
             }
             var index = 23;
             var storeIndex = 0;
-            foreach(var player in GetVisibleParty())
+            foreach(nint player in GetVisibleParty())
             {
                 //InternalLog.Verbose($"  Now checking {index} for {player}");
-                if(player != null)
+                if(player != nint.Zero)
                 {
                     var iconArray = Utils.GetNodeIconArray(addon->UldManager.NodeList[index]);
                     foreach(var x in iconArray)
@@ -74,16 +75,18 @@ public unsafe class PartyListProcessor : IDisposable
 
     public void UpdatePartyList(AtkUnitBase* addon, bool hideAll = false)
     {
-        if(!Player.Available) return;
+        if(!LocalPlayer.Available) return;
         if(!P.CanModifyUI()) return;
+        
         if(addon != null && IsAddonReady(addon))
         {
             var partyMemberNodeIndex = 23;
             var party = GetVisibleParty();
+            
             for(var n = 0; n < party.Count; n++)
             {
                 var player = party[n];
-                if(player != null)
+                if(player != nint.Zero)
                 {
                     var iconArray = Utils.GetNodeIconArray(addon->UldManager.NodeList[partyMemberNodeIndex]);
                     //InternalLog.Information($"Icon array length for {player} is {iconArray.Length}");
@@ -95,10 +98,11 @@ public unsafe class PartyListProcessor : IDisposable
                     if(!hideAll)
                     {
                         var curIndex = NumStatuses[n];
-                        foreach(var status in player.GetMyStatusManager().Statuses)
+                        foreach(var status in ((Character*)player)->MyStatusManager().Statuses)
                         {
                             if(status.Type == StatusType.Special) continue;
                             if(curIndex >= iconArray.Length) break;
+                            
                             var rem = status.ExpiresAt - Utils.Time;
                             if(rem > 0)
                             {
@@ -113,25 +117,29 @@ public unsafe class PartyListProcessor : IDisposable
         }
     }
 
-    public List<IPlayerCharacter> GetVisibleParty()
+    /// <summary>
+    ///     Returns a list of pointer addresses that are Character* references for the visible party members.
+    /// </summary>
+    /// <returns></returns>
+    public List<nint> GetVisibleParty()
     {
         if(Svc.Party.Length < 2)
         {
-            return [Svc.ClientState.LocalPlayer];
+            return [LocalPlayer.Address];
         }
         else
         {
-            List<IPlayerCharacter> ret = [Svc.ClientState.LocalPlayer];
+            List<nint> ret = [LocalPlayer.Address];
             for(var i = 1; i < Math.Min(8, Svc.Party.Length); i++)
             {
-                var obj = FakePronoun.Resolve($"<{i + 1}>");
-                if(Svc.Objects.CreateObjectReference((nint)obj) is IPlayerCharacter pc)
+                var obj = ExtendedPronoun.Resolve($"<{i + 1}>");
+                if (obj->IsCharacter())
                 {
-                    ret.Add(pc);
+                    ret.Add((nint)obj);
                 }
                 else
                 {
-                    ret.Add(null);
+                    ret.Add(nint.Zero);
                 }
             }
             return ret;

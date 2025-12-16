@@ -2,6 +2,7 @@
 using OtterGui.Log;
 
 namespace Moodles.OtterGuiHandlers;
+#pragma warning disable CS8618 // Failing the constructors try-catch will fail Main() initialization anyways.
 public sealed class OtterGuiHandler : IDisposable
 {
     public MoodleFileSystem MoodleFileSystem;
@@ -34,3 +35,4 @@ public sealed class OtterGuiHandler : IDisposable
         Safe(() => PresetFileSystem?.Save());
     }
 }
+#pragma warning restore CS8618 // Failing the constructors try-catch will fail Main() initialization anyways.

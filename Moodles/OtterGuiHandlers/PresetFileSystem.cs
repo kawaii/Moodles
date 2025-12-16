@@ -5,14 +5,14 @@ using OtterGui.Classes;
 using OtterGui.Filesystem;
 using OtterGui.FileSystem.Selector;
 using OtterGui.Raii;
+using System.Diagnostics.CodeAnalysis;
 using System.IO;
-using static FFXIVClientStructs.FFXIV.Client.Game.StatusManager.Delegates;
 
 namespace Moodles.OtterGuiHandlers;
 public sealed class PresetFileSystem : FileSystem<Preset>, IDisposable
 {
     private string FilePath = Path.Combine(Svc.PluginInterface.ConfigDirectory.FullName, "PresetFileSystem.json");
-    public readonly PresetFileSystem.FileSystemSelector Selector;
+    public readonly FileSystemSelector Selector;
     public PresetFileSystem(OtterGuiHandler h)
     {
         EzConfig.OnSave += Save;
@@ -23,21 +23,27 @@ public sealed class PresetFileSystem : FileSystem<Preset>, IDisposable
             {
                 Load(info, C.SavedPresets, ConvertToIdentifier, ConvertToName);
             }
-            Selector = new(this, h);
         }
         catch(Exception e)
         {
             e.Log();
         }
+        finally
+        {
+            Selector = new(this, h);
+        }
     }
-    public bool TryGetPathByID(Guid id, out string path)
+    public bool TryGetPathByID(Guid id, [NotNullWhen(true)] out string? path)
     {
-        if(FindLeaf(C.SavedPresets.FirstOrDefault(x => x.GUID == id), out var leaf))
+        path = default;
+        if (C.SavedPresets.FirstOrDefault(x => x.GUID == id) is not { } preset)
+            return false;
+
+        if(FindLeaf(preset, out var leaf))
         {
             path = leaf.FullName();
             return true;
         }
-        path = default;
         return false;
     }
 
@@ -58,7 +64,7 @@ public sealed class PresetFileSystem : FileSystem<Preset>, IDisposable
         Save();
     }
 
-    public bool FindLeaf(Preset item, out Leaf leaf)
+    public bool FindLeaf(Preset item, [NotNullWhen(true)] out Leaf? leaf)
     {
         leaf = Root.GetAllDescendants(ISortMode<Preset>.Lexicographical)
             .OfType<Leaf>()
@@ -103,8 +109,8 @@ public sealed class PresetFileSystem : FileSystem<Preset>, IDisposable
     {
         public List<uint> IconArray = [];
         private string NewName = "";
-        private string ClipboardText = null;
-        private Preset CloneItem = null;
+        private string ClipboardText = null!;
+        private Preset CloneItem = null!;
         public override ISortMode<Preset> SortMode => ISortMode<Preset>.FoldersFirst;
 
         private static PresetFileSystem FS => P.OtterGuiHandler.PresetFileSystem;
@@ -134,7 +140,7 @@ public sealed class PresetFileSystem : FileSystem<Preset>, IDisposable
             {
                 var copy = Selected.JSONClone();
                 copy.GUID = Guid.Empty;
-                Copy(EzConfig.DefaultSerializationFactory.Serialize(copy, false));
+                Copy(EzConfig.DefaultSerializationFactory.Serialize(copy, false) ?? string.Empty);
             }
         }
 
@@ -146,8 +152,8 @@ public sealed class PresetFileSystem : FileSystem<Preset>, IDisposable
 
             try
             {
-                CloneItem = null;
-                ClipboardText = Paste();
+                CloneItem = null!;
+                ClipboardText = Paste() ?? string.Empty;
                 ImGui.OpenPopup("##NewItem");
             }
             catch
@@ -166,8 +172,8 @@ public sealed class PresetFileSystem : FileSystem<Preset>, IDisposable
             if(ImGuiUtil.DrawDisabledButton(FontAwesomeIcon.Plus.ToIconString(), size, "Create new preset", false,
                     true))
             {
-                ClipboardText = null;
-                CloneItem = null;
+                ClipboardText = null!;
+                CloneItem = null!;
                 ImGui.OpenPopup("##NewItem");
             }
         }

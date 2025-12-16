@@ -1,5 +1,6 @@
 ﻿using Dalamud.Game.ClientState.Objects.SubKinds;
 using ECommons.GameHelpers;
+using ECommons.GameHelpers.LegacyPlayer;
 using FFXIVClientStructs.FFXIV.Client.Game.Character;
 using Lumina.Excel.Sheets;
 using Moodles.Data;
@@ -10,7 +11,7 @@ namespace Moodles.Commands;
 public static class MoodleCommandProcessor
 {
     private const string CUSTOM_TAG = "[custom]";
-    private static string lastCommandPart;
+    private static string lastCommandPart = string.Empty;
     private static List<string> matchedArguments = [];
     private static int customCounter = 0;
 
@@ -115,9 +116,9 @@ public static class MoodleCommandProcessor
         }
     }
 
-    private static void HandleAsMoodle(TargetState targetState, MoodleState moodleState, MoodleNameType moodleNameType)
+    private static unsafe void HandleAsMoodle(TargetState targetState, MoodleState moodleState, MoodleNameType moodleNameType)
     {
-        var statusManager = GetStatusManager(targetState);
+        var sm = GetStatusManager(targetState);
         var myStatuses = GetMyStatus(moodleNameType);
 
         foreach (var myStatus in myStatuses)
@@ -125,7 +126,7 @@ public static class MoodleCommandProcessor
 
             if (moodleState == MoodleState.Toggle)
             {
-                if (statusManager.ContainsStatus(myStatus))
+                if (sm.ContainsStatus(myStatus))
                 {
                     moodleState = MoodleState.Remove;
                 }
@@ -137,36 +138,36 @@ public static class MoodleCommandProcessor
 
             if (moodleState == MoodleState.Apply)
             {
-                if (Utils.GSpeakPlayerCache.ContainsKey(statusManager.Owner.Address))
+                if (IPC.GSpeakPlayerCache.ContainsKey((nint)sm.Owner))
                 {
-                    myStatus.SendGSpeakMessage(statusManager.Owner);
+                    myStatus.SendGSpeakMessage((nint)sm.Owner);
                 }
-                else if (Utils.SundouleiaPlayerCache.ContainsKey(statusManager.Owner.Address))
+                else if (IPC.SundouleiaPlayerCache.ContainsKey((nint)sm.Owner))
                 {
-                    myStatus.SendSundouleiaMessage(statusManager.Owner);
+                    myStatus.SendSundouleiaMessage((nint)sm.Owner);
                 }
                 else
                 {
-                    statusManager.AddOrUpdate(myStatus.PrepareToApply(myStatus.Persistent ? PrepareOptions.Persistent : PrepareOptions.NoOption), UpdateSource.StatusTuple);
+                    sm.AddOrUpdate(myStatus.PrepareToApply(myStatus.Persistent ? PrepareOptions.Persistent : PrepareOptions.NoOption), UpdateSource.StatusTuple);
                 }
             }
             else if (moodleState == MoodleState.Remove)
             {
-                if (Utils.GSpeakPlayerCache.ContainsKey(statusManager.Owner.Address))
+                if (IPC.GSpeakPlayerCache.ContainsKey((nint)sm.Owner))
                 {
                     var newStatus = myStatus.JSONClone();
                     newStatus.ExpiresAt = 0;
-                    newStatus.SendGSpeakMessage(statusManager.Owner);
+                    newStatus.SendGSpeakMessage((nint)sm.Owner);
                 }
-                else if (Utils.SundouleiaPlayerCache.ContainsKey(statusManager.Owner.Address))
+                else if (IPC.SundouleiaPlayerCache.ContainsKey((nint)sm.Owner))
                 {
                     var newStatus = myStatus.JSONClone();
                     newStatus.ExpiresAt = 0;
-                    newStatus.SendSundouleiaMessage(statusManager.Owner);
+                    newStatus.SendSundouleiaMessage((nint)sm.Owner);
                 }
                 else
                 {
-                    statusManager.Cancel(myStatus);
+                    sm.Cancel(myStatus);
                 }
             }
         }
@@ -202,28 +203,28 @@ public static class MoodleCommandProcessor
         }
     }
 
-    private static void HandleAsAutomation(TargetState targetState, MoodleState moodleState, MoodleNameType moodleNameType)
+    private static unsafe void HandleAsAutomation(TargetState targetState, MoodleState moodleState, MoodleNameType moodleNameType)
     {
         if(moodleNameType == MoodleNameType.GUID)
         {
             throw new MoodleChatException("GUID is an invalid parameter type for automation.");
         }
 
-        IPlayerCharacter playerCharacter = null;
+        Character* chara = null!;
 
         if(targetState == TargetState.Self)
         {
-            playerCharacter = Svc.Objects.LocalPlayer;
+            chara = LocalPlayer.Character;
         }
         else if(targetState == TargetState.Target)
         {
-            if(Svc.Targets.Target is IPlayerCharacter pCharacter)
+            if(Svc.Targets.Target is IPlayerCharacter)
             {
-                playerCharacter = pCharacter;
+                chara = (Character*)Svc.Targets.Target.Address;
             }
             else
             {
-                if(Svc.Targets.Target == null)
+                if(Svc.Targets.Target is null)
                 {
                     throw new MoodleChatException("No target selected.");
                 }
@@ -235,16 +236,16 @@ public static class MoodleCommandProcessor
         }
         else if(targetState == TargetState.Custom)
         {
-            playerCharacter = PlayerFromString(GetCustomString());
+            chara = PlayerFromString(GetCustomString());
         }
 
-        if(playerCharacter == null)
+        if(chara == null)
         {
             throw new MoodleChatException("An error occured whilst obtaining the selected target.");
         }
 
         var customString = GetCustomString();
-        AutomationProfile selectedProfile = null;
+        AutomationProfile selectedProfile = null!;
 
         var hasWorld = customString.Split('@').Length == 2 || targetState != TargetState.Custom;
 
@@ -264,12 +265,12 @@ public static class MoodleCommandProcessor
 
         if(moodleState == MoodleState.Toggle)
         {
-            var nameIsCorrect = selectedProfile.Character == playerCharacter.Name.TextValue;
+            var nameIsCorrect = selectedProfile.Character == chara->NameString;
             var worldIsCorrect = true;
 
             if(hasWorld)
             {
-                worldIsCorrect = selectedProfile.World == playerCharacter.HomeWorld.RowId;
+                worldIsCorrect = selectedProfile.World == chara->HomeWorld;
             }
 
             if(nameIsCorrect && worldIsCorrect)
@@ -284,10 +285,10 @@ public static class MoodleCommandProcessor
 
         if(moodleState == MoodleState.Apply)
         {
-            selectedProfile.Character = playerCharacter.Name.TextValue;
-            if(hasWorld)
+            selectedProfile.Character = chara->NameString;
+            if (hasWorld)
             {
-                selectedProfile.World = playerCharacter.HomeWorld.RowId;
+                selectedProfile.World = chara->HomeWorld;
             }
             else
             {
@@ -437,19 +438,19 @@ public static class MoodleCommandProcessor
         return false;
     }
 
-    private static MyStatusManager GetStatusManager(TargetState targetState)
+    private static unsafe MyStatusManager GetStatusManager(TargetState targetState)
     {
-        MyStatusManager statusManager = null;
+        MyStatusManager statusManager = null!;
 
         if(targetState == TargetState.Self)
         {
-            statusManager = Utils.GetMyStatusManager(Player.NameWithWorld);
+            statusManager = Utils.GetMyStatusManager(LocalPlayer.NameWithWorld);
         }
         else if(targetState == TargetState.Target)
         {
-            if(Svc.Targets.Target is IPlayerCharacter pCharacter)
+            if(Svc.Targets.Target is IPlayerCharacter)
             {
-                statusManager = Utils.GetMyStatusManager(Player.GetNameWithWorld(pCharacter));
+                statusManager = Utils.GetMyStatusManager(((Character*)Svc.Targets.Target.Address)->GetNameWithWorld());
             }
             else
             {
@@ -465,17 +466,17 @@ public static class MoodleCommandProcessor
         }
         else if(targetState == TargetState.Custom)
         {
-            var pCharacter = PlayerFromString(GetCustomString());
-            if(pCharacter != null)
+            Character* chara = PlayerFromString(GetCustomString());
+            if(chara == null)
             {
-                statusManager = Utils.GetMyStatusManager(Player.GetNameWithWorld(pCharacter));
+                statusManager = Utils.GetMyStatusManager(chara->GetNameWithWorld());
             }
         }
 
         return statusManager;
     }
 
-    private static unsafe IPlayerCharacter PlayerFromString(string playerString)
+    private static unsafe Character* PlayerFromString(string playerString)
     {
         var splitString = playerString.Split('@');
         var hasWorld = false;
@@ -500,13 +501,13 @@ public static class MoodleCommandProcessor
             }
         }
 
-        var battleChara = CharacterManager.Instance()->LookupBattleCharaByName(userName, true, (short)homeworld);
-        if(battleChara == null)
+        var chara = (Character*)CharacterManager.Instance()->LookupBattleCharaByName(userName, true, (short)homeworld);
+        if(chara == null)
         {
             throw new MoodleChatException($"Specified Target Selector '{playerString}' could not be found.");
         }
 
-        return (IPlayerCharacter)Svc.Objects.CreateObjectReference((nint)battleChara);
+        return chara;
     }
 
     private static string GetCustomString(bool applyCounter = true)

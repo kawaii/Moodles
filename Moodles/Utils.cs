@@ -1,16 +1,11 @@
 ﻿using Dalamud.Game.ClientState.Objects.SubKinds;
 using Dalamud.Game.Text.SeStringHandling;
 using ECommons.ExcelServices;
-using ECommons.EzIpcManager;
-using ECommons.GameHelpers;
 using ECommons.PartyFunctions;
 using FFXIVClientStructs.FFXIV.Client.UI.Info;
 using FFXIVClientStructs.FFXIV.Component.GUI;
 using Moodles.Data;
-using Moodles.OtterGuiHandlers.Whitelist.GSpeak;
-using System;
 using System.Text.RegularExpressions;
-using System.Windows.Forms;
 using Status = Lumina.Excel.Sheets.Status;
 using UIColor = ECommons.ChatMethods.UIColor;
 
@@ -21,15 +16,12 @@ public static unsafe partial class Utils
     {
         if (Svc.Targets.Target is not IPlayerCharacter pc)
             return TargetApplyMode.NoTarget;
-        if (GSpeakAvailable && GSpeakPlayerCache.ContainsKey(pc.Address))
+        if (IPC.GSpeakAvailable && IPC.GSpeakPlayerCache.ContainsKey(pc.Address))
             return TargetApplyMode.GSpeakPair;
-        if (SundouleiaAvailable && SundouleiaPlayerCache.ContainsKey(pc.Address))
+        if (IPC.SundouleiaAvailable && IPC.SundouleiaPlayerCache.ContainsKey(pc.Address))
             return TargetApplyMode.Sundesmo;
         return TargetApplyMode.Local;
     }
-
-
-    private static long LastChangeTime;
 
     public static bool DurationSelector(string PermanentTitle, ref bool NoExpire, ref int Days, ref int Hours, ref int Minutes, ref int Seconds)
     {
@@ -89,7 +81,7 @@ public static unsafe partial class Utils
         return ret;
     }
 
-    public static bool IsNotNull(this MyStatus status)
+    public static bool IsNotNull(this MyStatus? status)
     {
         if(status == null) return false;
         if(status.Applier == null) return false;
@@ -142,90 +134,21 @@ public static unsafe partial class Utils
         return C.Censor ? s.Split(" ").Where(x => x.Length > 0).Select(x => $"{x[0]}.").Join(" ") : s;
     }
 
-    public static IEnumerable<AutomationCombo> GetSuitableAutomation(IPlayerCharacter pc = null!)
-    {
-        pc ??= Player.Object;
-        foreach(var x in C.AutomationProfiles)
-        {
-            if(x.Enabled && x.Character == pc.Name.ToString() && (x.World == 0 || x.World == pc.HomeWorld.RowId))
-            {
-                foreach(var c in x.Combos)
-                {
-                    if(c.Jobs.Count == 0 || c.Jobs.Contains((Job)pc.ClassJob.RowId))
-                    {
-                        yield return c;
-                    }
-                }
-            }
-        }
-    }
-
-    public static bool TryFindPlayer(string name, out IPlayerCharacter pcr)
-    {
-        if(name == Player.NameWithWorld)
-        {
-            pcr = Player.Object;
-            return true;
-        }
-        else
-        {
-            foreach(var x in Svc.Objects)
-            {
-                if(x is IPlayerCharacter pc && pc.GetNameWithWorld() == name)
-                {
-                    pcr = pc;
-                    return true;
-                }
-            }
-        }
-        pcr = null!;
-        return false;
-    }
-
-    public static bool CanSpawnVFX(IPlayerCharacter target)
-    {
-        return true;
-    }
-
-    public static bool CanSpawnFlytext(IPlayerCharacter target)
-    {
-        if(!target.IsTargetable) return false;
-        if(!Player.Interactable) return false;
-        if(Svc.Condition[ConditionFlag.OccupiedInCutSceneEvent]
-            || Svc.Condition[ConditionFlag.WatchingCutscene]
-            || Svc.Condition[ConditionFlag.WatchingCutscene78]
-            || Svc.Condition[ConditionFlag.OccupiedInQuestEvent]
-            || Svc.Condition[ConditionFlag.Occupied]
-            || Svc.Condition[ConditionFlag.Occupied30]
-            || Svc.Condition[ConditionFlag.Occupied33]
-            || Svc.Condition[ConditionFlag.Occupied38]
-            || Svc.Condition[ConditionFlag.Occupied39]
-            || Svc.Condition[ConditionFlag.OccupiedInEvent]
-            || Svc.Condition[ConditionFlag.BetweenAreas]
-            || Svc.Condition[ConditionFlag.BetweenAreas51]
-            || Svc.Condition[ConditionFlag.DutyRecorderPlayback]
-            || Svc.Condition[ConditionFlag.LoggingOut]) return false;
-        return true;
-    }
-
-    public static long Time => DateTimeOffset.Now.ToUnixTimeMilliseconds();
-
     public static MyStatusManager GetMyStatusManager(string playerName, bool create = true)
     {
-        if(!C.StatusManagers.TryGetValue(playerName, out var manager))
+        if (!C.StatusManagers.TryGetValue(playerName, out var manager))
         {
-            if(create)
+            if (create)
             {
                 PluginLog.Verbose($"Creating new status manager for {playerName}");
                 manager = new();
                 C.StatusManagers[playerName] = manager;
             }
         }
-        return manager;
+        return manager!;
     }
 
-    public static MyStatusManager GetMyStatusManager(this IPlayerCharacter pc, bool create = true) => GetMyStatusManager(pc.GetNameWithWorld(), create);
-
+    public static long Time => DateTimeOffset.Now.ToUnixTimeMilliseconds();
     public static ulong Frame => CSFramework.Instance()->FrameCounter;
 
     public static SeString ParseBBSeString(string text, bool nullTerminator = true) => ParseBBSeString(text, out _, nullTerminator);
@@ -233,7 +156,7 @@ public static unsafe partial class Utils
     {
         try
         {
-            error = null;
+            error = null!;
             var result = SplitRegex().Split(text);
             var str = new SeStringBuilder();
             int[] valid = [0, 0, 0];
@@ -303,7 +226,7 @@ public static unsafe partial class Utils
             error = "Error: Color is out of range.";
             return new SeStringBuilder().AddText($"{error}\0").Build();
         }
-        catch(Exception e)
+        catch(Exception)
         {
             error = "Error: please check syntax.";
             return new SeStringBuilder().AddText($"{error}\0").Build();
@@ -327,8 +250,8 @@ public static unsafe partial class Utils
     {
         foreach (var x in Svc.Data.GetExcelSheet<Status>())
         {
-            if (x.Icon == iconID) return x.HitEffect.ValueNullable?.Location.ValueNullable?.Location.ExtractText();
-            if (x.MaxStacks > 1 && iconID >= x.Icon + 1 && iconID < x.Icon + x.MaxStacks) return x.HitEffect.ValueNullable?.Location.ValueNullable?.Location.ExtractText();
+            if (x.Icon == iconID) return x.HitEffect.ValueNullable?.Location.ValueNullable?.Location.ExtractText() ?? string.Empty;
+            if (x.MaxStacks > 1 && iconID >= x.Icon + 1 && iconID < x.Icon + x.MaxStacks) return x.HitEffect.ValueNullable?.Location.ValueNullable?.Location.ExtractText() ?? string.Empty;
         }
         return string.Empty;
     }
@@ -381,6 +304,7 @@ public static unsafe partial class Utils
         }
     }
 
+    // This should be not needed anymore but who knows.
     public static void CleanupNulls()
     {
         for(var i = C.SavedStatuses.Count - 1; i >= 0; i--)

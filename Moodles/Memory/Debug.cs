@@ -69,10 +69,10 @@ public unsafe partial class Memory
         return UnkDelegateHook.Original(a1, a2, a3);
     }
 
-    delegate void AddFlyTextDelegate(IntPtr a1, uint actorIndex, uint a3, IntPtr a4, uint a5, uint a6, IntPtr a7, uint a8, uint a9, int a10);
+    delegate void AddFlyTextDelegate(nint a1, uint actorIndex, uint a3, nint a4, uint a5, uint a6, nint a7, uint a8, uint a9, int a10);
     [EzHook("E8 ?? ?? ?? ?? FF C7 41 D1 C7", false)]
     EzHook<AddFlyTextDelegate> AddFlyTextHook;
-    void AddFlyTextDetour(IntPtr a1, uint actorIndex, uint a3, IntPtr a4, uint a5, uint a6, IntPtr a7, uint a8, uint a9, int a10)
+    void AddFlyTextDetour(nint a1, uint actorIndex, uint a3, nint a4, uint a5, uint a6, nint a7, uint a8, uint a9, int a10)
     {
         PluginLog.Debug($"actor: {actorIndex}");
         AddFlyTextHook.Original(a1, actorIndex, a3, a4, a5, a6, a7, a8, a9, a10);

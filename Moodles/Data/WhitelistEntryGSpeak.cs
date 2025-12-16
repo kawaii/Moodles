@@ -1,4 +1,5 @@
-﻿using InteropGenerator.Runtime;
+﻿using FFXIVClientStructs.FFXIV.Client.Game.Character;
+using InteropGenerator.Runtime;
 using System.Diagnostics.CodeAnalysis;
 
 namespace Moodles.Data;
@@ -6,8 +7,10 @@ namespace Moodles.Data;
 [Serializable]
 public class WhitelistEntryGSpeak
 {
+    // Does a weird thing where when loading from the config it loads this in for an initial entry, then loads everything else after.
     public WhitelistEntryGSpeak()
     {
+        Name = "Unknown-GSpeak-Name";
         PlayerName = "Unknown-GSpeak-Player";
         Address = nint.Zero;
         Access = MoodleAccess.None;
@@ -16,14 +19,16 @@ public class WhitelistEntryGSpeak
         ClientMaxTime = TimeSpan.Zero;
     }
 
-    public WhitelistEntryGSpeak(nint address, string nameWithWorld, IPCMoodleAccessTuple accessTuple)
+    public unsafe WhitelistEntryGSpeak(nint address, IPCMoodleAccessTuple accessTuple)
     {
-        PlayerName = nameWithWorld;
+        Name = ((Character*)address)->NameString;
+        PlayerName = ((Character*)address)->GetNameWithWorld();
         Address = address;
         UpdateData(accessTuple);
     }
 
     // The Player Name associated with this whitelist entry.
+    public string Name;
     public string PlayerName;
     public nint Address;
 
@@ -39,11 +44,13 @@ public class WhitelistEntryGSpeak
     public long ClientTotalMaxTime => (long)ClientMaxTime.TotalMilliseconds;
     public long ClientMaxExpireTimeUnix => ClientAccess.HasAny(MoodleAccess.Permanent) ? long.MaxValue : Utils.Time + ClientTotalMaxTime;
 
+    public string CensoredName() => string.Concat(Name.Split(' ', StringSplitOptions.RemoveEmptyEntries).Select(w => char.ToUpper(w[0]) + "."));
+
     public void UpdateData(IPCMoodleAccessTuple latestAccessTuple)
     {
         // Update the MoodleAccess first.
-        ClientAccess = latestAccessTuple.CallerAccess;
-        Access = latestAccessTuple.OtherAccess;
+        ClientAccess = (MoodleAccess)latestAccessTuple.CallerAccessFlags;
+        Access = (MoodleAccess)latestAccessTuple.OtherAccessFlags;
         // Update the max times.
         ClientMaxTime = TimeSpan.FromMilliseconds(latestAccessTuple.CallerMaxTime);
         MaxTime = TimeSpan.FromMilliseconds(latestAccessTuple.OtherMaxTime);    
