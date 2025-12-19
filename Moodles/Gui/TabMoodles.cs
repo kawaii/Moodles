@@ -141,41 +141,6 @@ public static class TabMoodles
 
                 ImGui.TableNextRow();
 
-                // Stack Field
-                ImGui.TableNextColumn();
-                ImGuiEx.TextV($"Stacks:");
-                ImGuiEx.HelpMarker("Where the game data contains information about sequential status effect stacks you can select the desired number here. Not all status effects that have stacks follow the same logic due to inconsistencies so the icon you're looking for may be elsewhere.");
-                ImGui.TableNextColumn();
-                ImGuiEx.SetNextItemFullWidth();
-                var maxStacks = 1;
-                if (P.CommonProcessor.IconStackCounts.TryGetValue((uint)Selected.IconID, out var count))
-                {
-                    maxStacks = (int)count;
-                }
-                if (maxStacks <= 1) ImGui.BeginDisabled();
-                if (ImGui.BeginCombo("##stk", $"{Selected.Stacks}"))
-                {
-                    for (var i = 1; i <= maxStacks; i++)
-                    {
-                        if (ImGui.Selectable($"{i}"))
-                        {
-                            Selected.Stacks = i;
-                            // Inform IPC of change after adjusting stack count.
-                            P.IPCProcessor.StatusUpdated(Selected.GUID, false);
-                        }
-                    }
-                    ImGui.EndCombo();
-                }
-                if (maxStacks <= 1) ImGui.EndDisabled();
-                if (Selected.Stacks > maxStacks) Selected.Stacks = maxStacks;
-                if (Selected.Stacks < 1)
-                {
-                    Selected.Stacks = 1;
-                    Selected.StackOnReapply = false;
-                    Selected.StacksIncOnReapply = 1;
-                }
-                ImGui.TableNextRow();
-
                 // Description Field
                 ImGui.TableNextColumn();
                 var cpx = ImGui.GetCursorPosX();
@@ -207,9 +172,44 @@ public static class TabMoodles
                 {
                     P.IPCProcessor.StatusUpdated(Selected.GUID, false);
                 }
+                ImGui.TableNextRow();
+
+                // Stack row.
+                ImGui.TableNextColumn();
+                ImGuiEx.TextV($"Stacks:");
+                ImGuiEx.HelpMarker("Some status effects have a stable number beside them.\nYou set the starting count, and how much to increase per reapplication.\nIf this is greyed out, it is not stackable.");
+                ImGui.TableNextColumn();
+                ImGuiEx.SetNextItemFullWidth();
+                var maxStacks = 1;
+                if (P.CommonProcessor.IconStackCounts.TryGetValue((uint)Selected.IconID, out var count))
+                {
+                    maxStacks = (int)count;
+                }
+                if (maxStacks <= 1) ImGui.BeginDisabled();
+                if (ImGui.BeginCombo("##stk", $"{Selected.Stacks}"))
+                {
+                    for (var i = 1; i <= maxStacks; i++)
+                    {
+                        if (ImGui.Selectable($"{i}"))
+                        {
+                            Selected.Stacks = i;
+                            // Inform IPC of change after adjusting stack count.
+                            P.IPCProcessor.StatusUpdated(Selected.GUID, false);
+                        }
+                    }
+                    ImGui.EndCombo();
+                }
+                if (maxStacks <= 1) ImGui.EndDisabled();
+                if (Selected.Stacks > maxStacks) Selected.Stacks = maxStacks;
+                if (Selected.Stacks < 1)
+                {
+                    Selected.Stacks = 1;
+                    Selected.StackOnReapply = false;
+                    Selected.StacksIncOnReapply = 1;
+                }
+                ImGui.TableNextRow();
 
                 // Duration Field
-                ImGui.TableNextRow();
                 ImGui.TableNextColumn();
                 ImGuiEx.TextV($"Duration:");
                 if (Selected.TotalDurationSeconds < 1 && !Selected.NoExpire)
@@ -422,5 +422,11 @@ public static class TabMoodles
         //ImGui.SetWindowFontScale(0.75f);
         ImGuiEx.HelpMarker($"This field supports formatting tags.\n[color=red]...[/color], [color=5]...[/color] - colored text.\n[glow=blue]...[/glow], [glow=7]...[/glow] - glowing text outline\nThe following colors are available:\n{Enum.GetValues<ECommons.ChatMethods.UIColor>().Select(x => x.ToString()).Where(x => !x.StartsWith("_")).Print()}\nFor extra color, look up numeric value with \"/xldata uicolor\" command\n[i]...[/i] - italic text", ImGuiColors.DalamudWhite, FontAwesomeIcon.Code.ToIconString());
         //ImGui.SetWindowFontScale(1f);
+    }
+
+    // Based on changes we might need to update some things.
+    private static void EnsureValidState()
+    {
+
     }
 }

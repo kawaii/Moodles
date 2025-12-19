@@ -24,23 +24,19 @@ public unsafe class StatusCustomProcessor : IDisposable
         Svc.AddonLifecycle.RegisterListener(AddonEvent.PostRequestedUpdate, "_StatusCustom2", OnStatusCustom2RequestedUpdate);
         if(Player.Available)
         {
+            if(TryGetAddonByName<AtkUnitBase>("_StatusCustom0", out var addon0) && IsAddonReady(addon0))
             {
-                if(TryGetAddonByName<AtkUnitBase>("_StatusCustom0", out var addon) && IsAddonReady(addon))
-                {
-                    OnStatusCustom0RequestedUpdate(AddonEvent.PostRequestedUpdate, new ArtificialAddonArgs(addon));
-                }
+                Custom0RequestedUpdate(addon0);
             }
+
+            if(TryGetAddonByName<AtkUnitBase>("_StatusCustom1", out var addon1) && IsAddonReady(addon1))
             {
-                if(TryGetAddonByName<AtkUnitBase>("_StatusCustom1", out var addon) && IsAddonReady(addon))
-                {
-                    OnStatusCustom1RequestedUpdate(AddonEvent.PostRequestedUpdate, new ArtificialAddonArgs(addon));
-                }
+                Custom1RequestedUpdate(addon1);
             }
+
+            if(TryGetAddonByName<AtkUnitBase>("_StatusCustom2", out var addon2) && IsAddonReady(addon2))
             {
-                if(TryGetAddonByName<AtkUnitBase>("_StatusCustom2", out var addon) && IsAddonReady(addon))
-                {
-                    OnStatusCustom2RequestedUpdate(AddonEvent.PostRequestedUpdate, new ArtificialAddonArgs(addon));
-                }
+                Custom2RequestedUpdate(addon2);
             }
         }
     }
@@ -58,52 +54,53 @@ public unsafe class StatusCustomProcessor : IDisposable
     public void HideAll()
     {
         if(!Player.Available) return;
+        
+        if(TryGetAddonByName<AtkUnitBase>("_StatusCustom0", out var addon0) && IsAddonReady(addon0))
+        {
+            var validStatuses = Utils.GetMyStatusManager(Player.NameWithWorld).Statuses.Where(x => x.Type == StatusType.Positive);
+            UpdateStatusCustom(addon0, validStatuses, P.CommonProcessor.PositiveStatuses, NumStatuses0, true);
+        }
 
+        if(TryGetAddonByName<AtkUnitBase>("_StatusCustom1", out var addon1) && IsAddonReady(addon1))
         {
-            if(TryGetAddonByName<AtkUnitBase>("_StatusCustom0", out var addon) && IsAddonReady(addon))
-            {
-                var validStatuses = Utils.GetMyStatusManager(Player.NameWithWorld).Statuses.Where(x => x.Type == StatusType.Positive);
-                UpdateStatusCustom(addon, validStatuses, P.CommonProcessor.PositiveStatuses, NumStatuses0, true);
-            }
+            var validStatuses = Utils.GetMyStatusManager(Player.NameWithWorld).Statuses.Where(x => x.Type == StatusType.Negative);
+            UpdateStatusCustom(addon1, validStatuses, P.CommonProcessor.NegativeStatuses, NumStatuses1, true);
         }
+
+        if(TryGetAddonByName<AtkUnitBase>("_StatusCustom2", out var addon2) && IsAddonReady(addon2))
         {
-            if(TryGetAddonByName<AtkUnitBase>("_StatusCustom1", out var addon) && IsAddonReady(addon))
-            {
-                var validStatuses = Utils.GetMyStatusManager(Player.NameWithWorld).Statuses.Where(x => x.Type == StatusType.Negative);
-                UpdateStatusCustom(addon, validStatuses, P.CommonProcessor.NegativeStatuses, NumStatuses1, true);
-            }
-        }
-        {
-            if(TryGetAddonByName<AtkUnitBase>("_StatusCustom2", out var addon) && IsAddonReady(addon))
-            {
-                var validStatuses = Utils.GetMyStatusManager(Player.NameWithWorld).Statuses.Where(x => x.Type == StatusType.Special);
-                UpdateStatusCustom(addon, validStatuses, P.CommonProcessor.SpecialStatuses, NumStatuses2, true);
-            }
+            var validStatuses = Utils.GetMyStatusManager(Player.NameWithWorld).Statuses.Where(x => x.Type == StatusType.Special);
+            UpdateStatusCustom(addon2, validStatuses, P.CommonProcessor.SpecialStatuses, NumStatuses2, true);
         }
     }
 
-    private void OnStatusCustom0RequestedUpdate(AddonEvent type, AddonArgs args)
+    // Func helper to get around 7.4's internal AddonArgs while removing ArtificialAddonArgs usage 
+    private void OnStatusCustom0RequestedUpdate(AddonEvent t, AddonArgs args) => Custom0RequestedUpdate((AtkUnitBase*)args.Addon.Address);
+    private void OnStatusCustom1RequestedUpdate(AddonEvent t, AddonArgs args) => Custom1RequestedUpdate((AtkUnitBase*)args.Addon.Address);
+    private void OnStatusCustom2RequestedUpdate(AddonEvent t, AddonArgs args) => Custom2RequestedUpdate((AtkUnitBase*)args.Addon.Address);
+
+    private void Custom0RequestedUpdate(AtkUnitBase* addonBase)
     {
         if(P == null) return;
-        RequestedUpdateStatusCustom((AtkUnitBase*)args.Addon.Address, ref NumStatuses0);
+        AddonRequestedUpdate(addonBase, ref NumStatuses0);
         InternalLog.Verbose($"StatusCustom0 Requested update: {NumStatuses0}");
     }
 
-    private void OnStatusCustom1RequestedUpdate(AddonEvent type, AddonArgs args)
+    private void Custom1RequestedUpdate(AtkUnitBase* addonBase)
     {
         if(P == null) return;
-        RequestedUpdateStatusCustom((AtkUnitBase*)args.Addon.Address, ref NumStatuses1);
+        AddonRequestedUpdate(addonBase, ref NumStatuses1);
         InternalLog.Verbose($"StatusCustom1 Requested update: {NumStatuses1}");
     }
 
-    private void OnStatusCustom2RequestedUpdate(AddonEvent type, AddonArgs args)
+    private void Custom2RequestedUpdate(AtkUnitBase* addonBase)
     {
         if(P == null) return;
-        RequestedUpdateStatusCustom((AtkUnitBase*)args.Addon.Address, ref NumStatuses2);
+        AddonRequestedUpdate(addonBase, ref NumStatuses2);
         InternalLog.Verbose($"StatusCustom2 Requested update: {NumStatuses2}");
     }
 
-    private void RequestedUpdateStatusCustom(AtkUnitBase* addon, ref int StatusCnt)
+    private void AddonRequestedUpdate(AtkUnitBase* addon, ref int StatusCnt)
     {
         if(addon != null && IsAddonReady(addon) && P.CanModifyUI())
         {
@@ -161,6 +158,7 @@ public unsafe class StatusCustomProcessor : IDisposable
         UpdateStatusCustom((AtkUnitBase*)args.Addon.Address, validStatuses, P.CommonProcessor.PositiveStatuses, NumStatuses0);
     }
 
+    // The common logic method with all statuses of a defined type in the player's status manager.
     public void UpdateStatusCustom(AtkUnitBase* addon, IEnumerable<MyStatus> statuses, IEnumerable<uint> userStatuses, int StatusCnt, bool hideAll = false)
     {
         if(addon != null && IsAddonReady(addon))

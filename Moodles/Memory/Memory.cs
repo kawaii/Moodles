@@ -2,7 +2,7 @@
 using ECommons.EzHookManager;
 
 namespace Moodles;
-#pragma warning disable CS0649 // Ignore "Field is never assigned to" warnings for IPC fields
+#pragma warning disable CS0649, CS8618 // Ignore "Field is never assigned to" warnings for IPC fields
 public unsafe partial class Memory : IDisposable
 {
     public delegate nint AtkComponentIconText_LoadIconByIDDelegate(void* iconText, int iconId);
@@ -37,7 +37,7 @@ public unsafe partial class Memory : IDisposable
             {
                 // Append the address to the cancelRequests to expire the moodle on the next SetIcon() func.
                 P.CommonProcessor.CancelRequests.Add(a1);
-                P.CommonProcessor.HoveringOver = 0; // See if we can stop this when we want to.
+                P.CommonProcessor.HoveringOver = 0;
             }
         }
         catch (Exception e)

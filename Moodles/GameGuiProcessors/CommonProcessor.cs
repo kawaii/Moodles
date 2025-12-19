@@ -156,7 +156,6 @@ public unsafe class CommonProcessor : IDisposable
                 // Process the removals.
                 foreach (var status in removed)
                 {
-                    continue;
                     statusManager.Remove(status);
 
                     // Process additional logic for the ClientPlayer to process a status on dispel. 

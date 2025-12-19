@@ -15,17 +15,17 @@ public unsafe class PartyListProcessor : IDisposable
     public PartyListProcessor()
     {
         Svc.AddonLifecycle.RegisterListener(AddonEvent.PostUpdate, "_PartyList", OnPartyListUpdate);
-        Svc.AddonLifecycle.RegisterListener(AddonEvent.PostRequestedUpdate, "_PartyList", OnPartyListRequestedUpdate);
+        Svc.AddonLifecycle.RegisterListener(AddonEvent.PostRequestedUpdate, "_PartyList", OnAlcPartyListRequestedUpdate);
         if(Player.Available && TryGetAddonByName<AtkUnitBase>("_PartyList", out var addon) && IsAddonReady(addon))
         {
-            OnPartyListRequestedUpdate(AddonEvent.PostRequestedUpdate, new ArtificialAddonArgs(addon));
+            AddonRequestedUpdate(addon);
         }
     }
 
     public void Dispose()
     {
         Svc.AddonLifecycle.UnregisterListener(AddonEvent.PostUpdate, "_PartyList", OnPartyListUpdate);
-        Svc.AddonLifecycle.UnregisterListener(AddonEvent.PostRequestedUpdate, "_PartyList", OnPartyListRequestedUpdate);
+        Svc.AddonLifecycle.UnregisterListener(AddonEvent.PostRequestedUpdate, "_PartyList", OnAlcPartyListRequestedUpdate);
     }
 
     public void HideAll()
@@ -36,28 +36,36 @@ public unsafe class PartyListProcessor : IDisposable
         }
     }
 
-    private void OnPartyListRequestedUpdate(AddonEvent type, AddonArgs args)
+    // Func helper to get around 7.4's internal AddonArgs while removing ArtificialAddonArgs usage 
+    private void OnAlcPartyListRequestedUpdate(AddonEvent t, AddonArgs args) => AddonRequestedUpdate((AtkUnitBase*)args.Addon.Address);
+
+    private void OnPartyListUpdate(AddonEvent type, AddonArgs args)
     {
         if(P == null) return;
-        if(!Player.Available) return;
-        var addon = (AtkUnitBase*)args.Addon.Address;
-        if(addon != null && IsAddonReady(addon) && P.CanModifyUI())
+        UpdatePartyList((AtkUnitBase*)args.Addon.Address);
+    }
+
+    private void AddonRequestedUpdate(AtkUnitBase* addonBase)
+    {
+        if (P == null) return;
+        if (!Player.Available) return;
+        if (addonBase != null && IsAddonReady(addonBase) && P.CanModifyUI())
         {
-            for(var i = 0; i < NumStatuses.Length; i++)
+            for (var i = 0; i < NumStatuses.Length; i++)
             {
                 NumStatuses[i] = 0;
             }
             var index = 23;
             var storeIndex = 0;
-            foreach(nint player in GetVisibleParty())
+            foreach (nint player in GetVisibleParty())
             {
                 //InternalLog.Verbose($"  Now checking {index} for {player}");
-                if(player != nint.Zero)
+                if (player != nint.Zero)
                 {
-                    var iconArray = Utils.GetNodeIconArray(addon->UldManager.NodeList[index]);
-                    foreach(var x in iconArray)
+                    var iconArray = Utils.GetNodeIconArray(addonBase->UldManager.NodeList[index]);
+                    foreach (var x in iconArray)
                     {
-                        if(x->IsVisible()) NumStatuses[storeIndex]++;
+                        if (x->IsVisible()) NumStatuses[storeIndex]++;
                     }
                 }
                 storeIndex++;
@@ -65,12 +73,6 @@ public unsafe class PartyListProcessor : IDisposable
             }
         }
         InternalLog.Verbose($"PartyList Requested update: {NumStatuses.Print()}");
-    }
-
-    private void OnPartyListUpdate(AddonEvent type, AddonArgs args)
-    {
-        if(P == null) return;
-        UpdatePartyList((AtkUnitBase*)args.Addon.Address);
     }
 
     public void UpdatePartyList(AtkUnitBase* addon, bool hideAll = false)

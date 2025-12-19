@@ -98,7 +98,7 @@ public static unsafe class CharacterUtils
         // DrawObject does not exist yet.
         if ((nint)character->DrawObject == nint.Zero) return false;
         // RenderFlags are marked as 'still loading'.
-        if (character->RenderFlags == 2048) return false;
+        if ((ulong)character->RenderFlags == 2048) return false;
         // There are models loaded into slots, still being applied.
         if (((CharacterBase*)character->DrawObject)->HasModelInSlotLoaded != 0) return false;
         // There are model files loaded into slots, still being applied.

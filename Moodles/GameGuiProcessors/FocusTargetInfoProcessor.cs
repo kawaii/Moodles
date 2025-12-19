@@ -17,7 +17,7 @@ public unsafe class FocusTargetInfoProcessor
         Svc.AddonLifecycle.RegisterListener(AddonEvent.PostRequestedUpdate, "_FocusTargetInfo", OnFocusTargetInfoRequestedUpdate);
         if(Player.Available && TryGetAddonByName<AtkUnitBase>("_FocusTargetInfo", out var addon) && IsAddonReady(addon))
         {
-            OnFocusTargetInfoRequestedUpdate(AddonEvent.PostRequestedUpdate, new ArtificialAddonArgs(addon));
+            AddonRequestedUpdate(addon);
         }
     }
 
@@ -35,24 +35,8 @@ public unsafe class FocusTargetInfoProcessor
         }
     }
 
-    private void OnFocusTargetInfoRequestedUpdate(AddonEvent type, AddonArgs args)
-    {
-        if(P == null) return;
-        var addon = (AtkUnitBase*)args.Addon.Address;
-        if(addon != null && IsAddonReady(addon))
-        {
-            NumStatuses = 0;
-            for(var i = 8; i >= 4; i--)
-            {
-                var c = addon->UldManager.NodeList[i];
-                if(c->IsVisible())
-                {
-                    NumStatuses++;
-                }
-            }
-        }
-        InternalLog.Verbose($"FocusTarget Requested update: {NumStatuses}");
-    }
+    // Func helper to get around 7.4's internal AddonArgs while removing ArtificialAddonArgs usage 
+    private void OnFocusTargetInfoRequestedUpdate(AddonEvent t, AddonArgs args) => AddonRequestedUpdate((AtkUnitBase*)args.Addon.Address);
 
     private void OnFocusTargetInfoUpdate(AddonEvent type, AddonArgs args)
     {
@@ -62,6 +46,24 @@ public unsafe class FocusTargetInfoProcessor
         {
             UpdateAddon((AtkUnitBase*)args.Addon.Address);
         }
+    }
+
+    private void AddonRequestedUpdate(AtkUnitBase* addonBase)
+    {
+        if (P == null) return;
+        if (addonBase != null && IsAddonReady(addonBase))
+        {
+            NumStatuses = 0;
+            for (var i = 8; i >= 4; i--)
+            {
+                var c = addonBase->UldManager.NodeList[i];
+                if (c->IsVisible())
+                {
+                    NumStatuses++;
+                }
+            }
+        }
+        InternalLog.Verbose($"FocusTarget Requested update: {NumStatuses}");
     }
 
     public void UpdateAddon(AtkUnitBase* addon, bool hideAll = false)

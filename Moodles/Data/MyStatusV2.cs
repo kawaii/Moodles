@@ -1,33 +1,37 @@
 ﻿using MemoryPack;
 
 namespace Moodles.Data;
+
+// Updated MyStatus for desired new features holding updated structure.
 [Serializable]
 [MemoryPackable]
-public partial class MyStatus
+public partial class MyStatusV2
 {
     internal string ID => GUID.ToString();
+    // Essential
     public Guid GUID = Guid.NewGuid();
     public int IconID;
     public string Title = "";
     public string Description = "";
-    public long ExpiresAt;
-    public StatusType Type;
-    public string Applier = "";
-    public bool Dispelable = false;
-    public string Dispeller = "";
-    public int Stacks = 1;
-    public Guid StatusOnDispell = Guid.Empty;
-    public bool TransferStacksOnDispell = false;
     public string CustomFXPath = "";
-    public bool StackOnReapply = false;
-    public int StacksIncOnReapply = 1;
+    public long ExpiresAt;
+    // Attributes
+    public StatusType Type;
+    public int Stacks = 1;
+    public int StackSteps = 0; // How many stacks to add per reapplication.
+    public Modifiers Modifiers; // What can be customized with this moodle.
 
+    // Chaining Status (Applies when ChainTrigger condition is met)
+    public Guid ChainedStatus = Guid.Empty;
+    public ChainTrigger ChainTrigger;
+
+    #region Conditional Serialization/Deserialization
 
     [MemoryPackIgnore] public bool Persistent = false;
 
-    [NonSerialized] internal int TooltipShown = -1;
+    [NonSerialized] internal bool Locked = false; // The status is locked for GSpeak from ClientEdits.
+    [NonSerialized] internal int  TooltipShown = -1;
 
-    // Used for Duration selector, but not used in memory pack.
     [MemoryPackIgnore] public int Days = 0;
     [MemoryPackIgnore] public int Hours = 0;
     [MemoryPackIgnore] public int Minutes = 0;
@@ -35,12 +39,20 @@ public partial class MyStatus
     [MemoryPackIgnore] public bool NoExpire = false;
     [MemoryPackIgnore] public bool AsPermanent = false;
 
-    // These are JSON serialization control methods.
     public bool ShouldSerializeGUID() => GUID != Guid.Empty;
     public bool ShouldSerializePersistent() => ShouldSerializeGUID();
     public bool ShouldSerializeExpiresAt() => ShouldSerializeGUID();
 
-    // Everything below here is helpers.
+    #endregion Conditional Serialization/Deserialization
+
+    // Additional Behavior added overtime.
+    public string Applier = "";
+    public string Dispeller = ""; // Person who must be the one to dispel you.
+
+    // Anything else that wants to be added here later that cant fit
+    // into Modifiers or ChainTrigger can fit below cleanly.
+
+
     internal uint AdjustedIconID => (uint)(IconID + Stacks - 1);
     internal long TotalDurationSeconds => Seconds * 1000 + Minutes * 1000 * 60 + Hours * 1000 * 60 * 60 + Days * 1000 * 60 * 60 * 24;
 
@@ -85,25 +97,6 @@ public partial class MyStatus
         error = null!;
         return true;
     }
-
-    public MoodlesStatusInfo ToStatusInfoTuple() => (
-        GUID, 
-        IconID,
-        Title, 
-        Description, 
-        Type,
-        CustomFXPath,
-        Stacks,
-        NoExpire ? -1 : TotalDurationSeconds,
-        Applier,
-        Dispelable,
-        Dispeller,
-        Persistent,
-        StatusOnDispell,
-        StackOnReapply,
-        StacksIncOnReapply,
-        TransferStacksOnDispell
-        );
 
     public static MyStatus FromTuple(MoodlesStatusInfo statusInfo)
     {

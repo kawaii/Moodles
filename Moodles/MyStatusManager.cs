@@ -12,12 +12,16 @@ public class MyStatusManager
     private static readonly MemoryPackSerializerOptions SerializerOptions = new()
     {
         StringEncoding = StringEncoding.Utf16,
+
     };
     // Changing anything in here will break everyones configs, so do not do that.
     public HashSet<Guid> AddTextShown = [];
     public HashSet<Guid> RemTextShown = [];
     public List<MyStatus> Statuses = [];
     public bool Ephemeral = false;
+
+    // Locks exclusively used for the Client's StatusManager
+    [NonSerialized] internal HashSet<Guid> LockedStatuses = [];
 
     /// <summary>
     ///     Beware this was originally a =>, so any location where it assumes valid nature should be double checked.

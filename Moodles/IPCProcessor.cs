@@ -147,16 +147,16 @@ public class IPCProcessor : IDisposable
     }
 
     [EzIPCEvent("Sundouleia.ApplyStatusInfo", false)]
-    private static void SundouleiaApplyTuple(MoodlesStatusInfo status) => _ = new TickScheduler(() => ApplyStatusTuples([status]));
+    private static void SundouleiaApplyTuple(MoodlesStatusInfo status) => _ = new TickScheduler(() => ApplyStatusTuples([status], false));
 
     [EzIPCEvent("GagSpeak.ApplyStatusInfo", false)]
-    private static void GSpeakApplyTuple(MoodlesStatusInfo status) => _ = new TickScheduler(() => ApplyStatusTuples([status]));
+    private static void GSpeakApplyTuple(MoodlesStatusInfo status, bool lockId) => _ = new TickScheduler(() => ApplyStatusTuples([status], lockId));
 
     [EzIPCEvent("Sundouleia.ApplyStatusInfoList", false)]
-    private static void SundouleiaApplyTuples(List<MoodlesStatusInfo> statuses) => _ = new TickScheduler(() => ApplyStatusTuples(statuses));
+    private static void SundouleiaApplyTuples(List<MoodlesStatusInfo> statuses) => _ = new TickScheduler(() => ApplyStatusTuples(statuses, false));
 
     [EzIPCEvent("GagSpeak.ApplyStatusInfoList", false)]
-    private static void GSpeakApplyTuples(List<MoodlesStatusInfo> statuses) => _ = new TickScheduler(() => ApplyStatusTuples(statuses));
+    private static void GSpeakApplyTuples(List<MoodlesStatusInfo> statuses, bool lockIds) => _ = new TickScheduler(() => ApplyStatusTuples(statuses, lockIds));
 
     /// <summary>
     ///     <b>Primarily used for Apply-To-Pair functionality, or for Try-On features.</b> <para />
@@ -164,7 +164,7 @@ public class IPCProcessor : IDisposable
     ///     GSpeak for valid MoodleAccess and can be trusted.
     /// </summary>
     /// <remarks> Ensure this is called in a <see cref="TickScheduler"/> </remarks>
-    private static unsafe void ApplyStatusTuples(List<MoodlesStatusInfo> tuples)
+    private static unsafe void ApplyStatusTuples(List<MoodlesStatusInfo> tuples, bool lockStatus)
     {
         if (!CharaWatcher.LocalPlayerRendered) return;
 
@@ -174,6 +174,24 @@ public class IPCProcessor : IDisposable
         {
             sm.AddOrUpdate(MyStatus.FromTuple(status).PrepareToApply(), UpdateSource.StatusTuple, false, true);
         }
+    }
+
+    [EzIPCEvent("GagSpeak.LockIds", false)] // Only applicable to the ClientPlayer StatusManager, Identifies which Statuses cannot be removed.
+    private static void GSpeakLockStatuses(List<Guid> statusesToLock)
+    {
+
+    }
+
+    [EzIPCEvent("GagSpeak.UnlockIds", false)]
+    private static void GSpeakUnlockStatuses(List<Guid> statusesToLock)
+    {
+
+    }
+
+    [EzIPCEvent("GagSpeak.ClearLocks", false)]
+    private static void GSpeakLockStatuses()
+    {
+
     }
     #endregion GSpeak & Sundouleia Listener Events
 

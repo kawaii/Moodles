@@ -16,7 +16,7 @@ public unsafe class TargetInfoProcessor
         Svc.AddonLifecycle.RegisterListener(AddonEvent.PostRequestedUpdate, "_TargetInfo", OnTargetInfoRequestedUpdate);
         if(Player.Available && TryGetAddonByName<AtkUnitBase>("_TargetInfo", out var addon) && IsAddonReady(addon))
         {
-            OnTargetInfoRequestedUpdate(AddonEvent.PostRequestedUpdate, new ArtificialAddonArgs(addon));
+            AddonRequestedUpdate(addon);
         }
     }
 
@@ -34,16 +34,18 @@ public unsafe class TargetInfoProcessor
         }
     }
 
-    private void OnTargetInfoRequestedUpdate(AddonEvent type, AddonArgs args)
+    // Func helper to get around 7.4's internal AddonArgs while removing ArtificialAddonArgs usage
+    private void OnTargetInfoRequestedUpdate(AddonEvent t, AddonArgs args) => AddonRequestedUpdate((AtkUnitBase*)args.Addon.Address);
+
+    private void AddonRequestedUpdate(AtkUnitBase* addonBase)
     {
         if(P == null) return;
-        var addon = (AtkUnitBase*)args.Addon.Address;
-        if(addon != null && IsAddonReady(addon))
+        if(addonBase != null && IsAddonReady(addonBase))
         {
             NumStatuses = 0;
             for(var i = 32; i >= 3; i--)
             {
-                var c = addon->UldManager.NodeList[i];
+                var c = addonBase->UldManager.NodeList[i];
                 if(c->IsVisible())
                 {
                     NumStatuses++;

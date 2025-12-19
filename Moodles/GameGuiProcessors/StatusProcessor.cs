@@ -12,17 +12,17 @@ public unsafe class StatusProcessor : IDisposable
     public StatusProcessor()
     {
         Svc.AddonLifecycle.RegisterListener(AddonEvent.PostUpdate, "_Status", OnStatusUpdate);
-        Svc.AddonLifecycle.RegisterListener(AddonEvent.PostRequestedUpdate, "_Status", OnStatusRequestedUpdate);
+        Svc.AddonLifecycle.RegisterListener(AddonEvent.PostRequestedUpdate, "_Status", OnAlcStatusRequestedUpdate);
         if(LocalPlayer.Available && TryGetAddonByName<AtkUnitBase>("_Status", out var addon) && IsAddonReady(addon))
         {
-            OnStatusRequestedUpdate(AddonEvent.PostRequestedUpdate, new ArtificialAddonArgs(addon));
+            AddonRequestedUpdate(addon);
         }
     }
 
     public void Dispose()
     {
         Svc.AddonLifecycle.UnregisterListener(AddonEvent.PostUpdate, "_Status", OnStatusUpdate);
-        Svc.AddonLifecycle.UnregisterListener(AddonEvent.PostRequestedUpdate, "_Status", OnStatusRequestedUpdate);
+        Svc.AddonLifecycle.UnregisterListener(AddonEvent.PostRequestedUpdate, "_Status", OnAlcStatusRequestedUpdate);
     }
 
     public void HideAll()
@@ -36,25 +36,8 @@ public unsafe class StatusProcessor : IDisposable
         }
     }
 
-    private void OnStatusRequestedUpdate(AddonEvent type, AddonArgs args)
-    {
-        if(P == null) return;
-
-        var addon = (AtkUnitBase*)args.Addon.Address;
-        if (addon != null && IsAddonReady(addon) && P.CanModifyUI())
-        {
-            NumStatuses = 0;
-            for(var i = 25; i >= 1; i--)
-            {
-                var c = addon->UldManager.NodeList[i];
-                if(c->IsVisible())
-                {
-                    NumStatuses++;
-                }
-            }
-        }
-    }
-
+    // Func helper to get around 7.4's internal AddonArgs while removing ArtificialAddonArgs usage 
+    private void OnAlcStatusRequestedUpdate(AddonEvent t, AddonArgs args) => AddonRequestedUpdate((AtkUnitBase*)args.Addon.Address);
     private void OnStatusUpdate(AddonEvent type, AddonArgs args)
     {
         if(P == null) return;
@@ -63,6 +46,24 @@ public unsafe class StatusProcessor : IDisposable
         
         var validStatuses = Utils.GetMyStatusManager(Player.NameWithWorld).Statuses;
         UpdateStatus((AtkUnitBase*)args.Addon.Address, validStatuses, NumStatuses);
+    }
+
+    private void AddonRequestedUpdate(AtkUnitBase* addonBase)
+    {
+        if (P == null) return;
+
+        if (addonBase != null && IsAddonReady(addonBase) && P.CanModifyUI())
+        {
+            NumStatuses = 0;
+            for (var i = 25; i >= 1; i--)
+            {
+                var c = addonBase->UldManager.NodeList[i];
+                if (c->IsVisible())
+                {
+                    NumStatuses++;
+                }
+            }
+        }
     }
 
     public void UpdateStatus(AtkUnitBase* addon, IEnumerable<MyStatus> statuses, int StatusCnt, bool hideAll = false)
