@@ -64,6 +64,10 @@ public class Moodles : IDalamudPlugin
             Utils.CleanupNulls();
             // Check connected IPC states availability & data.
             IPC.FetchInitial();
+
+            // Ensure only the correct whitelist tabs are shown.
+            TabWhitelist.UpdateWhitelists();
+
         });
     }
 

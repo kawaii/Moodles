@@ -98,7 +98,7 @@ public static unsafe class UI
         {
             ImGuiEx.Text(Utils.GetFriendlist().Print("\n"));
         }
-        if (ImGui.CollapsingHeader("Sundouleia players"))
+        if (IPC.SundouleiaAvailable && ImGui.CollapsingHeader("Sundouleia players"))
         {
             ImGui.Text("SundouleiaPlayers (From IPC Call)");
             if (P.IPCProcessor.GetSundouleiaPlayers.TryInvoke(out var list) && list != null)
@@ -109,7 +109,7 @@ public static unsafe class UI
             ImGui.Text("SundouleiaPlayers (From Memory)");
             DrawIpcHandles("sdMem", IPC.SundouleiaPlayerCache.Keys);
         }
-        if (ImGui.CollapsingHeader("GSpeak players"))
+        if (IPC.GSpeakAvailable && ImGui.CollapsingHeader("GSpeak players"))
         {
             ImGui.Text("GSpeakPlayers (From IPC Call)");
             if(P.IPCProcessor.GetGSpeakPlayers.TryInvoke(out var list) && list != null)

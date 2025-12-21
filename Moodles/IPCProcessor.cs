@@ -3,6 +3,7 @@ using Dalamud.Plugin.Ipc;
 using ECommons.EzIpcManager;
 using FFXIVClientStructs.FFXIV.Client.Game.Character;
 using Moodles.Data;
+using Moodles.Gui;
 
 namespace Moodles;
 #pragma warning disable CS0649, CS8602, CS8618 // EzIPC never needs to be initialized, it is handled internally.
@@ -66,6 +67,7 @@ public class IPCProcessor : IDisposable
             PluginLog.LogDebug("GSpeak Ready, Obtaining all handled player information.");
             IPC.SundouleiaAvailable = true;
             IPC.InitSundesmoCache();
+            TabWhitelist.UpdateWhitelists();
         });
     }
 
@@ -77,6 +79,7 @@ public class IPCProcessor : IDisposable
             PluginLog.LogDebug("GSpeak Ready, Obtaining all handled player information.");
             IPC.GSpeakAvailable = true;
             IPC.InitGSpeakCache();
+            TabWhitelist.UpdateWhitelists();
         });
     }
 
@@ -86,6 +89,7 @@ public class IPCProcessor : IDisposable
         PluginLog.LogDebug("Sundouleia Disposed / Disabled. Clearing associated data.");
         IPC.ClearSundesmos();
         IPC.SundouleiaAvailable = false;
+        TabWhitelist.UpdateWhitelists();
     }
 
     [EzIPCEvent("GagSpeak.Disposing", false)]
@@ -94,6 +98,7 @@ public class IPCProcessor : IDisposable
         PluginLog.LogDebug("GSpeak Disposed / Disabled. Clearing associated data.");
         IPC.ClearGSpeakPairs();
         IPC.GSpeakAvailable = false;
+        TabWhitelist.UpdateWhitelists();
     }
 
     [EzIPCEvent("Sundouleia.PairRendered", false)]

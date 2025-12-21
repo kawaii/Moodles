@@ -8,7 +8,7 @@ internal class GSpeakPluginWhitelist : PluginWhitelist
 {
     private WhitelistEntryGSpeak Selected => P.OtterGuiHandler.WhitelistGSpeak.Current!;
 
-    public override string pluginName { get; } = "GagSpeak";
+    public override string pluginName { get; } = "GSpeak";
 
     protected override void DrawWhitelist()
     {

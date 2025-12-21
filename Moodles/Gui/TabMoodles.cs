@@ -42,13 +42,13 @@ public static class TabMoodles
         {
             Utils.GetMyStatusManager(LocalPlayer.NameWithWorld).AddOrUpdate(Selected.PrepareToApply(AsPermanent ? PrepareOptions.Persistent : PrepareOptions.NoOption), UpdateSource.StatusTuple);
         }
-#if DEBUG
-        ImGui.SameLine();
-        if (ImGui.Button("Apply to Yourself (As Locked)"))
-        {
-            Utils.GetMyStatusManager(LocalPlayer.NameWithWorld).AddOrUpdateLocked(Selected.PrepareToApply(AsPermanent ? PrepareOptions.Persistent : PrepareOptions.NoOption));
-        }
-#endif
+//#if DEBUG
+//        ImGui.SameLine();
+//        if (ImGui.Button("Apply to Yourself (As Locked)"))
+//        {
+//            Utils.GetMyStatusManager(LocalPlayer.NameWithWorld).AddOrUpdateLocked(Selected.PrepareToApply(AsPermanent ? PrepareOptions.Persistent : PrepareOptions.NoOption));
+//        }
+//#endif
 
         ImGui.SameLine();
         // Determine target state and application intent
