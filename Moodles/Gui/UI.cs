@@ -31,7 +31,7 @@ public static unsafe class UI
             ("Automation", TabAutomation.Draw, null, true),
             ("Whitelist", TabWhitelist.Draw, null, true),
             ("Settings", TabSettings.Draw, null, true),
-            (C.FuckupTab?"Cleanup":null, TabFuckup.Draw, ImGuiColors.DalamudGrey, true),
+            (C.FuckupTab2?"Cleanup":null, TabFuckup.Draw, ImGuiColors.DalamudGrey, true),
             (C.Debug?"Debugger":null, DrawDebugger, ImGuiColors.DalamudGrey, true),
             InternalLog.ImGuiTab(C.Debug),
             ]);

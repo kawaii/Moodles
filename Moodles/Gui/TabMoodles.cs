@@ -82,6 +82,8 @@ public static class TabMoodles
 
     private static void DrawMoodleEssentials()
     {
+        ImGui.Spacing();
+
         if (ImGui.BeginTable("##essentials", 2, ImGuiTableFlags.Borders | ImGuiTableFlags.RowBg | ImGuiTableFlags.SizingStretchSame))
         {
             ImGui.TableSetupColumn("Name", ImGuiTableColumnFlags.WidthFixed, 175f);
@@ -244,6 +246,8 @@ public static class TabMoodles
         if (maxStacks <= 1)
             return;
 
+        ImGui.Spacing();
+
         if (ImGui.BeginTable("##stacking", 2, ImGuiTableFlags.Borders | ImGuiTableFlags.RowBg | ImGuiTableFlags.SizingStretchSame))
         {
             ImGui.TableSetupColumn("Name", ImGuiTableColumnFlags.WidthFixed, 175f);
@@ -340,6 +344,8 @@ public static class TabMoodles
         if (!P.CommonProcessor.DispelableIcons.Contains((uint)Selected.IconID))
             return;
 
+        ImGui.Spacing();
+
         if (ImGui.BeginTable("##dispelling", 2, ImGuiTableFlags.Borders | ImGuiTableFlags.RowBg | ImGuiTableFlags.SizingStretchSame))
         {
             ImGui.TableSetupColumn("Name", ImGuiTableColumnFlags.WidthFixed, 175f);
@@ -360,8 +366,8 @@ public static class TabMoodles
             {
                 ImGui.TableNextRow();
                 ImGui.TableNextColumn();
-                ImGuiEx.TextV($"Dispeller:");
-                ImGuiEx.HelpMarker("An optional field to spesify who the moodle must be dispelled by, preventing others from doing so");
+                ImGuiEx.TextV($"Allowed Dispeller:");
+                ImGuiEx.HelpMarker("An optional field to spesify who the moodle must be dispelled by, preventing others from doing so.");
                 ImGui.TableNextColumn();
                 ImGuiEx.SetNextItemFullWidth();
                 ImGui.InputTextWithHint("Dispeller##dispeller", "Player Name@World", ref Selected.Dispeller, 150, C.Censor ? ImGuiInputTextFlags.Password : ImGuiInputTextFlags.None);
@@ -377,6 +383,8 @@ public static class TabMoodles
 
     private static void DrawChaining()
     {
+        ImGui.Spacing();
+
         if (ImGui.BeginTable("##chaining", 2, ImGuiTableFlags.Borders | ImGuiTableFlags.RowBg | ImGuiTableFlags.SizingStretchSame))
         {
             ImGui.TableSetupColumn("Name", ImGuiTableColumnFlags.WidthFixed, 175f);

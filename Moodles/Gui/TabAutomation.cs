@@ -15,7 +15,7 @@ public static class TabAutomation
     private static bool Editing = true;
     public static void Draw()
     {
-        P.OtterGuiHandler.AutomationList.Draw(200f);
+        P.OtterGuiHandler.AutomationList.Draw(300f);
         ImGui.SameLine();
         using var group = ImRaii.Group();
         DrawHeader();

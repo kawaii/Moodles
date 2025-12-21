@@ -27,7 +27,7 @@ public static class TabSettings
         ImGui.Checkbox($"Debug Mode", ref C.Debug);
         ImGui.Checkbox($"Debug AutoSave", ref C.DebugSaves);
 
-        ImGui.Checkbox($"Enable Moodle Cleanup Tab", ref C.FuckupTab);
+        ImGui.Checkbox($"Enable Moodle Cleanup Tab", ref C.FuckupTab2);
 
         ImGui.Checkbox($"Moodles can be Esunad", ref C.MoodlesCanBeEsunad);
         ImGui.Checkbox($"Others can Esuna Moodles", ref C.OthersCanEsunaMoodles);

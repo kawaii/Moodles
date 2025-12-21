@@ -15,6 +15,10 @@ public static unsafe class TabFuckup
 
     public static unsafe void Draw()
     {
+        ImGui.Text("Ever had a Moodle linger on someone that shouldn't be there anymore?"u8);
+        ImGui.Text("Well I'm sorry for that. This window should allow you to fix that!"u8);
+        ImGui.NewLine();
+
         var objManager = GameObjectManager.Instance();
 
         if (ImGui.BeginCombo("Select status manager", $"{OwnerNameWorld}"))
