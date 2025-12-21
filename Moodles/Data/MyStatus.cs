@@ -1,29 +1,47 @@
 ﻿using MemoryPack;
 
 namespace Moodles.Data;
+
+// Updated MyStatus for desired new features holding updated structure.
 [Serializable]
 [MemoryPackable]
 public partial class MyStatus
 {
     internal string ID => GUID.ToString();
+
+    // Essential
+    public const int Version = 2;
     public Guid GUID = Guid.NewGuid();
     public int IconID;
     public string Title = "";
     public string Description = "";
-    public long ExpiresAt;
-    public StatusType Type;
-    public string Applier = "";
-    public bool Dispelable = false;
-    public int Stacks = 1;
-    public Guid StatusOnDispell = Guid.Empty;
-    public bool TransferStacksOnDispell = false;
     public string CustomFXPath = "";
-    public bool StackOnReapply = false;
-    public int StacksIncOnReapply = 1;
+    public long ExpiresAt;
+    // Attributes
+    public StatusType Type;
+    public Modifiers Modifiers; // What can be customized with this moodle.
+    public int Stacks = 1;
+    public int StackSteps = 0; // How many stacks to add per reapplication.
 
+    // Chaining Status (Applies when ChainTrigger condition is met)
+    public Guid ChainedStatus = Guid.Empty;
+    public ChainTrigger ChainTrigger;
+
+    // Additional Behavior added overtime.
+    public string Applier = "";
+    public string Dispeller = ""; // Person who must be the one to dispel you.
+
+    // Anything else that wants to be added here later that cant fit
+    // into Modifiers or ChainTrigger can fit below cleanly.
+
+
+    #region Conditional Serialization/Deserialization
 
     [MemoryPackIgnore] public bool Persistent = false;
 
+    // Internals used to track data in the common processors.
+    [NonSerialized] internal bool ApplyChain = false; // Informs processor to apply chain.
+    [NonSerialized] internal bool ClickedOff = false; // Set when the status is right clicked off.
     [NonSerialized] internal int TooltipShown = -1;
 
     [MemoryPackIgnore] public int Days = 0;
@@ -37,8 +55,13 @@ public partial class MyStatus
     public bool ShouldSerializePersistent() => ShouldSerializeGUID();
     public bool ShouldSerializeExpiresAt() => ShouldSerializeGUID();
 
+    #endregion Conditional Serialization/Deserialization
+
     internal uint AdjustedIconID => (uint)(IconID + Stacks - 1);
     internal long TotalDurationSeconds => Seconds * 1000 + Minutes * 1000 * 60 + Hours * 1000 * 60 * 60 + Days * 1000 * 60 * 60 * 24;
+
+    public bool ShouldExpireOnChain() => ApplyChain && !Modifiers.Has(Modifiers.PersistAfterTrigger);
+    public bool HadNaturalTimerFalloff() => ExpiresAt - Utils.Time <= 0 && !ApplyChain && !ClickedOff;
 
     public bool IsValid(out string error)
     {
@@ -78,37 +101,60 @@ public partial class MyStatus
                 return false;
             }
         }
-        error = null;
+        error = null!;
         return true;
     }
 
-    public MoodlesStatusInfo ToStatusInfoTuple()
-        => (GUID, IconID, Title, Description, Type, Applier, Dispelable, Stacks, Persistent, Days, Hours, 
-        Minutes, Seconds, NoExpire, AsPermanent, StatusOnDispell, CustomFXPath, StackOnReapply, StacksIncOnReapply);
+    public MoodlesStatusInfo ToStatusTuple()
+        => new MoodlesStatusInfo
+        {
+            Version = Version,
+            GUID = GUID,
+            IconID = IconID,
+            Title = Title,
+            Description = Description,
+            CustomVFXPath = CustomFXPath,
+            ExpireTicks = NoExpire ? -1 : TotalDurationSeconds,
+            Type = Type,
+            Stacks = Stacks,
+            StackSteps = StackSteps,
+            Modifiers = (uint)Modifiers,
+            ChainedStatus = ChainedStatus,
+            ChainTrigger = ChainTrigger,
+            Applier = Applier,
+            Dispeller = Dispeller,
+            Permanent = AsPermanent
+        };
 
-    public static MyStatus FromStatusInfoTuple(MoodlesStatusInfo statusInfo)
+    public static MyStatus FromTuple(MoodlesStatusInfo statusInfo)
     {
+        var totalTime = statusInfo.ExpireTicks == -1 ? TimeSpan.Zero : TimeSpan.FromMilliseconds(statusInfo.ExpireTicks);
         return new MyStatus
         {
             GUID = statusInfo.GUID,
             IconID = statusInfo.IconID,
             Title = statusInfo.Title,
             Description = statusInfo.Description,
-            Type = statusInfo.Type,
-            Applier = statusInfo.Applier,
-            Dispelable = statusInfo.Dispelable,
-            Stacks = statusInfo.Stacks,
-            Persistent = statusInfo.Persistent,
-            Days = statusInfo.Days,
-            Hours = statusInfo.Hours,
-            Minutes = statusInfo.Minutes,
-            Seconds = statusInfo.Seconds,
-            NoExpire = statusInfo.NoExpire,
-            AsPermanent = statusInfo.AsPermanent,
-            StatusOnDispell = statusInfo.StatusOnDispell,
             CustomFXPath = statusInfo.CustomVFXPath,
-            StackOnReapply = statusInfo.StackOnReapply,
-            StacksIncOnReapply = statusInfo.StacksIncOnReapply
+
+            Type = statusInfo.Type,
+            Stacks = statusInfo.Stacks,
+            StackSteps = statusInfo.StackSteps,
+            Modifiers = (Modifiers)statusInfo.Modifiers,
+
+            ChainedStatus = statusInfo.ChainedStatus,
+            ChainTrigger = statusInfo.ChainTrigger,
+
+            Applier = statusInfo.Applier,
+            Dispeller = statusInfo.Dispeller,
+
+            // Additional variables we can run assumptions on.
+            Persistent = statusInfo.Permanent,
+            Days = totalTime.Days,
+            Hours = totalTime.Hours,
+            Minutes = totalTime.Minutes,
+            Seconds = totalTime.Seconds,
+            NoExpire = statusInfo.ExpireTicks == -1,
         };
     }
 }

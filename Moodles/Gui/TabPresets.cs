@@ -1,6 +1,4 @@
-﻿using Dalamud.Game.ClientState.Objects.SubKinds;
-using ECommons;
-using ECommons.GameHelpers;
+﻿using FFXIVClientStructs.FFXIV.Client.Game.Character;
 using Moodles.Data;
 using Moodles.OtterGuiHandlers;
 using OtterGui.Raii;
@@ -18,7 +16,7 @@ public static class TabPresets
     };
     private static string Filter = "";
 
-    private static Preset Selected => P.OtterGuiHandler.PresetFileSystem.Selector.Selected;
+    private static Preset Selected => P.OtterGuiHandler.PresetFileSystem.Selector.Selected!;
     public static void Draw()
     {
         if(IsMoodleSelection)
@@ -48,34 +46,26 @@ public static class TabPresets
         {
             if(ImGui.Button("Apply to Yourself"))
             {
-                Utils.GetMyStatusManager(Player.NameWithWorld).ApplyPreset(Selected);
+                Utils.GetMyStatusManager(LocalPlayer.NameWithWorld).ApplyPreset(Selected);
             }
             ImGui.SameLine();
-
-            var isGSpeak = Svc.Targets.Target is IPlayerCharacter pc && Utils.GSpeakPlayerNames.Contains(pc.GetNameWithWorld());
-            var dis = Svc.Targets.Target is not IPlayerCharacter;
-            if(dis) ImGui.BeginDisabled();
-            var buttonText = dis ? "No Target Selected" : $"Apply to Target ({(isGSpeak ? "via GagSpeak" : "Locally")})";
-            if(ImGui.Button(buttonText))
+            // Determine target state and application intent
+            var targetMode = Utils.GetApplyMode();
+            var buttonText = targetMode switch
             {
-                try
-                {
-                    var target = (IPlayerCharacter)Svc.Targets.Target!;
-                    if(!isGSpeak)
-                    {
-                        Utils.GetMyStatusManager(target.GetNameWithWorld()).ApplyPreset(Selected);
-                    }
-                    else
-                    {
-                        Selected.SendGSpeakMessage(target);
-                    }
-                }
-                catch(Exception e)
-                {
-                    e.Log();
-                }
+                TargetApplyMode.GSpeakPair => "Apply to Target (via GSpeak)",
+                TargetApplyMode.Sundesmo => "Apply to Target (via Sundouleia)",
+                TargetApplyMode.Local => "Apply to Target (Locally)",
+                _ => "No Target Selected"
+            };
+            var dis = targetMode is TargetApplyMode.NoTarget;
+
+            if (dis) ImGui.BeginDisabled();
+            if (ImGui.Button(buttonText))
+            {
+                ApplyToTarget(targetMode);
             }
-            if(dis) ImGui.EndDisabled();
+            if (dis) ImGui.EndDisabled();
 
             ImGui.Separator();
 
@@ -83,13 +73,13 @@ public static class TabPresets
             ImGui.InputTextWithHint("Rename Preset", "Give preset a name", ref Selected.Title, 100, C.Censor ? ImGuiInputTextFlags.Password : ImGuiInputTextFlags.None);
             if(ImGui.IsItemDeactivatedAfterEdit())
             {
-                P.IPCProcessor.PresetModified(Selected.GUID);
+                P.IPCProcessor.PresetUpdated(Selected.GUID, false);
             }
 
             ImGui.SetNextItemWidth(ImGui.GetContentRegionAvail().X - 150);
             if (ImGuiEx.EnumCombo("Application Effect##on", ref Selected.ApplicationType, ApplicationTypes))
             {
-                P.IPCProcessor.PresetModified(Selected.GUID);
+                P.IPCProcessor.PresetUpdated(Selected.GUID, false);
             }
             ImGuiEx.SetNextItemFullWidth();
             if(ImGui.BeginCombo("##addnew", "Add new Moodle..."))
@@ -118,7 +108,7 @@ public static class TabPresets
                             if(ImGui.Selectable($"{name}##{x.ID}", false, ImGuiSelectableFlags.DontClosePopups))
                             {
                                 Selected.Statuses.Add(x.GUID);
-                                P.IPCProcessor.PresetModified(Selected.GUID);
+                                P.IPCProcessor.PresetUpdated(Selected.GUID, false);
                             }
                         }
                     }
@@ -205,7 +195,7 @@ public static class TabPresets
                             new TickScheduler(() =>
                             {
                                 Selected.Statuses.Remove(statusId);
-                                P.IPCProcessor.PresetModified(Selected.GUID);
+                                P.IPCProcessor.PresetUpdated(Selected.GUID, false);
                             });
                         }
 
@@ -216,7 +206,7 @@ public static class TabPresets
                         new TickScheduler(() =>
                         {
                             Selected.Statuses.Remove(statusId);
-                            P.IPCProcessor.PresetModified(Selected.GUID);
+                            P.IPCProcessor.PresetUpdated(Selected.GUID, false);
                         });
                     }
                 }
@@ -236,6 +226,28 @@ public static class TabPresets
                     x.AcceptDraw();
                 }
             }
+        }
+    }
+
+    public static unsafe void ApplyToTarget(TargetApplyMode mode)
+    {
+        if (!CharaWatcher.TryGetValue(Svc.Targets.Target?.Address ?? nint.Zero, out Character* chara))
+            return;
+        try
+        {
+            switch (mode)
+            {
+                case TargetApplyMode.GSpeakPair:
+                    Selected.SendGSpeakMessage((nint)chara); break;
+                case TargetApplyMode.Sundesmo:
+                    Selected.SendSundouleiaMessage((nint)chara); break;
+                case TargetApplyMode.Local:
+                    chara->MyStatusManager().ApplyPreset(Selected); break;
+            }
+        }
+        catch (Exception e)
+        {
+            e.Log();
         }
     }
 }

@@ -1,11 +1,13 @@
-﻿using ECommons.Configuration;
-
-namespace Moodles.Data;
-public class Config : IEzConfig
+﻿namespace Moodles.Data;
+public class Config
 {
+    public int Version = 2;
+
     public bool Enabled = true;
     public bool EnabledDuty = false;
     public bool EnabledCombat = false;
+    // Keeps StatusManagers to persist between sessions. Owners could be potentially stale.
+    // Intended to add some form of client-side served 'data sync' when reappearing.
     public Dictionary<string, MyStatusManager> StatusManagers = [];
     public List<MyStatus> SavedStatuses = [];
     public List<Preset> SavedPresets = [];
@@ -29,10 +31,8 @@ public class Config : IEzConfig
     public bool MoodlesCanBeEsunad = true;
     public bool OthersCanEsunaMoodles = true;
     public SortOption IconSortOption = SortOption.Numerical;
-    public List<WhitelistEntryGSpeak> WhitelistGSpeak = [];
 
     public bool BroadcastAllowAll = false;
     public bool BroadcastAllowFriends = false;
     public bool BroadcastAllowParty = false;
-    public WhitelistEntryGSpeak BroadcastDefaultEntry = new();
 }

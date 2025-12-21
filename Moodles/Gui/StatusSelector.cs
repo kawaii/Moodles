@@ -6,13 +6,12 @@ using Moodles.Data;
 namespace Moodles.Gui;
 public class StatusSelector : Window
 {
-    public MyStatus Delegate;
+    public MyStatus Delegate = null!;
     private bool? IsFCStatus = null;
     private bool? IsStackable = null;
     private List<Job> Jobs = [];
     private string Filter = "";
     public List<uint> IconArray = [];
-    private bool Fullscreen = false;
 
     private bool Valid => Delegate != null && C.SavedStatuses.Contains(Delegate);
 

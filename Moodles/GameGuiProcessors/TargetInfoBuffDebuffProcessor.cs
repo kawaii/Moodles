@@ -1,7 +1,7 @@
 ﻿using Dalamud.Game.Addon.Lifecycle;
 using Dalamud.Game.Addon.Lifecycle.AddonArgTypes;
 using Dalamud.Game.ClientState.Objects.SubKinds;
-using ECommons.GameHelpers;
+using FFXIVClientStructs.FFXIV.Client.Game.Character;
 using FFXIVClientStructs.FFXIV.Component.GUI;
 using Moodles.Data;
 
@@ -11,18 +11,18 @@ public unsafe class TargetInfoBuffDebuffProcessor
     public int NumStatuses = 0;
     public TargetInfoBuffDebuffProcessor()
     {
-        Svc.AddonLifecycle.RegisterListener(AddonEvent.PostUpdate, "_TargetInfoBuffDebuff", TargetInfoBuffDebuffUpdate);
-        Svc.AddonLifecycle.RegisterListener(AddonEvent.PostRequestedUpdate, "_TargetInfoBuffDebuff", TargetInfoBuffDebuffRequestedUpdate);
-        if(Player.Available && TryGetAddonByName<AtkUnitBase>("_TargetInfoBuffDebuff", out var addon) && IsAddonReady(addon))
+        Svc.AddonLifecycle.RegisterListener(AddonEvent.PostUpdate, "_TargetInfoBuffDebuff", OnTargetInfoBuffDebuffUpdate);
+        Svc.AddonLifecycle.RegisterListener(AddonEvent.PostRequestedUpdate, "_TargetInfoBuffDebuff", OnTargetInfoBuffDebuffRequestedUpdate);
+        if(LocalPlayer.Available && TryGetAddonByName<AtkUnitBase>("_TargetInfoBuffDebuff", out var addon) && IsAddonReady(addon))
         {
-            TargetInfoBuffDebuffRequestedUpdate(AddonEvent.PostRequestedUpdate, new ArtificialAddonArgs(addon));
+            AddonRequestedUpdate(addon);
         }
     }
 
     public void Dispose()
     {
-        Svc.AddonLifecycle.UnregisterListener(AddonEvent.PostUpdate, "_TargetInfoBuffDebuff", TargetInfoBuffDebuffUpdate);
-        Svc.AddonLifecycle.UnregisterListener(AddonEvent.PostRequestedUpdate, "_TargetInfoBuffDebuff", TargetInfoBuffDebuffRequestedUpdate);
+        Svc.AddonLifecycle.UnregisterListener(AddonEvent.PostUpdate, "_TargetInfoBuffDebuff", OnTargetInfoBuffDebuffUpdate);
+        Svc.AddonLifecycle.UnregisterListener(AddonEvent.PostRequestedUpdate, "_TargetInfoBuffDebuff", OnTargetInfoBuffDebuffRequestedUpdate);
     }
 
     public void HideAll()
@@ -33,17 +33,19 @@ public unsafe class TargetInfoBuffDebuffProcessor
         }
     }
 
-    private void TargetInfoBuffDebuffRequestedUpdate(AddonEvent type, AddonArgs args)
+    // Func helper to get around 7.4's internal AddonArgs while removing ArtificialAddonArgs usage
+    private void OnTargetInfoBuffDebuffRequestedUpdate(AddonEvent t, AddonArgs args) => AddonRequestedUpdate((AtkUnitBase*)args.Addon.Address);
+    
+    private void AddonRequestedUpdate(AtkUnitBase* addonBase)
     {
-        if(P == null) return;
-        var addon = (AtkUnitBase*)args.Addon.Address;
-        if(addon != null && IsAddonReady(addon))
+        if (P == null) return;
+        if (addonBase != null && IsAddonReady(addonBase))
         {
             NumStatuses = 0;
-            for(var i = 3u; i <= 32; i++)
+            for (var i = 3u; i <= 32; i++)
             {
-                var c = addon->UldManager.SearchNodeById(i);
-                if(c->IsVisible())
+                var c = addonBase->UldManager.SearchNodeById(i);
+                if (c->IsVisible())
                 {
                     NumStatuses++;
                 }
@@ -52,15 +54,16 @@ public unsafe class TargetInfoBuffDebuffProcessor
         InternalLog.Verbose($"TargetInfo Requested update: {NumStatuses}");
     }
 
-    private void TargetInfoBuffDebuffUpdate(AddonEvent type, AddonArgs args)
+    private void OnTargetInfoBuffDebuffUpdate(AddonEvent type, AddonArgs args)
     {
         if(P == null) return;
-        if(!Player.Available) return;
+        if(!LocalPlayer.Available) return;
         if(!P.CanModifyUI()) return;
         UpdateAddon((AtkUnitBase*)args.Addon.Address);
     }
 
-    public void UpdateAddon(AtkUnitBase* addon, bool hideAll = false)
+    // Didn't really know how to transfer to get the DalamudStatusList from here, so had to use IPlayerCharacter.
+    public unsafe void UpdateAddon(AtkUnitBase* addon, bool hideAll = false)
     {
         var target = Svc.Targets.SoftTarget! ?? Svc.Targets.Target!;
         if(target is IPlayerCharacter pc)
@@ -83,7 +86,8 @@ public unsafe class TargetInfoBuffDebuffProcessor
                 }
                 if(!hideAll)
                 {
-                    foreach(var x in pc.GetMyStatusManager().Statuses)
+                    var sm = ((Character*)pc.Address)->MyStatusManager();
+                    foreach (var x in sm.Statuses)
                     {
                         if(baseCnt > 32) break;
                         var rem = x.ExpiresAt - Utils.Time;

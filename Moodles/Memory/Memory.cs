@@ -2,6 +2,7 @@
 using ECommons.EzHookManager;
 
 namespace Moodles;
+#pragma warning disable CS0649, CS8618 // Ignore "Field is never assigned to" warnings for IPC fields
 public unsafe partial class Memory : IDisposable
 {
     public delegate nint AtkComponentIconText_LoadIconByIDDelegate(void* iconText, int iconId);
@@ -31,9 +32,10 @@ public unsafe partial class Memory : IDisposable
             {
                 P.CommonProcessor.HoveringOver = 0;
             }
+            // Handle Cancellation Request on Right Click
             if (a2 == 9 && P.CommonProcessor.WasRightMousePressed)
             {
-                // Append the address to the cancelRequests to expire the moodle on the next SetIcon() func.
+                // We dunno what status this is yet, so mark the address for next check.
                 P.CommonProcessor.CancelRequests.Add(a1);
                 P.CommonProcessor.HoveringOver = 0;
             }
@@ -45,11 +47,11 @@ public unsafe partial class Memory : IDisposable
         AtkComponentIconText_ReceiveEventHook.Original(a1, a2, a3, a4, a5);
     }
 
-    internal delegate IntPtr SheApplier(string path, IntPtr target, IntPtr target2, float speed, char a5, UInt16 a6, char a7);
+    internal delegate nint SheApplier(string path, nint target, nint target2, float speed, char a5, UInt16 a6, char a7);
     [EzHook("E8 ?? ?? ?? ?? 48 8B D8 48 85 C0 74 27 B2 01", false)]
     internal EzHook<SheApplier> SheApplierHook;
 
-    private IntPtr SheApplierDetour(string path, IntPtr target, IntPtr target2, float speed, char a5, UInt16 a6, char a7)
+    private nint SheApplierDetour(string path, nint target, nint target2, float speed, char a5, UInt16 a6, char a7)
     {
         try
         {
@@ -62,7 +64,7 @@ public unsafe partial class Memory : IDisposable
         return SheApplierHook.Original(path, target, target2, speed, a5, a6, a7);
     }
 
-    internal void SpawnSHE(uint iconID, IntPtr target, IntPtr target2, float speed = -1.0f, char a5 = char.MinValue, UInt16 a6 = 0, char a7 = char.MinValue)
+    internal void SpawnSHE(uint iconID, nint target, nint target2, float speed = -1.0f, char a5 = char.MinValue, UInt16 a6 = 0, char a7 = char.MinValue)
     {
         try
         {
@@ -81,7 +83,7 @@ public unsafe partial class Memory : IDisposable
         }
     }
 
-    internal void SpawnSHE(string path, IntPtr target, IntPtr target2, float speed = -1.0f, char a5 = char.MinValue, UInt16 a6 = 0, char a7 = char.MinValue)
+    internal void SpawnSHE(string path, nint target, nint target2, float speed = -1.0f, char a5 = char.MinValue, UInt16 a6 = 0, char a7 = char.MinValue)
     {
         try
         {
@@ -108,3 +110,5 @@ public unsafe partial class Memory : IDisposable
 
     }
 }
+#pragma warning restore CS0649 // Ignore "Field is never assigned to" warnings for IPC fields
+

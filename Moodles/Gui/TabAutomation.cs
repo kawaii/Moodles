@@ -1,7 +1,4 @@
-﻿using Dalamud.Game.ClientState.Objects.SubKinds;
-using ECommons;
-using ECommons.ExcelServices;
-using ECommons.GameHelpers;
+﻿using ECommons.ExcelServices;
 using Moodles.Data;
 using Moodles.OtterGuiHandlers;
 using OtterGui.Raii;
@@ -12,7 +9,7 @@ public static class TabAutomation
 {
     public static Vector2 JobIconSize => new(24f, 24f);
 
-    private static AutomationProfile Selected => P.OtterGuiHandler.AutomationList.Current;
+    private static AutomationProfile Selected => P.OtterGuiHandler.AutomationList.Current!;
 
     private static string Filter = "";
     private static bool Editing = true;
@@ -72,25 +69,29 @@ public static class TabAutomation
             var buttonSize = new Vector2((ImGui.GetContentRegionAvail().X - 150) / 2 - ImGui.GetStyle().ItemSpacing.X / 2, ImGuiHelpers.GetButtonSize(" ").Y);
 
             {
-                var dis = !Player.Available;
+                var dis = !LocalPlayer.Available;
                 if(dis) ImGui.BeginDisabled();
                 if(ImGui.Button("Set to Character", buttonSize))
                 {
-                    Selected.World = Player.Object.HomeWorld.RowId;
-                    Selected.Character = Player.Name;
+                    Selected.World = LocalPlayer.HomeWorldId;
+                    Selected.Character = LocalPlayer.Name; // Maybe use CharacterName? idk.
                 }
                 if(dis) ImGui.EndDisabled();
             }
             ImGui.SameLine();
             {
-                var dis = Svc.Targets.Target is not IPlayerCharacter;
-                if(dis) ImGui.BeginDisabled();
-                if(ImGui.Button("Set to Target", buttonSize))
+                unsafe
                 {
-                    Selected.World = ((IPlayerCharacter)Svc.Targets.Target).HomeWorld.RowId;
-                    Selected.Character = ((IPlayerCharacter)Svc.Targets.Target).Name.ToString();
+                    var targetPlayer = CharaWatcher.PlayerTarget;
+                    var dis = targetPlayer == null;
+                    if (dis) ImGui.BeginDisabled();
+                    if (ImGui.Button("Set to Target", buttonSize))
+                    {
+                        Selected.World = targetPlayer->HomeWorld;
+                        Selected.Character = targetPlayer->NameString;
+                    }
+                    if (dis) ImGui.EndDisabled();
                 }
-                if(dis) ImGui.EndDisabled();
             }
         }
 

@@ -1,9 +1,10 @@
 ﻿using Dalamud.Game.ClientState.Objects.SubKinds;
 using Dalamud.Game.Gui.FlyText;
+using Dalamud.Interface.Utility.Raii;
 using ECommons.Configuration;
 using ECommons.EzIpcManager;
-using ECommons.GameHelpers;
 using ECommons.Throttlers;
+using FFXIVClientStructs.FFXIV.Client.Game.Character;
 using FFXIVClientStructs.FFXIV.Client.Game.Object;
 
 namespace Moodles.Gui;
@@ -60,18 +61,14 @@ public static unsafe class UI
             ImGui.InputInt("a7", ref sa7);
             if(ImGui.Button("Do"))
             {
-                var addr = Svc.Targets.Target?.Address ?? Player.Object.Address;
+                var addr = Svc.Targets.Target?.Address ?? LocalPlayer.Address;
                 P.Memory.SpawnSHE((uint)ID, addr, addr, sa4, (char)sa5, (UInt16)sa6, (char)sa7);
             }
             if(ImGui.Button("Do (all players)"))
             {
-                foreach(var x in Svc.Objects)
+                foreach (nint chara in CharaWatcher.Rendered)
                 {
-                    if(x is IPlayerCharacter pc)
-                    {
-                        var addr = pc.Address;
-                        P.Memory.SpawnSHE((uint)ID, addr, addr, sa4, (char)sa5, (UInt16)sa6, (char)sa7);
-                    }
+                    P.Memory.SpawnSHE((uint)ID, chara, chara, sa4, (char)sa5, (UInt16)sa6, (char)sa7);
                 }
             }
         }
@@ -101,17 +98,29 @@ public static unsafe class UI
         {
             ImGuiEx.Text(Utils.GetFriendlist().Print("\n"));
         }
-        if(ImGui.CollapsingHeader("GSpeak players"))
+        if (IPC.SundouleiaAvailable && ImGui.CollapsingHeader("Sundouleia players"))
+        {
+            ImGui.Text("SundouleiaPlayers (From IPC Call)");
+            if (P.IPCProcessor.GetSundouleiaPlayers.TryInvoke(out var list) && list != null)
+            {
+                DrawIpcHandles("sdIPC", list);
+            }
+            ImGui.Separator();
+            ImGui.Text("SundouleiaPlayers (From Memory)");
+            DrawIpcHandles("sdMem", IPC.SundouleiaPlayerCache.Keys);
+        }
+        if (IPC.GSpeakAvailable && ImGui.CollapsingHeader("GSpeak players"))
         {
             ImGui.Text("GSpeakPlayers (From IPC Call)");
             if(P.IPCProcessor.GetGSpeakPlayers.TryInvoke(out var list) && list != null)
             {
-                ImGuiEx.Text(list.Print("\n"));
+                DrawIpcHandles("gsIPC", list);
             }
             ImGui.Separator();
             ImGui.Text("GSpeakPlayers (From Memory)");
-            ImGuiEx.Text(Utils.GSpeakPlayers.Print("\n"));
+            DrawIpcHandles("gsMem", IPC.GSpeakPlayerCache.Keys);
 
+            ImGuiEx.Text(IPC.GSpeakPlayerCache.Keys.Print("\n"));
         }
         if(ImGui.CollapsingHeader("IPC"))
         {
@@ -155,9 +164,12 @@ public static unsafe class UI
 
             if(ImGui.BeginCombo("object", $"{OID:X8}"))
             {
-                foreach(var x in Svc.Objects.Where(x => x is IPlayerCharacter).Cast<IPlayerCharacter>())
+                unsafe
                 {
-                    if(ImGui.Selectable($"{x.Name}")) OID = x.OwnerId;
+                    foreach (Character* chara in CharaWatcher.Rendered)
+                    {
+                        if (ImGui.Selectable($"{chara->NameString}")) OID = chara->OwnerId;
+                    }
                 }
                 ImGui.EndCombo();
             }
@@ -171,9 +183,9 @@ public static unsafe class UI
             ImGui.Button("Execute");
             if(ImGui.IsItemHovered() && (ImGui.IsMouseClicked(ImGuiMouseButton.Left) || ImGui.IsMouseDown(ImGuiMouseButton.Right)))
             {
-                if(Svc.Objects.TryGetFirst(x => x.OwnerId == OID, out var obj))
+                if(CharaWatcher.TryGetFirst(x => x.OwnerId == OID, out var chara))
                 {
-                    P.Memory.BattleLog_AddToScreenLogWithScreenLogKindDetour(obj.Address, My ? Player.Object.Address : obj.Address, MessageID, 5, (byte)a4, (int)a5, (int)StatusID, (int)a7, (int)a8);
+                    P.Memory.BattleLog_AddToScreenLogWithScreenLogKindDetour(chara, My ? LocalPlayer.Address : chara, MessageID, 5, (byte)a4, (int)a5, (int)StatusID, (int)a7, (int)a8);
                     Notify.Info($"Success");
                 }
             }
@@ -184,8 +196,11 @@ public static unsafe class UI
         if (ImGui.CollapsingHeader("Status debugging"))
         {
             ImGuiEx.Text($"{P.CommonProcessor.HoveringOver:X16}");
-            ImGuiEx.Text($"Statuses: {Player.Object.StatusList.Count(x => P.CommonProcessor.PositiveStatuses.Contains(x.StatusId))}|{Player.Object.StatusList.Count(x => P.CommonProcessor.NegativeStatuses.Contains(x.StatusId))}|{Player.Object.StatusList.Count(x => P.CommonProcessor.SpecialStatuses.Contains(x.StatusId))}");
-            foreach (var x in Player.Object.StatusList)
+            ImGuiEx.Text($"Statuses: {LocalPlayer.StatusList.Count(x => P.CommonProcessor.PositiveStatuses.Contains(x.StatusId))}" +
+                $"|{LocalPlayer.StatusList.Count(x => P.CommonProcessor.NegativeStatuses.Contains(x.StatusId))}" +
+                $"|{LocalPlayer.StatusList.Count(x => P.CommonProcessor.SpecialStatuses.Contains(x.StatusId))}");
+
+            foreach (var x in LocalPlayer.StatusList)
             {
                 if (x.StatusId != 0)
                 {
@@ -198,6 +213,44 @@ public static unsafe class UI
             }
 
             ImGuiEx.Text($"SeenPlayers:\n{P.SeenPlayers.Print("\n")}");
+        }
+    }
+
+    private static unsafe void DrawIpcHandles(string tableId, IEnumerable<nint> players)
+    {
+        if (!players.Any()) return;
+
+        using var _ = ImRaii.PushIndent();
+        try
+        {
+            using (var t = ImRaii.Table($"##ipcPlayers-{tableId}", 5, ImGuiTableFlags.SizingFixedFit | ImGuiTableFlags.RowBg | ImGuiTableFlags.BordersInnerV))
+            {
+                if (!t) return;
+                ImGui.TableSetupColumn("Address");
+                ImGui.TableSetupColumn("Name");
+                ImGui.TableSetupColumn("ObjIdx");
+                ImGui.TableSetupColumn("ObjKind");
+                ImGui.TableSetupColumn("EntityId");
+                ImGui.TableHeadersRow();
+
+                foreach (Character* chara in players)
+                {
+                    ImGui.TableNextColumn();
+                    ImGui.Text($"{(nint)chara:X}");
+                    ImGui.TableNextColumn();
+                    ImGui.Text(chara->NameString.ToString());
+                    ImGui.TableNextColumn();
+                    ImGui.Text(chara->ObjectIndex.ToString());
+                    ImGui.TableNextColumn();
+                    ImGui.Text(chara->ObjectKind.ToString());
+                    ImGui.TableNextColumn();
+                    ImGui.Text(chara->EntityId.ToString());
+                }
+            }
+        }
+        catch (Exception ex)
+        {
+            PluginLog.Error($"Error drawing rendered charas: {ex}");
         }
     }
 

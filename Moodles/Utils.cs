@@ -1,78 +1,28 @@
 ﻿using Dalamud.Game.ClientState.Objects.SubKinds;
 using Dalamud.Game.Text.SeStringHandling;
 using ECommons.ExcelServices;
-using ECommons.EzIpcManager;
-using ECommons.GameHelpers;
 using ECommons.PartyFunctions;
+using FFXIVClientStructs.FFXIV.Client.Game.Character;
 using FFXIVClientStructs.FFXIV.Client.UI.Info;
 using FFXIVClientStructs.FFXIV.Component.GUI;
 using Moodles.Data;
-using Moodles.OtterGuiHandlers.Whitelist.GSpeak;
 using System.Text.RegularExpressions;
-using System.Windows.Forms;
 using Status = Lumina.Excel.Sheets.Status;
 using UIColor = ECommons.ChatMethods.UIColor;
 
 namespace Moodles;
 public static unsafe partial class Utils
 {
-    /// <summary>
-    /// Sends a message to GSpeak to apply the preset's collective statuses to the target player.
-    /// <para> All Moodles Status's are applied directly to the status manager. And not to their Saved Moodles. </para>
-    /// </summary>
-    /// <param name="Preset"> The preset to apply. </param>
-    /// <param name="target"> The target player to apply the statuses to. </param>
-    public static void SendGSpeakMessage(this Preset Preset, IPlayerCharacter target)
+    public static TargetApplyMode GetApplyMode()
     {
-        var list = new List<MoodlesStatusInfo>();
-        foreach(var s in C.SavedStatuses.Where(x => Preset.Statuses.Contains(x.GUID)))
-        {
-            var preparedStatus = s.PrepareToApply();
-            preparedStatus.Applier = Player.NameWithWorld ?? "";
-            if(!preparedStatus.IsValid(out var error))
-            {
-                PluginLog.Error($"Could not apply status: {error}");
-            }
-            else
-            {
-                list.Add(preparedStatus.ToStatusInfoTuple());
-            }
-        }
-        if(list.Count > 0)
-        {
-            if(P.IPCProcessor.ApplyStatusesToPair.TryInvoke(Player.NameWithWorld ?? "", target.GetNameWithWorld(), list, false))
-            {
-                Notify.Info($"Broadcast success");
-            }
-            else
-            {
-                Notify.Error("Broadcast failed");
-            }
-        }
+        if (Svc.Targets.Target is not IPlayerCharacter pc)
+            return TargetApplyMode.NoTarget;
+        if (IPC.GSpeakAvailable && IPC.GSpeakPlayerCache.ContainsKey(pc.Address))
+            return TargetApplyMode.GSpeakPair;
+        if (IPC.SundouleiaAvailable && IPC.SundouleiaPlayerCache.ContainsKey(pc.Address))
+            return TargetApplyMode.Sundesmo;
+        return TargetApplyMode.Local;
     }
-
-    public static void SendGSpeakMessage(this MyStatus Status, IPlayerCharacter target)
-    {
-        var preparedStatus = Status.PrepareToApply();
-        preparedStatus.Applier = Player.NameWithWorld ?? "";
-        if(!preparedStatus.IsValid(out var error))
-        {
-            Notify.Error($"Could not apply status: {error}");
-        }
-        else
-        {
-            if(P.IPCProcessor.ApplyStatusesToPair.TryInvoke(Player.NameWithWorld ?? "", target.GetNameWithWorld(), [preparedStatus.ToStatusInfoTuple()], true))
-            {
-                Notify.Info($"Broadcast success");
-            }
-            else
-            {
-                Notify.Error("Broadcast failed");
-            }
-        }
-    }
-
-    private static long LastChangeTime;
 
     public static bool DurationSelector(string PermanentTitle, ref bool NoExpire, ref int Days, ref int Hours, ref int Minutes, ref int Seconds)
     {
@@ -132,49 +82,12 @@ public static unsafe partial class Utils
         return ret;
     }
 
-    // is automatically updated by GSpeak's VisiblePairsUpdated event call, and does not need to be called every frame.
-    public static bool GSpeakAvailable = false;
-    public static List<(string, MoodlesGSpeakPairPerms, MoodlesGSpeakPairPerms)> GSpeakPlayers = [];
-    public static List<string> GSpeakPlayerNames = [];
-    public static ulong GSpeakPlayersUpdated = 0;
-    public static List<(string, MoodlesGSpeakPairPerms, MoodlesGSpeakPairPerms)> GetGSpeakPlayers()
+    public static bool IsNotNull(this MyStatus? status)
     {
-        if(Frame != GSpeakPlayersUpdated)
-        {
-            GSpeakPlayersUpdated = Frame;
-            if(P.IPCProcessor.GetGSpeakPlayers.TryInvoke(out var ret) && ret != null)
-            {
-                GSpeakPlayers = ret;
-                GSpeakPlayerNames = ret.Select(x => x.Item1).ToList();
-                WhitelistGSpeak.SyncWithGSpeakPlayers(GSpeakPlayers);
-            }
-        }
-        return GSpeakPlayers;
-    }
-
-    public static void ClearGSpeakPlayers()
-    {
-        if(Frame != GSpeakPlayersUpdated)
-        {
-            GSpeakPlayersUpdated = Frame;
-            GSpeakPlayers = [];
-            GSpeakPlayerNames = [];
-            // update the whitelist
-            WhitelistGSpeak.SyncWithGSpeakPlayers(GSpeakPlayers);
-        }
-    }
-    public static void SyncGSpeakAvailable()
-    {
-        var gSpeak = Svc.PluginInterface.InstalledPlugins.FirstOrDefault(p => string.Equals(p.InternalName, "ProjectGagSpeak", StringComparison.OrdinalIgnoreCase));
-        GSpeakAvailable = gSpeak is { } plugin && plugin.IsLoaded; 
-    }
-
-    public static bool IsNotNull(this MyStatus status)
-    {
-        if(status == null) return false;
-        if(status.Applier == null) return false;
-        if(status.Description == null) return false;
-        if(status.Title == null) return false;
+        if (status == null) return false;
+        if (status.Applier == null) return false;
+        if (status.Description == null) return false;
+        if (status.Title == null) return false;
         return true;
     }
 
@@ -222,90 +135,26 @@ public static unsafe partial class Utils
         return C.Censor ? s.Split(" ").Where(x => x.Length > 0).Select(x => $"{x[0]}.").Join(" ") : s;
     }
 
-    public static IEnumerable<AutomationCombo> GetSuitableAutomation(IPlayerCharacter pc = null!)
-    {
-        pc ??= Player.Object;
-        foreach(var x in C.AutomationProfiles)
-        {
-            if(x.Enabled && x.Character == pc.Name.ToString() && (x.World == 0 || x.World == pc.HomeWorld.RowId))
-            {
-                foreach(var c in x.Combos)
-                {
-                    if(c.Jobs.Count == 0 || c.Jobs.Contains(pc.GetJob()))
-                    {
-                        yield return c;
-                    }
-                }
-            }
-        }
-    }
-
-    public static bool TryFindPlayer(string name, out IPlayerCharacter pcr)
-    {
-        if(name == Player.NameWithWorld)
-        {
-            pcr = Player.Object;
-            return true;
-        }
-        else
-        {
-            foreach(var x in Svc.Objects)
-            {
-                if(x is IPlayerCharacter pc && pc.GetNameWithWorld() == name)
-                {
-                    pcr = pc;
-                    return true;
-                }
-            }
-        }
-        pcr = null!;
-        return false;
-    }
-
-    public static bool CanSpawnVFX(IPlayerCharacter target)
-    {
-        return true;
-    }
-
-    public static bool CanSpawnFlytext(IPlayerCharacter target)
-    {
-        if(!target.IsTargetable) return false;
-        if(!Player.Interactable) return false;
-        if(Svc.Condition[ConditionFlag.OccupiedInCutSceneEvent]
-            || Svc.Condition[ConditionFlag.WatchingCutscene]
-            || Svc.Condition[ConditionFlag.WatchingCutscene78]
-            || Svc.Condition[ConditionFlag.OccupiedInQuestEvent]
-            || Svc.Condition[ConditionFlag.Occupied]
-            || Svc.Condition[ConditionFlag.Occupied30]
-            || Svc.Condition[ConditionFlag.Occupied33]
-            || Svc.Condition[ConditionFlag.Occupied38]
-            || Svc.Condition[ConditionFlag.Occupied39]
-            || Svc.Condition[ConditionFlag.OccupiedInEvent]
-            || Svc.Condition[ConditionFlag.BetweenAreas]
-            || Svc.Condition[ConditionFlag.BetweenAreas51]
-            || Svc.Condition[ConditionFlag.DutyRecorderPlayback]
-            || Svc.Condition[ConditionFlag.LoggingOut]) return false;
-        return true;
-    }
-
-    public static long Time => DateTimeOffset.Now.ToUnixTimeMilliseconds();
-
     public static MyStatusManager GetMyStatusManager(string playerName, bool create = true)
     {
-        if(!C.StatusManagers.TryGetValue(playerName, out var manager))
+        if (!C.StatusManagers.TryGetValue(playerName, out var manager))
         {
-            if(create)
+            if (create)
             {
                 PluginLog.Verbose($"Creating new status manager for {playerName}");
                 manager = new();
                 C.StatusManagers[playerName] = manager;
+                // Set the owner if so.
+                if (CharaWatcher.TryGetFirst(x => x.GetNameWithWorld() == playerName, out var chara))
+                {
+                    manager.Owner = (Character*)chara;
+                }
             }
         }
-        return manager;
+        return manager!;
     }
 
-    public static MyStatusManager GetMyStatusManager(this IPlayerCharacter pc, bool create = true) => GetMyStatusManager(pc.GetNameWithWorld(), create);
-
+    public static long Time => DateTimeOffset.Now.ToUnixTimeMilliseconds();
     public static ulong Frame => CSFramework.Instance()->FrameCounter;
 
     public static SeString ParseBBSeString(string text, bool nullTerminator = true) => ParseBBSeString(text, out _, nullTerminator);
@@ -313,7 +162,7 @@ public static unsafe partial class Utils
     {
         try
         {
-            error = null;
+            error = null!;
             var result = SplitRegex().Split(text);
             var str = new SeStringBuilder();
             int[] valid = [0, 0, 0];
@@ -383,7 +232,7 @@ public static unsafe partial class Utils
             error = "Error: Color is out of range.";
             return new SeStringBuilder().AddText($"{error}\0").Build();
         }
-        catch(Exception e)
+        catch(Exception)
         {
             error = "Error: please check syntax.";
             return new SeStringBuilder().AddText($"{error}\0").Build();
@@ -407,8 +256,8 @@ public static unsafe partial class Utils
     {
         foreach (var x in Svc.Data.GetExcelSheet<Status>())
         {
-            if (x.Icon == iconID) return x.HitEffect.ValueNullable?.Location.ValueNullable?.Location.ExtractText();
-            if (x.MaxStacks > 1 && iconID >= x.Icon + 1 && iconID < x.Icon + x.MaxStacks) return x.HitEffect.ValueNullable?.Location.ValueNullable?.Location.ExtractText();
+            if (x.Icon == iconID) return x.HitEffect.ValueNullable?.Location.ValueNullable?.Location.ExtractText() ?? string.Empty;
+            if (x.MaxStacks > 1 && iconID >= x.Icon + 1 && iconID < x.Icon + x.MaxStacks) return x.HitEffect.ValueNullable?.Location.ValueNullable?.Location.ExtractText() ?? string.Empty;
         }
         return string.Empty;
     }
@@ -461,6 +310,7 @@ public static unsafe partial class Utils
         }
     }
 
+    // For Pre-7.1 Moodles.
     public static void CleanupNulls()
     {
         for(var i = C.SavedStatuses.Count - 1; i >= 0; i--)

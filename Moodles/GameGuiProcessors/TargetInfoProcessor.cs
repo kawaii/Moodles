@@ -1,7 +1,7 @@
 ﻿using Dalamud.Game.Addon.Lifecycle;
 using Dalamud.Game.Addon.Lifecycle.AddonArgTypes;
 using Dalamud.Game.ClientState.Objects.SubKinds;
-using ECommons.GameHelpers;
+using FFXIVClientStructs.FFXIV.Client.Game.Character;
 using FFXIVClientStructs.FFXIV.Component.GUI;
 using Moodles.Data;
 
@@ -13,9 +13,9 @@ public unsafe class TargetInfoProcessor
     {
         Svc.AddonLifecycle.RegisterListener(AddonEvent.PostUpdate, "_TargetInfo", OnTargetInfoUpdate);
         Svc.AddonLifecycle.RegisterListener(AddonEvent.PostRequestedUpdate, "_TargetInfo", OnTargetInfoRequestedUpdate);
-        if(Player.Available && TryGetAddonByName<AtkUnitBase>("_TargetInfo", out var addon) && IsAddonReady(addon))
+        if(LocalPlayer.Available && TryGetAddonByName<AtkUnitBase>("_TargetInfo", out var addon) && IsAddonReady(addon))
         {
-            OnTargetInfoRequestedUpdate(AddonEvent.PostRequestedUpdate, new ArtificialAddonArgs(addon));
+            AddonRequestedUpdate(addon);
         }
     }
 
@@ -33,16 +33,18 @@ public unsafe class TargetInfoProcessor
         }
     }
 
-    private void OnTargetInfoRequestedUpdate(AddonEvent type, AddonArgs args)
+    // Func helper to get around 7.4's internal AddonArgs while removing ArtificialAddonArgs usage
+    private void OnTargetInfoRequestedUpdate(AddonEvent t, AddonArgs args) => AddonRequestedUpdate((AtkUnitBase*)args.Addon.Address);
+
+    private void AddonRequestedUpdate(AtkUnitBase* addonBase)
     {
         if(P == null) return;
-        var addon = (AtkUnitBase*)args.Addon.Address;
-        if(addon != null && IsAddonReady(addon))
+        if(addonBase != null && IsAddonReady(addonBase))
         {
             NumStatuses = 0;
             for(var i = 32; i >= 3; i--)
             {
-                var c = addon->UldManager.NodeList[i];
+                var c = addonBase->UldManager.NodeList[i];
                 if(c->IsVisible())
                 {
                     NumStatuses++;
@@ -55,7 +57,7 @@ public unsafe class TargetInfoProcessor
     private void OnTargetInfoUpdate(AddonEvent type, AddonArgs args)
     {
         if(P == null) return;
-        if(!Player.Available) return;
+        if(!LocalPlayer.Available) return;
         if(!P.CanModifyUI()) return;
         UpdateAddon((AtkUnitBase*)args.Addon.Address);
     }
@@ -83,7 +85,8 @@ public unsafe class TargetInfoProcessor
                 }
                 if(!hideAll)
                 {
-                    foreach(var x in pc.GetMyStatusManager().Statuses)
+                    var sm = ((Character*)pc.Address)->MyStatusManager();
+                    foreach (var x in sm.Statuses)
                     {
                         if(baseCnt < 3) break;
                         var rem = x.ExpiresAt - Utils.Time;

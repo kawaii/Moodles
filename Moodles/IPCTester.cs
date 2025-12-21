@@ -1,19 +1,24 @@
 ﻿using Dalamud.Game.ClientState.Objects.SubKinds;
 using ECommons.EzIpcManager;
+using FFXIVClientStructs.FFXIV.Client.Game.Character;
 
 namespace Moodles;
+#pragma warning disable CS0649, CS8618 // EzIPC makes these warnings like wild but its fine.
 public class IPCTester
 {
     [EzIPC] private readonly Func<int> Version;
-    [EzIPC] private readonly Func<IPlayerCharacter, string> GetStatusManagerByPC;
-    [EzIPC] private readonly Func<nint, string> GetStatusManagerByPtr;
-    [EzIPC] private readonly Func<string, string> GetStatusManagerByName;
-    [EzIPC] private readonly Action<IPlayerCharacter, string> SetStatusManagerByPC;
-    [EzIPC] private readonly Action<nint, string> SetStatusManagerByPtr;
-    [EzIPC] private readonly Action<string, string> SetStatusManagerByName;
-    [EzIPC] private readonly Action<IPlayerCharacter> ClearStatusManagerByPC;
-    [EzIPC] private readonly Action<nint> ClearStatusManagerByPtr;
-    [EzIPC] private readonly Action<string> ClearStatusManagerByName;
+
+    [EzIPC] private readonly Func<string, string> GetStatusManagerByNameV2;
+    [EzIPC] private readonly Func<nint, string> GetStatusManagerByPtrV2;
+    [EzIPC] private readonly Func<IPlayerCharacter, string> GetStatusManagerByPlayerV2;
+
+    [EzIPC] private readonly Action<string, string> SetStatusManagerByNameV2;
+    [EzIPC] private readonly Action<nint, string> SetStatusManagerByPtrV2;
+    [EzIPC] private readonly Action<IPlayerCharacter, string> SetStatusManagerByPlayerV2;
+
+    [EzIPC] private readonly Action<string> ClearStatusManagerByNameV2;
+    [EzIPC] private readonly Action<nint> ClearStatusManagerByPtrV2;
+    [EzIPC] private readonly Action<IPlayerCharacter> ClearStatusManagerByPlayerV2;
 
     public IPCTester()
     {
@@ -21,21 +26,22 @@ public class IPCTester
     }
 
     [EzIPCEvent]
-    private void StatusManagerModified(IPlayerCharacter character)
+    private unsafe void StatusManagerModified(nint charaPtr)
     {
-        PluginLog.Debug($"IPC test: status manager modified ({character}): {string.Join(", ", character.GetMyStatusManager().Statuses.Select(x => x.Title))}");
+        Character* chara = (Character*)charaPtr;
+        PluginLog.Verbose($"IPC test: status manager modified ({chara->GetNameWithWorld()}): {string.Join(", ", chara->MyStatusManager().Statuses.Select(x => x.Title))}");
     }
 
     [EzIPCEvent]
-    private void StatusModified(Guid statusGuid)
+    private void StatusUpdated(Guid statusGuid, bool wasDeleted)
     {
-        PluginLog.Debug($"IPC test: Moodle status modified {statusGuid}");
+        PluginLog.Verbose($"IPC test: Moodle status modified {statusGuid} (Deleted? {wasDeleted})");
     }
 
     [EzIPCEvent]
-    private void PresetModified(Guid presetGuid)
+    private void PresetUpdated(Guid presetGuid, bool wasDeleted)
     {
-        PluginLog.Debug($"IPC test: Preset status modified {presetGuid}");
+        PluginLog.Verbose($"IPC test: Preset status modified {presetGuid} (Deleted? {wasDeleted})");
     }
 
     public void Draw()
@@ -46,39 +52,39 @@ public class IPCTester
         {
             if(ImGui.Button("Copy (PC)"))
             {
-                Copy(GetStatusManagerByPC(pc));
+                Copy(GetStatusManagerByPlayerV2(pc));
             }
             if(ImGui.Button("Copy (ptr)"))
             {
-                Copy(GetStatusManagerByPtr(pc.Address));
+                Copy(GetStatusManagerByPtrV2(pc.Address));
             }
             if(ImGui.Button("Copy (name)"))
             {
-                Copy(GetStatusManagerByName(pc.Name.ToString()));
+                Copy(GetStatusManagerByNameV2(pc.Name.ToString()));
             }
             if(ImGui.Button("Apply (PC)"))
             {
-                SetStatusManagerByPC(pc, Paste() ?? "");
+                SetStatusManagerByPlayerV2(pc, Paste() ?? "");
             }
             if(ImGui.Button("Apply (ptr)"))
             {
-                SetStatusManagerByPtr(pc.Address, Paste() ?? "");
+                SetStatusManagerByPtrV2(pc.Address, Paste() ?? "");
             }
             if(ImGui.Button("Apply (name)"))
             {
-                SetStatusManagerByName(pc.Name.ToString(), Paste() ?? "");
+                SetStatusManagerByNameV2(pc.Name.ToString(), Paste() ?? "");
             }
             if(ImGui.Button("Clear (PC)"))
             {
-                ClearStatusManagerByPC(pc);
+                ClearStatusManagerByPlayerV2(pc);
             }
             if(ImGui.Button("Clear (ptr)"))
             {
-                ClearStatusManagerByPtr(pc.Address);
+                ClearStatusManagerByPtrV2(pc.Address);
             }
             if(ImGui.Button("Clear (name)"))
             {
-                ClearStatusManagerByName(pc.Name.ToString());
+                ClearStatusManagerByNameV2(pc.Name.ToString());
             }
         }
         else
@@ -87,3 +93,5 @@ public class IPCTester
         }
     }
 }
+#pragma warning restore CS0649, CS8618 // EzIPC makes these warnings like wild but its fine.
+

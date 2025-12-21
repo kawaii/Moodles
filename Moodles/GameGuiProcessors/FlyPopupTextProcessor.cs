@@ -1,9 +1,9 @@
-﻿using Dalamud.Game.ClientState.Objects.SubKinds;
-using Dalamud.Game.Gui.FlyText;
+﻿using Dalamud.Game.Gui.FlyText;
 using Dalamud.Game.Text.SeStringHandling;
 using Dalamud.Memory;
 using Dalamud.Plugin.Services;
-using ECommons.GameHelpers;
+using FFXIVClientStructs.FFXIV.Client.Game.Character;
+using FFXIVClientStructs.FFXIV.Client.Game.Object;
 using FFXIVClientStructs.FFXIV.Component.GUI;
 using Lumina.Excel.Sheets;
 using Moodles.Data;
@@ -12,7 +12,7 @@ namespace Moodles.GameGuiProcessors;
 public sealed unsafe class FlyPopupTextProcessor : IDisposable
 {
     private List<FlyPopupTextData> Queue = [];
-    public FlyPopupTextData CurrentElement = null;
+    public FlyPopupTextData CurrentElement = null!;
     public Dictionary<uint, IconStatusData> StatusData = [];
 
     public FlyPopupTextProcessor()
@@ -37,37 +37,51 @@ public sealed unsafe class FlyPopupTextProcessor : IDisposable
         }
     }
 
-    private void Framework_Update(IFramework framework)
+    private unsafe void Framework_Update(IFramework framework)
     {
         ProcessPopupText();
         ProcessFlyText();
-        if(CurrentElement != null) CurrentElement = null;
-        if(Queue.Count > C.FlyPopupTextLimit)
+        if(CurrentElement != null) CurrentElement = null!;
+
+        var objManager = GameObjectManager.Instance();
+
+        if (Queue.Count > C.FlyPopupTextLimit)
         {
             PluginLog.Warning($"FlyPopupTextProcessor Queue is too large! Trimming to {C.FlyPopupTextLimit} closest entities.");
-            var n = Queue.RemoveAll(x => Svc.Objects.FirstOrDefault(z => z.EntityId == x.Owner) is not IPlayerCharacter);
-            if(n > 0) PluginLog.Information($"  Removed {n} non-player entities");
-            Queue = Queue.OrderBy(x => Vector3.DistanceSquared(Player.Object.Position, Svc.Objects.First(z => z.EntityId == x.Owner).Position)).Take(C.FlyPopupTextLimit).ToList();
+            var n = Queue.RemoveAll(x =>
+            {
+                var obj = objManager->Objects.GetObjectByEntityId(x.OwnerEntityId);
+                return obj == null || !obj->IsCharacter();
+            });
+
+            if (n > 0) PluginLog.Information($"  Removed {n} non-player entities");
+
+            Queue = Queue
+                .OrderBy(x => Vector3.DistanceSquared(LocalPlayer.Character->Position, objManager->Objects.GetObjectByEntityId(x.OwnerEntityId)->Position))
+                .Take(C.FlyPopupTextLimit)
+                .ToList();
         }
+        
         while(Queue.TryDequeue(out var e))
         {
-            IPlayerCharacter? target = null;
-            for(var i = 0; i < Svc.Objects.Length; i++)
+            Character* target = null;
+            for(var i = 0; i < 200; i++)
             {
-                var cur = Svc.Objects[i];
-                if(cur == null) continue;
-                if(cur.EntityId != e.Owner) continue;
-                if(cur is not IPlayerCharacter pChara) continue;
+                GameObject* obj = objManager->Objects.IndexSorted[i];
+                if (obj == null) continue;
+                if (obj->EntityId != e.OwnerEntityId) continue;
+                if (!obj->IsCharacter()) continue;
 
-                target = pChara;
-                break;
+                target = (Character*)obj;
+                break; // Break out of loop once found.
             }
 
+            // Process logic for non-null target.
             if(target != null)
             {
-                PluginLog.Debug($"Processing {e.Status.Title} at {Utils.Frame} for {target}...");
+                PluginLog.Debug($"Processing {e.Status.Title} at {Utils.Frame} for {target->NameString}...");
                 CurrentElement = e;
-                var isMine = e.Status.Applier == Player.NameWithWorld && e.IsAddition;
+                var isMine = e.Status.Applier == LocalPlayer.NameWithWorld && e.IsAddition;
                 FlyTextKind kind;
                 if(e.Status.Type == StatusType.Negative)
                 {
@@ -77,9 +91,9 @@ public sealed unsafe class FlyPopupTextProcessor : IDisposable
                 {
                     kind = e.IsAddition ? FlyTextKind.Buff : FlyTextKind.BuffFading;
                 }
-                if(StatusData.TryGetValue((uint)e.Status.AdjustedIconID, out var data))
+                if(StatusData.TryGetValue(e.Status.AdjustedIconID, out var data))
                 {
-                    P.Memory.BattleLog_AddToScreenLogWithScreenLogKindDetour(target.Address, isMine ? Player.Object.Address : target.Address, kind, 5, 0, 0, (int)data.StatusId, (int)data.StackCount, 0);
+                    P.Memory.BattleLog_AddToScreenLogWithScreenLogKindDetour((nint)target, isMine ? LocalPlayer.Address : (nint)target, kind, 5, 0, 0, (int)data.StatusId, (int)data.StackCount, 0);
                 }
                 else
                 {
@@ -89,7 +103,7 @@ public sealed unsafe class FlyPopupTextProcessor : IDisposable
             }
             else
             {
-                PluginLog.Debug($"Skipping {e.Status.Title} for {e.Owner:X8}, not found...");
+                PluginLog.Debug($"Skipping {e.Status.Title} for {e.OwnerEntityId:X8}, not found...");
             }
         }
     }
@@ -110,7 +124,7 @@ public sealed unsafe class FlyPopupTextProcessor : IDisposable
                             var sestr = new SeStringBuilder().AddText(CurrentElement.IsAddition ? "+ " : "- ").Append(Utils.ParseBBSeString(CurrentElement.Status.Title));
                             c->UldManager.NodeList[1]->GetAsAtkTextNode()->SetText(sestr.Encode());
                             c->UldManager.NodeList[2]->GetAsAtkImageNode()->LoadTexture(Svc.Texture.GetIconPath(CurrentElement.Status.AdjustedIconID), 1);
-                            CurrentElement = null;
+                            CurrentElement = null!;
                             return;
                         }
                     }
@@ -134,7 +148,7 @@ public sealed unsafe class FlyPopupTextProcessor : IDisposable
                             var c = candidate->GetAsAtkComponentNode()->Component;
                             var sestr = new SeStringBuilder().AddText(CurrentElement.IsAddition ? "+ " : "- ").Append(Utils.ParseBBSeString(CurrentElement.Status.Title));
                             c->UldManager.NodeList[1]->GetAsAtkTextNode()->SetText(sestr.Encode());
-                            CurrentElement = null;
+                            CurrentElement = null!;
                             return;
                         }
                     }
@@ -152,8 +166,10 @@ public sealed unsafe class FlyPopupTextProcessor : IDisposable
         if(!c->UldManager.NodeList[1]->IsVisible()) return false;
         if(c->UldManager.NodeList[2]->Type != NodeType.Image) return false;
         if(!c->UldManager.NodeList[2]->IsVisible()) return false;
+        
         var text = MemoryHelper.ReadSeString(&c->UldManager.NodeList[1]->GetAsAtkTextNode()->NodeText)?.GetText();
-        if(!text.StartsWith('-') && !text.StartsWith('+')) return false;
+        if(text is null || !text.StartsWith('-') && !text.StartsWith('+')) return false;
+        
         if(StatusData.TryGetValue((uint)CurrentElement.Status.AdjustedIconID, out var data))
         {
             if(!text.Contains(data.Name)) return false;

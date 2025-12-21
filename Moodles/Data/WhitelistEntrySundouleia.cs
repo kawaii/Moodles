@@ -4,13 +4,12 @@ using System.Diagnostics.CodeAnalysis;
 namespace Moodles.Data;
 
 [Serializable]
-public class WhitelistEntryGSpeak
+public class WhitelistEntrySundouleia
 {
-    // Does a weird thing where when loading from the config it loads this in for an initial entry, then loads everything else after.
-    public WhitelistEntryGSpeak()
+    public WhitelistEntrySundouleia()
     {
-        Name = "Unknown-GSpeak-Name";
-        PlayerName = "Unknown-GSpeak-Player";
+        Name = "Unknown-Sundouleia";
+        PlayerName = "Unknown-Sundouleia-Player";
         Address = nint.Zero;
         Access = MoodleAccess.None;
         MaxTime = TimeSpan.Zero;
@@ -18,7 +17,7 @@ public class WhitelistEntryGSpeak
         ClientMaxTime = TimeSpan.Zero;
     }
 
-    public unsafe WhitelistEntryGSpeak(nint address, IPCMoodleAccessTuple accessTuple)
+    public unsafe WhitelistEntrySundouleia(nint address, IPCMoodleAccessTuple accessTuple)
     {
         Name = ((Character*)address)->NameString;
         PlayerName = ((Character*)address)->GetNameWithWorld();
@@ -26,7 +25,6 @@ public class WhitelistEntryGSpeak
         UpdateData(accessTuple);
     }
 
-    // The Player Name associated with this whitelist entry.
     public string Name;
     public string PlayerName;
     public nint Address;
@@ -36,6 +34,7 @@ public class WhitelistEntryGSpeak
     public TimeSpan MaxTime;
     public long TotalMaxTime => (long)MaxTime.TotalMilliseconds;
     public long MaxExpireTimeUnix => Access.HasAny(MoodleAccess.Permanent) ? long.MaxValue : Utils.Time + TotalMaxTime;
+
 
     // Client Access for this whitelist entry.
     public MoodleAccess ClientAccess;
@@ -47,12 +46,10 @@ public class WhitelistEntryGSpeak
 
     public void UpdateData(IPCMoodleAccessTuple latestAccessTuple)
     {
-        // Update the MoodleAccess first.
         ClientAccess = (MoodleAccess)latestAccessTuple.CallerAccessFlags;
         Access = (MoodleAccess)latestAccessTuple.OtherAccessFlags;
-        // Update the max times.
         ClientMaxTime = TimeSpan.FromMilliseconds(latestAccessTuple.CallerMaxTime);
-        MaxTime = TimeSpan.FromMilliseconds(latestAccessTuple.OtherMaxTime);    
+        MaxTime = TimeSpan.FromMilliseconds(latestAccessTuple.OtherMaxTime);
     }
 
     // Logic used to perform if a status is allowed to be applied to the entry by the client.
