@@ -465,8 +465,8 @@ public static class TabMoodles
     private static void CleanupSelected()
     {
         var maxStacks = P.CommonProcessor.IconStackCounts.TryGetValue((uint)Selected.IconID, out var count) ? (int)count : 1;
-        Selected.Stacks = Math.Min(Selected.Stacks, maxStacks);
-        Selected.StackSteps = Math.Min(Selected.StackSteps, maxStacks);
+        Selected.Stacks = maxStacks < 1 ? 1 : Math.Min(Selected.Stacks, maxStacks);
+        Selected.StackSteps = maxStacks < 1 ? 0 : Math.Min(Selected.StackSteps, maxStacks);
         // Ensure modifiers are correct.
         Selected.Modifiers = (Selected.StackSteps > 0) 
             ? Selected.Modifiers | Modifiers.StacksIncrease : Selected.Modifiers & ~Modifiers.StacksIncrease;
