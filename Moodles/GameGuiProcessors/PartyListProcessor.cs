@@ -133,9 +133,11 @@ public unsafe class PartyListProcessor : IDisposable
             List<nint> ret = [LocalPlayer.Address];
             for (var i = 1; i < Math.Min(8, Svc.Party.Length); i++)
             {
-                if (Svc.Party[i] is { } pm && ((GameObject*)pm.Address)->IsCharacter())
+                var obj = ExtendedPronoun.Resolve($"<{i + 1}>"); // Could use Svc.Party[i].GetAddress() if needed.
+                // Ensure validity.
+                if (obj != null && obj->IsCharacter())
                 {
-                    ret.Add(pm.Address);
+                    ret.Add((nint)obj);
                 }
                 else
                 {
