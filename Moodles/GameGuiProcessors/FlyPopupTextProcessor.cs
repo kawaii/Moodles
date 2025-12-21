@@ -2,7 +2,6 @@
 using Dalamud.Game.Text.SeStringHandling;
 using Dalamud.Memory;
 using Dalamud.Plugin.Services;
-using ECommons.GameHelpers;
 using FFXIVClientStructs.FFXIV.Client.Game.Character;
 using FFXIVClientStructs.FFXIV.Client.Game.Object;
 using FFXIVClientStructs.FFXIV.Component.GUI;
@@ -82,7 +81,7 @@ public sealed unsafe class FlyPopupTextProcessor : IDisposable
             {
                 PluginLog.Debug($"Processing {e.Status.Title} at {Utils.Frame} for {target->NameString}...");
                 CurrentElement = e;
-                var isMine = e.Status.Applier == Player.NameWithWorld && e.IsAddition;
+                var isMine = e.Status.Applier == LocalPlayer.NameWithWorld && e.IsAddition;
                 FlyTextKind kind;
                 if(e.Status.Type == StatusType.Negative)
                 {

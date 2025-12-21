@@ -1,6 +1,5 @@
 ﻿using Dalamud.Game.Addon.Lifecycle;
 using Dalamud.Game.Addon.Lifecycle.AddonArgTypes;
-using ECommons.GameHelpers;
 using FFXIVClientStructs.FFXIV.Component.GUI;
 using Moodles.Data;
 
@@ -22,7 +21,7 @@ public unsafe class StatusCustomProcessor : IDisposable
         Svc.AddonLifecycle.RegisterListener(AddonEvent.PostRequestedUpdate, "_StatusCustom0", OnStatusCustom0RequestedUpdate);
         Svc.AddonLifecycle.RegisterListener(AddonEvent.PostRequestedUpdate, "_StatusCustom1", OnStatusCustom1RequestedUpdate);
         Svc.AddonLifecycle.RegisterListener(AddonEvent.PostRequestedUpdate, "_StatusCustom2", OnStatusCustom2RequestedUpdate);
-        if(Player.Available)
+        if(LocalPlayer.Available)
         {
             if(TryGetAddonByName<AtkUnitBase>("_StatusCustom0", out var addon0) && IsAddonReady(addon0))
             {
@@ -53,7 +52,7 @@ public unsafe class StatusCustomProcessor : IDisposable
 
     public void HideAll()
     {
-        if(!Player.Available) return;
+        if(!LocalPlayer.Available) return;
         
         if(TryGetAddonByName<AtkUnitBase>("_StatusCustom0", out var addon0) && IsAddonReady(addon0))
         {
@@ -129,7 +128,7 @@ public unsafe class StatusCustomProcessor : IDisposable
     private void OnStatusCustom2Update(AddonEvent type, AddonArgs args)
     {
         if(P == null) return;
-        if(!Player.Available) return;
+        if(!LocalPlayer.Available) return;
         if(!P.CanModifyUI()) return;
         //PluginLog.Verbose($"Post1 update {args.Addon:X16}");
         var validStatuses = Utils.GetMyStatusManager(LocalPlayer.NameWithWorld).Statuses.Where(x => x.Type == StatusType.Special);
@@ -140,7 +139,7 @@ public unsafe class StatusCustomProcessor : IDisposable
     private void OnStatusCustom1Update(AddonEvent type, AddonArgs args)
     {
         if(P == null) return;
-        if(!Player.Available) return;
+        if(!LocalPlayer.Available) return;
         if(!P.CanModifyUI()) return;
         //PluginLog.Verbose($"Post1 update {args.Addon:X16}");
         var validStatuses = Utils.GetMyStatusManager(LocalPlayer.NameWithWorld).Statuses.Where(x => x.Type == StatusType.Negative);
@@ -151,7 +150,7 @@ public unsafe class StatusCustomProcessor : IDisposable
     private void OnStatusCustom0Update(AddonEvent type, AddonArgs args)
     {
         if(P == null) return;
-        if(!Player.Available) return;
+        if(!LocalPlayer.Available) return;
         if(!P.CanModifyUI()) return;
         //PluginLog.Verbose($"Post0 update {args.Addon:X16}");
         var validStatuses = Utils.GetMyStatusManager(LocalPlayer.NameWithWorld).Statuses.Where(x => x.Type == StatusType.Positive);

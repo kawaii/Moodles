@@ -1,7 +1,6 @@
 ﻿using Dalamud.Game.Addon.Lifecycle;
 using Dalamud.Game.Addon.Lifecycle.AddonArgTypes;
 using Dalamud.Game.ClientState.Objects.SubKinds;
-using ECommons.GameHelpers;
 using FFXIVClientStructs.FFXIV.Client.Game.Character;
 using FFXIVClientStructs.FFXIV.Component.GUI;
 using Moodles.Data;
@@ -14,7 +13,7 @@ public unsafe class TargetInfoProcessor
     {
         Svc.AddonLifecycle.RegisterListener(AddonEvent.PostUpdate, "_TargetInfo", OnTargetInfoUpdate);
         Svc.AddonLifecycle.RegisterListener(AddonEvent.PostRequestedUpdate, "_TargetInfo", OnTargetInfoRequestedUpdate);
-        if(Player.Available && TryGetAddonByName<AtkUnitBase>("_TargetInfo", out var addon) && IsAddonReady(addon))
+        if(LocalPlayer.Available && TryGetAddonByName<AtkUnitBase>("_TargetInfo", out var addon) && IsAddonReady(addon))
         {
             AddonRequestedUpdate(addon);
         }
@@ -58,7 +57,7 @@ public unsafe class TargetInfoProcessor
     private void OnTargetInfoUpdate(AddonEvent type, AddonArgs args)
     {
         if(P == null) return;
-        if(!Player.Available) return;
+        if(!LocalPlayer.Available) return;
         if(!P.CanModifyUI()) return;
         UpdateAddon((AtkUnitBase*)args.Addon.Address);
     }

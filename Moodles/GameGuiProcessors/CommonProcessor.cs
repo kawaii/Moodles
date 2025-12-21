@@ -2,7 +2,6 @@
 using Dalamud.Memory;
 using Dalamud.Utility;
 using ECommons.EzEventManager;
-using ECommons.GameHelpers;
 using ECommons.Interop;
 using ECommons.PartyFunctions;
 using FFXIVClientStructs.FFXIV.Client.Game.Character;
@@ -12,7 +11,6 @@ using Lumina.Excel.Sheets;
 using Moodles.Data;
 using Moodles.GameGuiProcessors;
 using System.Buffers.Binary;
-using System.Runtime.ConstrainedExecution;
 
 namespace Moodles.Processors;
 public unsafe class CommonProcessor : IDisposable
@@ -380,7 +378,7 @@ public unsafe class CommonProcessor : IDisposable
 
         var t = textNode->GetAsAtkTextNode();
         t->SetText((timerText ?? SeString.Empty).Encode());
-        if (status.Applier == Player.NameWithWorld)
+        if (status.Applier == LocalPlayer.NameWithWorld)
         {
             t->TextColor = CreateColor(0xc9ffe4ff);
             t->EdgeColor = CreateColor(0x0a5f24ff);

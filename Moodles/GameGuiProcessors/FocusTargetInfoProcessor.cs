@@ -1,7 +1,6 @@
 ﻿using Dalamud.Game.Addon.Lifecycle;
 using Dalamud.Game.Addon.Lifecycle.AddonArgTypes;
 using Dalamud.Game.ClientState.Objects.SubKinds;
-using ECommons.GameHelpers;
 using FFXIVClientStructs.FFXIV.Client.Game.Character;
 using FFXIVClientStructs.FFXIV.Component.GUI;
 using Moodles.Data;
@@ -15,7 +14,7 @@ public unsafe class FocusTargetInfoProcessor
     {
         Svc.AddonLifecycle.RegisterListener(AddonEvent.PostUpdate, "_FocusTargetInfo", OnFocusTargetInfoUpdate);
         Svc.AddonLifecycle.RegisterListener(AddonEvent.PostRequestedUpdate, "_FocusTargetInfo", OnFocusTargetInfoRequestedUpdate);
-        if(Player.Available && TryGetAddonByName<AtkUnitBase>("_FocusTargetInfo", out var addon) && IsAddonReady(addon))
+        if(LocalPlayer.Available && TryGetAddonByName<AtkUnitBase>("_FocusTargetInfo", out var addon) && IsAddonReady(addon))
         {
             AddonRequestedUpdate(addon);
         }
@@ -41,7 +40,7 @@ public unsafe class FocusTargetInfoProcessor
     private void OnFocusTargetInfoUpdate(AddonEvent type, AddonArgs args)
     {
         if(P == null) return;
-        if(!Player.Available) return;
+        if(!LocalPlayer.Available) return;
         if(P.CanModifyUI())
         {
             UpdateAddon((AtkUnitBase*)args.Addon.Address);

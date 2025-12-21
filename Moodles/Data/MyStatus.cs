@@ -1,5 +1,4 @@
 ﻿using MemoryPack;
-using System.Runtime.ConstrainedExecution;
 
 namespace Moodles.Data;
 

@@ -1,5 +1,4 @@
-﻿using ECommons.GameHelpers;
-using FFXIVClientStructs.FFXIV.Client.Game.Character;
+﻿using FFXIVClientStructs.FFXIV.Client.Game.Character;
 using Moodles.Data;
 using Moodles.OtterGuiHandlers;
 using OtterGui.Raii;

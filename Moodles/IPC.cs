@@ -1,5 +1,4 @@
 ﻿using ECommons.EzIpcManager;
-using ECommons.GameHelpers;
 using Moodles.Data;
 
 namespace Moodles;
@@ -99,7 +98,7 @@ public static unsafe class IPC
         foreach (var s in C.SavedStatuses.Where(x => Preset.Statuses.Contains(x.GUID)))
         {
             var preparedStatus = s.PrepareToApply();
-            preparedStatus.Applier = Player.NameWithWorld ?? "";
+            preparedStatus.Applier = LocalPlayer.NameWithWorld ?? "";
             if (!preparedStatus.IsValid(out var error))
             {
                 PluginLog.Error($"Could not apply status: {error}");
@@ -260,7 +259,7 @@ public static unsafe class IPC
         }
 
         var preparedStatus = Status.PrepareToApply();
-        preparedStatus.Applier = Player.NameWithWorld ?? "";
+        preparedStatus.Applier = LocalPlayer.NameWithWorld ?? "";
         if (!preparedStatus.IsValid(out var error))
         {
             Notify.Error($"Could not apply status: {error}");

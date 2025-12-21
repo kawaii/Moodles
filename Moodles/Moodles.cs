@@ -2,7 +2,6 @@
 using ECommons.Events;
 using ECommons.ExcelServices;
 using ECommons.EzEventManager;
-using ECommons.GameHelpers;
 using ECommons.SimpleGui;
 using FFXIVClientStructs.FFXIV.Client.Game.Character;
 using Moodles.Commands;
@@ -204,7 +203,7 @@ public class Moodles : IDalamudPlugin
 
     private void OnLogin()
     {
-        LastJob = Player.Job;
+        LastJob = (Job)LocalPlayer.ClassJob.RowId;
         C.SeenCharacters.Add(LocalPlayer.NameWithWorld);
         ApplyAutomation();
     }

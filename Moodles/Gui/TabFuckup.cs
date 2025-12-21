@@ -1,5 +1,4 @@
 ﻿using Dalamud.Game.ClientState.Objects.SubKinds;
-using ECommons.GameHelpers;
 using FFXIVClientStructs.FFXIV.Client.Game.Character;
 using FFXIVClientStructs.FFXIV.Client.Game.Object;
 using Lumina.Excel.Sheets;
@@ -37,7 +36,7 @@ public static unsafe class TabFuckup
         ImGui.SameLine();
         if (ImGui.Button("Target") && Svc.Targets.Target is IPlayerCharacter pct)
         {
-            OwnerNameWorld = pct.GetNameWithWorld();
+            OwnerNameWorld = ((Character*)pct.Address)->GetNameWithWorld();
         }
         ImGui.SameLine();
         ImGui.SetNextItemWidth(200f);
@@ -62,7 +61,8 @@ public static unsafe class TabFuckup
             {
                 if (x.GameObject is IPlayerCharacter pc)
                 {
-                    if (ImGui.Selectable(pc.GetNameWithWorld())) OwnerNameWorld = pc.GetNameWithWorld();
+                    string nameWorld = ((Character*)pc.Address)->GetNameWithWorld();
+                    if (ImGui.Selectable(nameWorld)) OwnerNameWorld = nameWorld;
                 }
             }
             ImGui.EndCombo();
@@ -124,7 +124,7 @@ public static unsafe class TabFuckup
                 ImGui.SetNextItemWidth(100f);
                 ImGui.InputText("Applier", ref Status.Applier, 50);
                 ImGui.SameLine();
-                if (ImGui.Button("Me")) Status.Applier = Player.NameWithWorld;
+                if (ImGui.Button("Me")) Status.Applier = LocalPlayer.NameWithWorld;
                 ImGui.SameLine();
                 ImGuiEx.EnumCombo("Type", ref Status.Type);
                 if (ImGui.Button("Add"))
@@ -141,7 +141,7 @@ public static unsafe class TabFuckup
                     Status.Title = $"Random status {Random.Shared.Next()}";
                     Status.IconID = (int)iconArray[Random.Shared.Next(iconArray.Count)];
                     Status.Type = (StatusType)Random.Shared.Next(3);
-                    Status.Applier = Random.Shared.Next(2) == 0 ? Player.NameWithWorld : "";
+                    Status.Applier = Random.Shared.Next(2) == 0 ? LocalPlayer.NameWithWorld : "";
                     Status.Seconds = Random.Shared.Next(5, 60);
                     if (Random.Shared.Next(20) == 0) Status.Minutes = Random.Shared.Next(5, 60);
                     if (Random.Shared.Next(100) == 0) Status.Hours = Random.Shared.Next(5, 60);
@@ -160,7 +160,7 @@ public static unsafe class TabFuckup
                         Status.Description = $"Random status description {Random.Shared.Next()}\n {Random.Shared.Next()}\n {Random.Shared.Next()}";
                         Status.IconID = (int)iconArray[Random.Shared.Next(iconArray.Count)];
                         Status.Type = (StatusType)Random.Shared.Next(3);
-                        Status.Applier = Random.Shared.Next(2) == 0 ? Player.NameWithWorld : "";
+                        Status.Applier = Random.Shared.Next(2) == 0 ? LocalPlayer.NameWithWorld : "";
                         Status.Minutes = 0;
                         Status.Hours = 0;
                         Status.Seconds = Random.Shared.Next(5, 60);
@@ -211,7 +211,7 @@ public static unsafe class TabFuckup
                 {
                     ImGuiEx.SetNextItemFullWidth();
                     ImGui.InputText($"##Applier{x.ID}", ref x.Applier, 50);
-                    if (ImGui.IsItemClicked(ImGuiMouseButton.Right)) x.Applier = Player.NameWithWorld;
+                    if (ImGui.IsItemClicked(ImGuiMouseButton.Right)) x.Applier = LocalPlayer.NameWithWorld;
                 }));
                 entries.Add(new("Expires", delegate
                 {

@@ -1,12 +1,7 @@
-﻿using ECommons.GameHelpers;
-using FFXIVClientStructs.FFXIV.Client.Game.Character;
+﻿using FFXIVClientStructs.FFXIV.Client.Game.Character;
 using Moodles.Data;
 using Moodles.OtterGuiHandlers;
 using OtterGui.Raii;
-using OtterGui.Text;
-using System.Net;
-using static FFXIVClientStructs.FFXIV.Client.Game.StatusManager.Delegates;
-using static System.Net.Mime.MediaTypeNames;
 
 namespace Moodles.Gui;
 public static class TabMoodles
