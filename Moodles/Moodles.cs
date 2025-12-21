@@ -133,6 +133,8 @@ public class Moodles : IDalamudPlugin
             // Need this Tick() check because someone could become a Sundouleia user after being rendered.
             foreach (Character* chara in CharaWatcher.Rendered)
             {
+                if (chara == LocalPlayer.Character) continue;
+
                 if (chara->MyStatusManager() is { } sm)
                 {
                     if (IPC.SundouleiaPlayerCache.Keys.Contains((nint)chara))
