@@ -1,6 +1,4 @@
-﻿using Dalamud.Game.ClientState.Objects.SubKinds;
-using ECommons;
-using ECommons.GameHelpers;
+﻿using ECommons.GameHelpers;
 using FFXIVClientStructs.FFXIV.Client.Game.Character;
 using Moodles.Data;
 using Moodles.OtterGuiHandlers;
@@ -49,7 +47,7 @@ public static class TabPresets
         {
             if(ImGui.Button("Apply to Yourself"))
             {
-                Utils.GetMyStatusManager(Player.NameWithWorld).ApplyPreset(Selected);
+                Utils.GetMyStatusManager(LocalPlayer.NameWithWorld).ApplyPreset(Selected);
             }
             ImGui.SameLine();
             // Determine target state and application intent

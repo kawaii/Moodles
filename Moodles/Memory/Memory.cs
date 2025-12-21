@@ -35,7 +35,7 @@ public unsafe partial class Memory : IDisposable
             // Handle Cancellation Request on Right Click
             if (a2 == 9 && P.CommonProcessor.WasRightMousePressed)
             {
-                // Append the address to the cancelRequests to expire the moodle on the next SetIcon() func.
+                // We dunno what status this is yet, so mark the address for next check.
                 P.CommonProcessor.CancelRequests.Add(a1);
                 P.CommonProcessor.HoveringOver = 0;
             }

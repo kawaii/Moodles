@@ -27,11 +27,11 @@ public unsafe class StatusProcessor : IDisposable
 
     public void HideAll()
     {
-        if(!Player.Available) return;
+        if(!LocalPlayer.Available) return;
 
         if(TryGetAddonByName<AtkUnitBase>("_Status", out var addon) && IsAddonReady(addon))
         {
-            var validStatuses = Utils.GetMyStatusManager(Player.NameWithWorld).Statuses;
+            var validStatuses = Utils.GetMyStatusManager(LocalPlayer.NameWithWorld).Statuses;
             UpdateStatus(addon, validStatuses, NumStatuses, true);
         }
     }
@@ -41,10 +41,10 @@ public unsafe class StatusProcessor : IDisposable
     private void OnStatusUpdate(AddonEvent type, AddonArgs args)
     {
         if(P == null) return;
-        if(!Player.Available) return;
+        if(!LocalPlayer.Available) return;
         if(!P.CanModifyUI()) return;
         
-        var validStatuses = Utils.GetMyStatusManager(Player.NameWithWorld).Statuses;
+        var validStatuses = Utils.GetMyStatusManager(LocalPlayer.NameWithWorld).Statuses;
         UpdateStatus((AtkUnitBase*)args.Addon.Address, validStatuses, NumStatuses);
     }
 
@@ -83,7 +83,7 @@ public unsafe class StatusProcessor : IDisposable
             for(var i = baseCnt; i >= 1; i--)
             {
                 var c = addon->UldManager.NodeList[i];
-                if(c->IsVisible()) c->NodeFlags ^= NodeFlags.Visible;
+                if (c->IsVisible()) c->NodeFlags ^= NodeFlags.Visible;
             }
             if(!hideAll)
             {

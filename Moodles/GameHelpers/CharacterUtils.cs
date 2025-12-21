@@ -1,10 +1,7 @@
-﻿using Dalamud.Game.ClientState.Objects.SubKinds;
-using ECommons.ExcelServices;
+﻿using ECommons.ExcelServices;
 using FFXIVClientStructs.FFXIV.Client.Game.Character;
-using FFXIVClientStructs.FFXIV.Client.Game.Object;
 using FFXIVClientStructs.FFXIV.Client.Graphics.Scene;
 using Lumina.Excel;
-using Lumina.Excel.Sheets;
 using Moodles.Data;
 using LuminaWorld = Lumina.Excel.Sheets.World;
 

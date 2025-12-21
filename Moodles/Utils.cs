@@ -2,10 +2,12 @@
 using Dalamud.Game.Text.SeStringHandling;
 using ECommons.ExcelServices;
 using ECommons.PartyFunctions;
+using FFXIVClientStructs.FFXIV.Client.Game.Character;
 using FFXIVClientStructs.FFXIV.Client.UI.Info;
 using FFXIVClientStructs.FFXIV.Component.GUI;
 using Moodles.Data;
 using System.Text.RegularExpressions;
+using System.Xml.Linq;
 using Status = Lumina.Excel.Sheets.Status;
 using UIColor = ECommons.ChatMethods.UIColor;
 
@@ -83,10 +85,10 @@ public static unsafe partial class Utils
 
     public static bool IsNotNull(this MyStatus? status)
     {
-        if(status == null) return false;
-        if(status.Applier == null) return false;
-        if(status.Description == null) return false;
-        if(status.Title == null) return false;
+        if (status == null) return false;
+        if (status.Applier == null) return false;
+        if (status.Description == null) return false;
+        if (status.Title == null) return false;
         return true;
     }
 
@@ -143,6 +145,11 @@ public static unsafe partial class Utils
                 PluginLog.Verbose($"Creating new status manager for {playerName}");
                 manager = new();
                 C.StatusManagers[playerName] = manager;
+                // Set the owner if so.
+                if (CharaWatcher.TryGetFirst(x => x.GetNameWithWorld() == playerName, out var chara))
+                {
+                    manager.Owner = (Character*)chara;
+                }
             }
         }
         return manager!;
@@ -304,7 +311,7 @@ public static unsafe partial class Utils
         }
     }
 
-    // This should be not needed anymore but who knows.
+    // For Pre-7.1 Moodles.
     public static void CleanupNulls()
     {
         for(var i = C.SavedStatuses.Count - 1; i >= 0; i--)

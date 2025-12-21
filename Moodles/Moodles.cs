@@ -1,10 +1,8 @@
-﻿using Dalamud.Game.ClientState.Objects.SubKinds;
-using ECommons.Configuration;
+﻿using ECommons.Configuration;
 using ECommons.Events;
 using ECommons.ExcelServices;
 using ECommons.EzEventManager;
 using ECommons.GameHelpers;
-using ECommons.MathHelpers;
 using ECommons.SimpleGui;
 using FFXIVClientStructs.FFXIV.Client.Game.Character;
 using Moodles.Commands;
@@ -37,6 +35,10 @@ public class Moodles : IDalamudPlugin
     {
         P = this;
         ECommonsMain.Init(pi, this);
+        // Define the EzConfig Deserialization factory.
+        EzConfig.DefaultSerializationFactory = new MoodleSerializationFactory();
+        MoodleSerializationFactory.BackupOldConfigs();
+
         new TickScheduler(() =>
         {
             Config = EzConfig.Init<Config>();
@@ -54,6 +56,7 @@ public class Moodles : IDalamudPlugin
             new EzLogout(Logout);
             StatusSelector = new();
             EzConfigGui.Window.SetMinSize(800, 500);
+            EzConfigGui.Open();
             CleanupStatusManagers();
             new EzTerritoryChanged((x) => CleanupStatusManagers());
             IPCProcessor = new();
@@ -78,7 +81,7 @@ public class Moodles : IDalamudPlugin
         foreach(var x in C.StatusManagers.Keys.ToArray())
         {
             var m = C.StatusManagers[x];
-            if(m.Statuses.Count == 0)
+            if(m.Statuses.Count == 0 && !m.OwnerValid)
             {
                 PluginLog.Debug($"  Deleting empty status manager for {x}");
                 C.StatusManagers.Remove(x);
@@ -196,7 +199,7 @@ public class Moodles : IDalamudPlugin
     private void OnLogin()
     {
         LastJob = Player.Job;
-        C.SeenCharacters.Add(Player.NameWithWorld);
+        C.SeenCharacters.Add(LocalPlayer.NameWithWorld);
         ApplyAutomation();
     }
 

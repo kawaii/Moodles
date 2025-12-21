@@ -1,13 +1,8 @@
 ﻿using Dalamud.Game.ClientState.Objects.SubKinds;
 using Dalamud.Hooking;
-using Dalamud.Utility;
-using ECommons.EzHookManager;
-using ECommons.GameHelpers;
 using FFXIVClientStructs.FFXIV.Client.Game.Character;
 using FFXIVClientStructs.FFXIV.Client.Game.Object;
-using FFXIVClientStructs.FFXIV.Client.Graphics.Scene;
 using System.Diagnostics.CodeAnalysis;
-using System.Windows.Forms;
 
 namespace Moodles;
 
@@ -160,7 +155,7 @@ public unsafe class CharaWatcher : IDisposable
             // If the player had an associated StatusManager, assign their Character* to it.
             if (C.StatusManagers.TryGetValue(charaNameWorld, out var sm))
             {
-                PluginLog.Verbose("Is null? " + (sm.Owner is null) + (chara is null));
+                PluginLog.Verbose($"Assigning {charaNameWorld} to SM. [SM Owner Null: {sm.Owner is null} | Chara Null: {chara is null}]");
                 sm.Owner = chara;
             }
         }

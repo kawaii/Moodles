@@ -111,7 +111,7 @@ public static unsafe class IPC
             }
             else
             {
-                list.Add(preparedStatus.ToStatusInfoTuple());
+                list.Add(preparedStatus.ToStatusTuple());
             }
         }
         if (list.Count > 0)
@@ -147,7 +147,7 @@ public static unsafe class IPC
         }
         else
         {
-            if (P.IPCProcessor.SundouleiaTryApplyToPair.TryInvoke(targetAddr, [preparedStatus.ToStatusInfoTuple()], true))
+            if (P.IPCProcessor.SundouleiaTryApplyToPair.TryInvoke(targetAddr, [preparedStatus.ToStatusTuple()], true))
             {
                 Notify.Info($"Broadcast success");
             }
@@ -235,7 +235,7 @@ public static unsafe class IPC
             }
             else
             {
-                list.Add(preparedStatus.ToStatusInfoTuple());
+                list.Add(preparedStatus.ToStatusTuple());
             }
         }
         if (list.Count > 0)
@@ -271,7 +271,7 @@ public static unsafe class IPC
         }
         else
         {
-            if (P.IPCProcessor.GSpeakTryApplyToPair.TryInvoke(targetAddr, [preparedStatus.ToStatusInfoTuple()], true))
+            if (P.IPCProcessor.GSpeakTryApplyToPair.TryInvoke(targetAddr, [preparedStatus.ToStatusTuple()], true))
             {
                 Notify.Info($"Broadcast success");
             }

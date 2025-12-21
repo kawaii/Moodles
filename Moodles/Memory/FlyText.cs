@@ -20,7 +20,7 @@ public unsafe partial class Memory
         try
         {
             if (C.Debug) {
-                PluginLog.Debug($"BattleLog_AddActionLogMessageDetour: {target:X16}, {source:X16}, {kind}, {a4}, {a5}, {actionID}, {statusID}, {stackCount}, {damageType}");
+                PluginLog.Verbose($"BattleLog_AddActionLogMessageDetour: {target:X16}, {source:X16}, {kind}, {a4}, {a5}, {actionID}, {statusID}, {stackCount}, {damageType}");
             }
             // If Moodles can be Esunad
             if (C.MoodlesCanBeEsunad)
@@ -39,13 +39,23 @@ public unsafe partial class Memory
                             {
                                 foreach (MyStatus status in manager.Statuses)
                                 {
-                                    if (!status.Dispelable) continue;
+                                    bool isClient = chara->ObjectIndex == 0;
+
                                     // Ensure only negative statuses are dispelled.
                                     if (status.Type != StatusType.Negative) continue;
-                                    // If it can be dispelled and has a dispeller, the name must match.
-                                    if (C.OthersCanEsunaMoodles && InvalidDispeller(status, chara)) continue;
-                                        
+                                    // If it cannot be dispelled, skip it.
+                                    else if (!status.Modifiers.Has(Modifiers.CanDispel)) continue;
+                                    // Client cannot dispel locked statuses.
+                                    else if (isClient && manager.LockedIds.Contains(status.GUID)) continue;
+                                    // Others cannot dispel if they are not whitelisted.
+                                    else if (C.OthersCanEsunaMoodles && !isClient && !IsValidDispeller(status, chara)) continue;
+
+                                    // Perform the dispel, expiring the timer. Also apply the chain if desired.
                                     status.ExpiresAt = 0;
+                                    if (status.ChainedStatus != Guid.Empty && status.ChainTrigger is ChainTrigger.Dispel)
+                                    {
+                                        status.ApplyChain = true;
+                                    }
                                     // This return is to not show the failed message
                                     return;
                                 }
@@ -64,6 +74,7 @@ public unsafe partial class Memory
         BattleLog_AddToScreenLogWithScreenLogKindHook.Original(target, source, kind, a4, a5, actionID, statusID, stackCount, damageType);
     }
 
-    private static unsafe bool InvalidDispeller(MyStatus status, Character* chara)
-        => chara->ObjectIndex != 0 && (status.Dispeller.Length > 0 && status.Dispeller != chara->GetNameWithWorld());
+    private static unsafe bool IsValidDispeller(MyStatus status, Character* chara)
+        => status.Dispeller.Length is 0 || status.Dispeller == chara->GetNameWithWorld();
+
 }

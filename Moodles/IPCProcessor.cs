@@ -1,11 +1,8 @@
 ﻿using Dalamud.Game.ClientState.Objects.SubKinds;
-using ECommons;
+using Dalamud.Plugin.Ipc;
 using ECommons.EzIpcManager;
-using ECommons.GameHelpers;
 using FFXIVClientStructs.FFXIV.Client.Game.Character;
 using Moodles.Data;
-using System.Collections.Immutable;
-using System.Security.Cryptography;
 
 namespace Moodles;
 #pragma warning disable CS0649, CS8602, CS8618 // EzIPC never needs to be initialized, it is handled internally.
@@ -62,7 +59,7 @@ public class IPCProcessor : IDisposable
 
 
     [EzIPCEvent("Sundouleia.Ready", false)]
-    private static void SundouleiaReady()
+    private void SundouleiaReady()
     {
         _ = new TickScheduler(() =>
         {
@@ -73,7 +70,7 @@ public class IPCProcessor : IDisposable
     }
 
     [EzIPCEvent("GagSpeak.Ready", false)]
-    private static void GSpeakReady()
+    private void GSpeakReady()
     {
         _ = new TickScheduler(() =>
         {
@@ -84,7 +81,7 @@ public class IPCProcessor : IDisposable
     }
 
     [EzIPCEvent("Sundouleia.Disposing", false)]
-    private static void SundouleiaDisposing()
+    private void SundouleiaDisposing()
     {
         PluginLog.LogDebug("Sundouleia Disposed / Disabled. Clearing associated data.");
         IPC.ClearSundesmos();
@@ -92,7 +89,7 @@ public class IPCProcessor : IDisposable
     }
 
     [EzIPCEvent("GagSpeak.Disposing", false)]
-    private static void GSpeakDisposing()
+    private void GSpeakDisposing()
     {
         PluginLog.LogDebug("GSpeak Disposed / Disabled. Clearing associated data.");
         IPC.ClearGSpeakPairs();
@@ -114,14 +111,14 @@ public class IPCProcessor : IDisposable
     }
 
     [EzIPCEvent("Sundouleia.PairUnrendered", false)]
-    private static void SundouleiaPairUnrendered(nint address)
+    private void SundouleiaPairUnrendered(nint address)
     {
         PluginLog.LogDebug($"Sundouleia removing unrendered player: {address:X}");
         IPC.RemoveSundesmo(address);
     }
 
     [EzIPCEvent("GagSpeak.PairUnrendered", false)]
-    private static void GSpeakPairUnrendered(nint address)
+    private void GSpeakPairUnrendered(nint address)
     {
         PluginLog.LogDebug($"GSpeak removing unrendered player: {address:X}");
         IPC.RemoveGSpeakPair(address);
@@ -147,51 +144,57 @@ public class IPCProcessor : IDisposable
     }
 
     [EzIPCEvent("Sundouleia.ApplyStatusInfo", false)]
-    private static void SundouleiaApplyTuple(MoodlesStatusInfo status) => _ = new TickScheduler(() => ApplyStatusTuples([status], false));
+    private void SundouleiaApplyTuple(MoodlesStatusInfo status) => ApplyStatusTuples([status], false);
 
     [EzIPCEvent("GagSpeak.ApplyStatusInfo", false)]
-    private static void GSpeakApplyTuple(MoodlesStatusInfo status, bool lockId) => _ = new TickScheduler(() => ApplyStatusTuples([status], lockId));
+    private void GSpeakApplyTuple(MoodlesStatusInfo status, bool asLocked) => ApplyStatusTuples([status], asLocked);
 
     [EzIPCEvent("Sundouleia.ApplyStatusInfoList", false)]
-    private static void SundouleiaApplyTuples(List<MoodlesStatusInfo> statuses) => _ = new TickScheduler(() => ApplyStatusTuples(statuses, false));
+    private void SundouleiaApplyTuples(List<MoodlesStatusInfo> statuses) => ApplyStatusTuples(statuses, false);
 
     [EzIPCEvent("GagSpeak.ApplyStatusInfoList", false)]
-    private static void GSpeakApplyTuples(List<MoodlesStatusInfo> statuses, bool lockIds) => _ = new TickScheduler(() => ApplyStatusTuples(statuses, lockIds));
+    private void GSpeakApplyTuples(List<MoodlesStatusInfo> statuses, bool asLocked) => ApplyStatusTuples(statuses, asLocked);
 
     /// <summary>
     ///     <b>Primarily used for Apply-To-Pair functionality, or for Try-On features.</b> <para />
     ///     By the time this method is called, any pair-applied tuples have been validated by 
     ///     GSpeak for valid MoodleAccess and can be trusted.
     /// </summary>
-    /// <remarks> Ensure this is called in a <see cref="TickScheduler"/> </remarks>
-    private static unsafe void ApplyStatusTuples(List<MoodlesStatusInfo> tuples, bool lockStatus)
+    private unsafe void ApplyStatusTuples(List<MoodlesStatusInfo> tuples, bool asLocked)
     {
         if (!CharaWatcher.LocalPlayerRendered) return;
 
         PluginLog.LogDebug($"Applying statuses: ({string.Join(",", tuples.Select(s => s.Title))})");
         var sm = LocalPlayer.Character->MyStatusManager();
-        foreach (var status in tuples)
+        if (asLocked)
         {
-            sm.AddOrUpdate(MyStatus.FromTuple(status).PrepareToApply(), UpdateSource.StatusTuple, false, true);
+            foreach (var status in tuples) sm.AddOrUpdateLocked(MyStatus.FromTuple(status).PrepareToApply());
+        }
+        else
+        {
+            foreach (var status in tuples) sm.AddOrUpdate(MyStatus.FromTuple(status).PrepareToApply(), UpdateSource.StatusTuple);
         }
     }
 
     [EzIPCEvent("GagSpeak.LockIds", false)] // Only applicable to the ClientPlayer StatusManager, Identifies which Statuses cannot be removed.
-    private static void GSpeakLockStatuses(List<Guid> statusesToLock)
+    private unsafe void GSpeakLockStatuses(List<Guid> toLock)
     {
-
+        if (!CharaWatcher.LocalPlayerRendered) return;
+        LocalPlayer.Character->MyStatusManager().LockStatuses(toLock);
     }
 
     [EzIPCEvent("GagSpeak.UnlockIds", false)]
-    private static void GSpeakUnlockStatuses(List<Guid> statusesToLock)
+    private unsafe void GSpeakUnlockStatuses(List<Guid> toUnlock)
     {
-
+        if (!CharaWatcher.LocalPlayerRendered) return;
+        LocalPlayer.Character->MyStatusManager().UnlockStatuses(toUnlock);
     }
 
     [EzIPCEvent("GagSpeak.ClearLocks", false)]
-    private static void GSpeakLockStatuses()
+    private unsafe void GSpeakLockStatuses()
     {
-
+        if (!CharaWatcher.LocalPlayerRendered) return;
+        LocalPlayer.Character->MyStatusManager().ClearLocks();
     }
     #endregion GSpeak & Sundouleia Listener Events
 
@@ -207,9 +210,9 @@ public class IPCProcessor : IDisposable
     }
 
     [EzIPC]
-    private static int Version()
+    private int Version()
     {
-        return 3;
+        return 4;
     }
 
     #region StatusManager
@@ -351,13 +354,13 @@ public class IPCProcessor : IDisposable
     [EzIPC]
     private MoodlesStatusInfo GetStatusInfoV2(Guid guid)
         => C.SavedStatuses.TryGetFirst(x => x.GUID == guid, out var status)
-            ? status.ToStatusInfoTuple() : default;
+            ? status.ToStatusTuple() : default;
 
     /// <summary>
     ///     Obtain all MyStatus tuples from the Clients statuses.
     /// </summary>
     [EzIPC]
-    private List<MoodlesStatusInfo> GetStatusInfoListV2() => C.SavedStatuses.Select(x => x.ToStatusInfoTuple()).ToList();
+    private List<MoodlesStatusInfo> GetStatusInfoListV2() => C.SavedStatuses.Select(x => x.ToStatusTuple()).ToList();
 
     /// <summary>
     ///     Obtain the Preset tuple for a valid Preset GUID.

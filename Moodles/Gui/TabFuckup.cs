@@ -225,7 +225,11 @@ public static unsafe class TabFuckup
                 }));
                 entries.Add(new("Dispelable", false, delegate
                 {
-                    ImGui.Checkbox($"Dispel##{x.ID}", ref x.Dispelable);
+                    var isDispellable = x.Modifiers.Has(Modifiers.CanDispel);
+                    if (ImGui.Checkbox($"Dispel##{x.ID}", ref isDispellable))
+                    {
+                        x.Modifiers.Set(Modifiers.CanDispel, isDispellable);
+                    }
                 }));
                 entries.Add(new("AddShown", false, delegate
                 {
@@ -239,6 +243,7 @@ public static unsafe class TabFuckup
                 {
                     if (ImGui.Button($"Del##{x.ID}"))
                     {
+                        manager.UnlockStatuses([x.GUID]);
                         x.ExpiresAt = 0;
                     }
                 }));

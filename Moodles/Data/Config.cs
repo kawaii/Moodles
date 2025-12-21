@@ -1,8 +1,8 @@
-﻿using ECommons.Configuration;
-
-namespace Moodles.Data;
+﻿namespace Moodles.Data;
 public class Config
 {
+    public int Version = 2;
+
     public bool Enabled = true;
     public bool EnabledDuty = false;
     public bool EnabledCombat = false;

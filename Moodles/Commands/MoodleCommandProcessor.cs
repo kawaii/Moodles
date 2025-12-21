@@ -1,6 +1,4 @@
 ﻿using Dalamud.Game.ClientState.Objects.SubKinds;
-using ECommons.GameHelpers;
-using ECommons.GameHelpers.LegacyPlayer;
 using FFXIVClientStructs.FFXIV.Client.Game.Character;
 using Lumina.Excel.Sheets;
 using Moodles.Data;

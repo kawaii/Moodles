@@ -3,9 +3,7 @@ using Dalamud.Game.Gui.FlyText;
 using Dalamud.Interface.Utility.Raii;
 using ECommons.Configuration;
 using ECommons.EzIpcManager;
-using ECommons.GameHelpers;
 using ECommons.Throttlers;
-using FFXIVClientStructs.FFXIV.Client.Game;
 using FFXIVClientStructs.FFXIV.Client.Game.Character;
 using FFXIVClientStructs.FFXIV.Client.Game.Object;
 

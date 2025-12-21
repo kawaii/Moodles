@@ -1,6 +1,5 @@
 ﻿using FFXIVClientStructs.FFXIV.Client.Game.Character;
 using System.Diagnostics.CodeAnalysis;
-using System.Xml.Linq;
 
 namespace Moodles.Data;
 

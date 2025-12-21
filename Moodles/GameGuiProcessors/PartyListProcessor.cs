@@ -1,12 +1,10 @@
 ﻿using Dalamud.Game.Addon.Lifecycle;
 using Dalamud.Game.Addon.Lifecycle.AddonArgTypes;
-using Dalamud.Game.ClientState.Objects.SubKinds;
 using ECommons.GameFunctions;
 using ECommons.GameHelpers;
 using FFXIVClientStructs.FFXIV.Client.Game.Character;
 using FFXIVClientStructs.FFXIV.Component.GUI;
 using Moodles.Data;
-using Moodles.GameGuiProcessors;
 
 namespace Moodles.Processors;
 public unsafe class PartyListProcessor : IDisposable

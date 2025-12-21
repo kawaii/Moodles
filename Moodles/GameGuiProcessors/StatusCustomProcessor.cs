@@ -57,19 +57,19 @@ public unsafe class StatusCustomProcessor : IDisposable
         
         if(TryGetAddonByName<AtkUnitBase>("_StatusCustom0", out var addon0) && IsAddonReady(addon0))
         {
-            var validStatuses = Utils.GetMyStatusManager(Player.NameWithWorld).Statuses.Where(x => x.Type == StatusType.Positive);
+            var validStatuses = Utils.GetMyStatusManager(LocalPlayer.NameWithWorld).Statuses.Where(x => x.Type == StatusType.Positive);
             UpdateStatusCustom(addon0, validStatuses, P.CommonProcessor.PositiveStatuses, NumStatuses0, true);
         }
 
         if(TryGetAddonByName<AtkUnitBase>("_StatusCustom1", out var addon1) && IsAddonReady(addon1))
         {
-            var validStatuses = Utils.GetMyStatusManager(Player.NameWithWorld).Statuses.Where(x => x.Type == StatusType.Negative);
+            var validStatuses = Utils.GetMyStatusManager(LocalPlayer.NameWithWorld).Statuses.Where(x => x.Type == StatusType.Negative);
             UpdateStatusCustom(addon1, validStatuses, P.CommonProcessor.NegativeStatuses, NumStatuses1, true);
         }
 
         if(TryGetAddonByName<AtkUnitBase>("_StatusCustom2", out var addon2) && IsAddonReady(addon2))
         {
-            var validStatuses = Utils.GetMyStatusManager(Player.NameWithWorld).Statuses.Where(x => x.Type == StatusType.Special);
+            var validStatuses = Utils.GetMyStatusManager(LocalPlayer.NameWithWorld).Statuses.Where(x => x.Type == StatusType.Special);
             UpdateStatusCustom(addon2, validStatuses, P.CommonProcessor.SpecialStatuses, NumStatuses2, true);
         }
     }
@@ -132,7 +132,7 @@ public unsafe class StatusCustomProcessor : IDisposable
         if(!Player.Available) return;
         if(!P.CanModifyUI()) return;
         //PluginLog.Verbose($"Post1 update {args.Addon:X16}");
-        var validStatuses = Utils.GetMyStatusManager(Player.NameWithWorld).Statuses.Where(x => x.Type == StatusType.Special);
+        var validStatuses = Utils.GetMyStatusManager(LocalPlayer.NameWithWorld).Statuses.Where(x => x.Type == StatusType.Special);
         UpdateStatusCustom((AtkUnitBase*)args.Addon.Address, validStatuses, P.CommonProcessor.SpecialStatuses, NumStatuses2);
     }
 
@@ -143,7 +143,7 @@ public unsafe class StatusCustomProcessor : IDisposable
         if(!Player.Available) return;
         if(!P.CanModifyUI()) return;
         //PluginLog.Verbose($"Post1 update {args.Addon:X16}");
-        var validStatuses = Utils.GetMyStatusManager(Player.NameWithWorld).Statuses.Where(x => x.Type == StatusType.Negative);
+        var validStatuses = Utils.GetMyStatusManager(LocalPlayer.NameWithWorld).Statuses.Where(x => x.Type == StatusType.Negative);
         UpdateStatusCustom((AtkUnitBase*)args.Addon.Address, validStatuses, P.CommonProcessor.NegativeStatuses, NumStatuses1);
     }
 
@@ -154,7 +154,7 @@ public unsafe class StatusCustomProcessor : IDisposable
         if(!Player.Available) return;
         if(!P.CanModifyUI()) return;
         //PluginLog.Verbose($"Post0 update {args.Addon:X16}");
-        var validStatuses = Utils.GetMyStatusManager(Player.NameWithWorld).Statuses.Where(x => x.Type == StatusType.Positive);
+        var validStatuses = Utils.GetMyStatusManager(LocalPlayer.NameWithWorld).Statuses.Where(x => x.Type == StatusType.Positive);
         UpdateStatusCustom((AtkUnitBase*)args.Addon.Address, validStatuses, P.CommonProcessor.PositiveStatuses, NumStatuses0);
     }
 
@@ -184,7 +184,7 @@ public unsafe class StatusCustomProcessor : IDisposable
                 {
                     if(baseCnt < 5) break;
                     var rem = x.ExpiresAt - Utils.Time;
-                    if(rem > 0)
+                    if (rem > 0)
                     {
                         if (statusCountLessened)
                         {
