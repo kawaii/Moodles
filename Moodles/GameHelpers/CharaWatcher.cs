@@ -148,9 +148,9 @@ public unsafe class CharaWatcher : IDisposable
     private void AddToWatcher(Character* chara)
     {
         if (chara is null
-            && chara->ObjectIndex >= 0 && chara->ObjectIndex <= 200
-            && chara->IsCharacter() == false
-            && chara->GetObjectKind() is not ObjectKind.Pc)
+            || chara->ObjectIndex < 0 || chara->ObjectIndex >= 200
+            || chara->IsCharacter() == false
+            || chara->GetObjectKind() is not ObjectKind.Pc)
             return;
 
         if (Rendered.Add((nint)chara))
