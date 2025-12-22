@@ -11,8 +11,8 @@ namespace Moodles;
 public unsafe class CharaWatcher : IDisposable
 {
     internal Hook<Character.Delegates.OnInitialize> OnCharaInitializeHook;
-    internal Hook<Character.Delegates.Dtor>         OnCharaDestroyHook;
-    internal Hook<Character.Delegates.Terminate>    OnCharaTerminateHook;
+    internal Hook<Character.Delegates.Dtor> OnCharaDestroyHook;
+    internal Hook<Character.Delegates.Terminate> OnCharaTerminateHook;
 
     public CharaWatcher()
     {
@@ -60,8 +60,7 @@ public unsafe class CharaWatcher : IDisposable
             if (!obj->IsCharacter())
                 continue;
 
-            // Additional safeguard that can probably be removed.
-            if (obj->GetObjectKind() is not (ObjectKind.Pc or ObjectKind.BattleNpc))
+            if (obj->GetObjectKind() is not (ObjectKind.Pc))
             {
                 PluginLog.Verbose($"[CharaWatcher] Skipping found character of object kind {obj->GetObjectKind()} at index {i}");
                 continue;
@@ -148,6 +147,12 @@ public unsafe class CharaWatcher : IDisposable
 
     private void AddToWatcher(Character* chara)
     {
+        if (chara is null
+            || chara->ObjectIndex < 0 || chara->ObjectIndex >= 200
+            || chara->IsCharacter() == false
+            || chara->GetObjectKind() is not ObjectKind.Pc)
+            return;
+
         if (Rendered.Add((nint)chara))
         {
             var charaNameWorld = chara->GetNameWithWorld();
@@ -163,24 +168,27 @@ public unsafe class CharaWatcher : IDisposable
 
     private void RemoveCharacter(Character* chara)
     {
-        if (Rendered.Remove((nint)chara))
+        if (Rendered.Contains((nint)chara))
         {
-            var charaNameWorld = chara->GetNameWithWorld();
-            PluginLog.Verbose($"Removed rendered character: Rendered: {(nint)chara:X} - {charaNameWorld}");
-            // If the removed character was a player with a status manager, handle Owner cleanup.
-            if (C.StatusManagers.TryGetValue(charaNameWorld, out var sm))
+            if (Rendered.Remove((nint)chara))
             {
-                if (sm.OwnerValid)
+                var charaNameWorld = chara->GetNameWithWorld();
+                PluginLog.Verbose($"Removed rendered character: Rendered: {(nint)chara:X} - {charaNameWorld}");
+                // If the removed character was a player with a status manager, handle Owner cleanup.
+                if (C.StatusManagers.TryGetValue(charaNameWorld, out var sm))
                 {
-                    sm.Owner = null;
-                }
+                    if (sm.OwnerValid)
+                    {
+                        sm.Owner = null;
+                    }
 
-                // If Ephemeral, remove their status manager and any SeenPlayers entry.
-                if (sm.Ephemeral)
-                {
-                    C.StatusManagers.Remove(charaNameWorld);
-                    P.SeenPlayers.RemoveAll(x => x.Name == charaNameWorld);
-                    PluginLog.Debug($"Removing ephemeral status manager for {charaNameWorld}");
+                    // If Ephemeral, remove their status manager and any SeenPlayers entry.
+                    if (sm.Ephemeral)
+                    {
+                        C.StatusManagers.Remove(charaNameWorld);
+                        P.SeenPlayers.RemoveAll(x => x.Name == charaNameWorld);
+                        PluginLog.Debug($"Removing ephemeral status manager for {charaNameWorld}");
+                    }
                 }
             }
         }
