@@ -261,7 +261,12 @@ public unsafe class CommonProcessor : IDisposable
                 }
 
                 // Fix ensuring cap is hit when the chain trigger is max stacks.
-                if (cur.ChainTrigger is ChainTrigger.HitMaxStacks) cur.Stacks = oldMax;
+                if (cur.ChainTrigger is ChainTrigger.HitMaxStacks)
+                {
+                    cur.Stacks = cur.Modifiers.Has(Modifiers.StacksRollOver) ? Math.Clamp((cur.Stacks + cur.StackSteps) - oldMax, 1, oldMax) : oldMax;
+                    manager.AddTextShown.Remove(cur.GUID);
+                    EnsureAddTextWasShown(manager, cur);
+                }
 
                 // Ensure the add text is shown for this newly chained status, and then break out.
                 EnsureAddTextWasShown(manager, s);

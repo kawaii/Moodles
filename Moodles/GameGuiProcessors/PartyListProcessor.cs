@@ -2,6 +2,7 @@
 using Dalamud.Game.Addon.Lifecycle.AddonArgTypes;
 using ECommons.GameFunctions;
 using FFXIVClientStructs.FFXIV.Client.Game.Character;
+using FFXIVClientStructs.FFXIV.Client.Game.Object;
 using FFXIVClientStructs.FFXIV.Component.GUI;
 using Moodles.Data;
 
@@ -132,8 +133,9 @@ public unsafe class PartyListProcessor : IDisposable
             List<nint> ret = [LocalPlayer.Address];
             for (var i = 1; i < Math.Min(8, Svc.Party.Length); i++)
             {
-                var obj = ExtendedPronoun.Resolve($"<{i + 1}>");
-                if (obj->IsCharacter())
+                var obj = ExtendedPronoun.Resolve($"<{i + 1}>"); // Could use Svc.Party[i].GetAddress() if needed.
+                // Ensure validity.
+                if (obj != null && obj->IsCharacter())
                 {
                     ret.Add((nint)obj);
                 }
