@@ -5,6 +5,7 @@ using OtterGui.Classes;
 using OtterGui.Filesystem;
 using OtterGui.FileSystem.Selector;
 using OtterGui.Raii;
+using OtterGui.Text;
 using System.Diagnostics.CodeAnalysis;
 using System.IO;
 
@@ -124,7 +125,26 @@ public sealed class MoodleFileSystem : FileSystem<MyStatus>, IDisposable
         }
 
         protected override float CurrentWidth
-            => 200f;
+            => C.SelectorWidthMoodles * ImUtf8.GlobalScale;
+
+        protected override float MinimumAbsoluteRemainder
+            => 400f * ImUtf8.GlobalScale;
+
+        protected override float MinimumScaling
+            => 0.1f;
+
+        protected override float MaximumScaling
+            => 0.5f;
+
+        protected override void SetSize(Vector2 size)
+        {
+            base.SetSize(size);
+            var adaptedSize = MathF.Round(size.X / ImUtf8.GlobalScale);
+            if (adaptedSize == C.SelectorWidthMoodles)
+                return;
+
+            C.SelectorWidthMoodles = adaptedSize;
+        }
 
         protected override uint CollapsedFolderColor => ImGuiColors.DalamudViolet.ToUint();
         protected override uint ExpandedFolderColor => CollapsedFolderColor;

@@ -24,6 +24,8 @@ public class Config
     public HashSet<uint> FavIcons = [];
     public bool AutoFill = false;
     public int SelectorHeight = 33;
+    public float SelectorWidthMoodles = 200f;
+    public float SelectorWidthPresets = 200f;
     public bool Debug = false;
     public bool FuckupTab2 = true;
     public bool DebugSaves = true;
