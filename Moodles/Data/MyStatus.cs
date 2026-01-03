@@ -58,7 +58,7 @@ public partial class MyStatus
     #endregion Conditional Serialization/Deserialization
 
     internal uint AdjustedIconID => (uint)(IconID + Stacks - 1);
-    internal long TotalDurationSeconds => Seconds * 1000 + Minutes * 1000 * 60 + Hours * 1000 * 60 * 60 + Days * 1000 * 60 * 60 * 24;
+    internal long TotalDurationSeconds => Seconds * 1000L + Minutes * 1000L * 60 + Hours * 1000L * 60 * 60 + Days * 1000L * 60 * 60 * 24;
 
     public bool ShouldExpireOnChain() => ApplyChain && !Modifiers.Has(Modifiers.PersistAfterTrigger);
     public bool HadNaturalTimerFalloff() => ExpiresAt - Utils.Time <= 0 && !ApplyChain && !ClickedOff;
