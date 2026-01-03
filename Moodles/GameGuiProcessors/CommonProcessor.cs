@@ -250,8 +250,8 @@ public unsafe class CommonProcessor : IDisposable
                 {
                     if (cur.Modifiers.Has(Modifiers.StacksCarryToChain))
                     {
-                        var toCarryOver = (cur.Stacks + cur.StackSteps) - oldMax;
-                        // If the new status had a stack increase it would be doing that increase + this, so we need to subtract that addition.
+                        // Use (oldMax - 1) here because our stacks always start at 1, not 0. So if it has 8 stacks, it can only increment 7 times.
+                        var toCarryOver = (cur.Stacks + cur.StackSteps) - (oldMax - 1);
                         newStatus.Stacks = Math.Min(newStatus.Stacks - newStatus.StackSteps + toCarryOver, newMaxStacks);
                     }
                     else if (cur.Modifiers.Has(Modifiers.StacksMoveToChain))

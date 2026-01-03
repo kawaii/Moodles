@@ -5,6 +5,7 @@ using OtterGui.Classes;
 using OtterGui.Filesystem;
 using OtterGui.FileSystem.Selector;
 using OtterGui.Raii;
+using OtterGui.Text;
 using System.Diagnostics.CodeAnalysis;
 using System.IO;
 
@@ -118,11 +119,30 @@ public sealed class PresetFileSystem : FileSystem<Preset>, IDisposable
         {
             AddButton(NewItem, 0);
             //AddButton(ImportButton, 10); needs custom logic
-            //AddButton(CopyToClipboardButton, 20);
             AddButton(DeleteButton, 1000);
         }
+
         protected override float CurrentWidth
-         => 200f;
+            => C.SelectorWidthPresets * ImUtf8.GlobalScale;
+
+        protected override float MinimumAbsoluteRemainder
+            => 400f * ImUtf8.GlobalScale;
+
+        protected override float MinimumScaling
+            => 0.1f;
+
+        protected override float MaximumScaling
+            => 0.5f;
+
+        protected override void SetSize(Vector2 size)
+        {
+            base.SetSize(size);
+            var adaptedSize = MathF.Round(size.X / ImUtf8.GlobalScale);
+            if (adaptedSize == C.SelectorWidthPresets)
+                return;
+
+            C.SelectorWidthPresets = adaptedSize;
+        }
 
         protected override uint CollapsedFolderColor => ImGuiColors.DalamudViolet.ToUint();
         protected override uint ExpandedFolderColor => CollapsedFolderColor;

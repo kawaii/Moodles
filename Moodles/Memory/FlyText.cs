@@ -28,27 +28,29 @@ public unsafe partial class Memory
                 // If action is Esuna
                 if (actionID == 7568 && kind == FlyTextKind.HasNoEffect)
                 {
-                    // Only perform logic on a dispel if a PlayerCharacter performed it.
-                    if (CharaWatcher.TryGetValue(source, out Character* chara))
+                    // Only check logic if the source and target are valid actors.
+                    if (CharaWatcher.TryGetValue(source, out Character* chara) && CharaWatcher.TryGetValue(target, out Character* targetChara))
                     {
-                        // Check permission
+                        // Check permission (Must be allowing from others, or must be from self)
                         if (C.OthersCanEsunaMoodles || chara->ObjectIndex == 0)
                         {
-                            // Grab the status manager.
-                            if (chara->MyStatusManager() is { } manager && !manager.Ephemeral)
+                            // Grab the status manager. (Do not trigger on Ephemeral, wait for them to update via IPC)
+                            if (targetChara->MyStatusManager() is { } manager && !manager.Ephemeral)
                             {
+                                bool fromClient = chara->ObjectIndex == 0;
+
                                 foreach (MyStatus status in manager.Statuses)
                                 {
-                                    bool isClient = chara->ObjectIndex == 0;
-
                                     // Ensure only negative statuses are dispelled.
                                     if (status.Type != StatusType.Negative) continue;
                                     // If it cannot be dispelled, skip it.
                                     else if (!status.Modifiers.Has(Modifiers.CanDispel)) continue;
                                     // Client cannot dispel locked statuses.
-                                    else if (isClient && manager.LockedIds.Contains(status.GUID)) continue;
+                                    else if (fromClient && manager.LockedIds.Contains(status.GUID)) continue;
+                                    // Prevent dispelling if not from client and others are not allowed.
+                                    else if (!fromClient && !C.OthersCanEsunaMoodles) continue;
                                     // Others cannot dispel if they are not whitelisted.
-                                    else if (C.OthersCanEsunaMoodles && !isClient && !IsValidDispeller(status, chara)) continue;
+                                    else if (!IsValidDispeller(status, chara)) continue;
 
                                     // Perform the dispel, expiring the timer. Also apply the chain if desired.
                                     status.ExpiresAt = 0;
