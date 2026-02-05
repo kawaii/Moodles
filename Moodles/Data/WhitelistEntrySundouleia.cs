@@ -44,12 +44,13 @@ public class WhitelistEntrySundouleia
 
     public string CensoredName() => string.Concat(Name.Split(' ', StringSplitOptions.RemoveEmptyEntries).Select(w => char.ToUpper(w[0]) + "."));
 
-    public void UpdateData(IPCMoodleAccessTuple latestAccessTuple)
+    public void UpdateData(IPCMoodleAccessTuple latest)
     {
-        ClientAccess = (MoodleAccess)latestAccessTuple.CallerAccessFlags;
-        Access = (MoodleAccess)latestAccessTuple.OtherAccessFlags;
-        ClientMaxTime = TimeSpan.FromMilliseconds(latestAccessTuple.CallerMaxTime);
-        MaxTime = TimeSpan.FromMilliseconds(latestAccessTuple.OtherMaxTime);
+        Access = (MoodleAccess)latest.RecipientAccessFlags;
+        ClientAccess = (MoodleAccess)latest.ClientAccessFlags;
+
+        MaxTime = TimeSpan.FromMilliseconds(latest.RecipientMaxTime);
+        ClientMaxTime = TimeSpan.FromMilliseconds(latest.ClientMaxTime);
     }
 
     // Logic used to perform if a status is allowed to be applied to the entry by the client.

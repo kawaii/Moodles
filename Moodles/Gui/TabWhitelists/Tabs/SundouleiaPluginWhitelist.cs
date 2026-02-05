@@ -44,14 +44,14 @@ internal class SundouleiaPluginWhitelist : PluginWhitelist
             using(var child = ImRaii.Child("##Panel", new(ImGui.GetContentRegionAvail().X - 1f, ImGui.GetContentRegionAvail().Y / 2 - ImGui.GetFrameHeight()), true))
             {
                 if(!child) return;
-                DrawTableForPermissions(Selected.ClientAccess, Selected.ClientMaxTime, name, true, "AccessPermissionsForPair");
+                DrawTableForPermissions(Selected.ClientAccess, Selected.ClientMaxTime, name, true, "ClientsPermsForEntry");
             }
 
             HeaderDrawer.Draw($"{dispName}'s Permissions for You", 0, ImGui.GetColorU32(ImGuiCol.FrameBg), 0, HeaderDrawer.Button.IncognitoButton(C.Censor, v => C.Censor = v));
             using(var child2 = ImRaii.Child("##Panel2", -Vector2.One, true))
             {
                 if(!child2) return;
-                DrawTableForPermissions(Selected.Access, Selected.MaxTime, name, false, "PairAccessPermsForClient");
+                DrawTableForPermissions(Selected.Access, Selected.MaxTime, name, false, "EntriesPermsForClient");
             }
         }
     }

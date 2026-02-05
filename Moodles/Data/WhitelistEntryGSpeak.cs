@@ -45,14 +45,13 @@ public class WhitelistEntryGSpeak
 
     public string CensoredName() => string.Concat(Name.Split(' ', StringSplitOptions.RemoveEmptyEntries).Select(w => char.ToUpper(w[0]) + "."));
 
-    public void UpdateData(IPCMoodleAccessTuple latestAccessTuple)
+    public void UpdateData(IPCMoodleAccessTuple latest)
     {
-        // Update the MoodleAccess first.
-        ClientAccess = (MoodleAccess)latestAccessTuple.CallerAccessFlags;
-        Access = (MoodleAccess)latestAccessTuple.OtherAccessFlags;
-        // Update the max times.
-        ClientMaxTime = TimeSpan.FromMilliseconds(latestAccessTuple.CallerMaxTime);
-        MaxTime = TimeSpan.FromMilliseconds(latestAccessTuple.OtherMaxTime);    
+        Access = (MoodleAccess)latest.RecipientAccessFlags;
+        ClientAccess = (MoodleAccess)latest.ClientAccessFlags;
+
+        MaxTime = TimeSpan.FromMilliseconds(latest.RecipientMaxTime);
+        ClientMaxTime = TimeSpan.FromMilliseconds(latest.ClientMaxTime);
     }
 
     // Logic used to perform if a status is allowed to be applied to the entry by the client.
