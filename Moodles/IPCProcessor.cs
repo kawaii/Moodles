@@ -226,7 +226,11 @@ public class IPCProcessor : IDisposable
     }
 
     [EzIPC("ClearStatusManagerByPtrV2")]
-    private void ClearStatusManager(nint ptr) => ClearStatusManagerInternal(ptr);
+    private void ClearStatusManager(nint ptr)
+    {
+        if (!CharaWatcher.Rendered.Contains(ptr)) return;
+        ClearStatusManagerInternal(ptr);
+    }
 
     [EzIPC("ClearStatusManagerByPlayerV2")]
     private void ClearStatusManager(IPlayerCharacter pc) => ClearStatusManagerInternal(pc.Address);
@@ -264,7 +268,11 @@ public class IPCProcessor : IDisposable
     }
 
     [EzIPC("SetStatusManagerByPtrV2")]
-    private void SetStatusManager(nint ptr, string data) => SetStatusManagerInternal(ptr, data);
+    private void SetStatusManager(nint ptr, string data)
+    {
+        if (!CharaWatcher.Rendered.Contains(ptr)) return;
+        SetStatusManagerInternal(ptr, data);
+    }
 
     [EzIPC("SetStatusManagerByPlayerV2")]
     private void SetStatusManager(IPlayerCharacter pc, string data) => SetStatusManagerInternal(pc.Address, data);
@@ -294,7 +302,8 @@ public class IPCProcessor : IDisposable
         ? GetStatusManagerInternal(chara) : null!;
 
     [EzIPC("GetStatusManagerByPtrV2")]
-    private string GetStatusManager(nint ptr) => GetStatusManagerInternal(ptr);
+    private string GetStatusManager(nint ptr) => CharaWatcher.Rendered.Contains(ptr)
+        ? GetStatusManagerInternal(ptr) : null!;
 
     [EzIPC("GetStatusManagerByPlayerV2")]
     private string GetStatusManager(IPlayerCharacter pc) => GetStatusManagerInternal(pc.Address);
@@ -421,7 +430,11 @@ public class IPCProcessor : IDisposable
     }
 
     [EzIPC]
-    private void AddOrUpdateMoodleByPtrV2(Guid guid, nint ptr) => AddOrUpdateMoodleInternal(ptr, guid);
+    private void AddOrUpdateMoodleByPtrV2(Guid guid, nint ptr)
+    {
+        if (!CharaWatcher.Rendered.Contains(ptr)) return;
+        AddOrUpdateMoodleInternal(ptr, guid);
+    }
 
     [EzIPC]
     private void AddOrUpdateMoodleByPlayerV2(Guid guid, IPlayerCharacter pc) => AddOrUpdateMoodleInternal(pc.Address, guid);
@@ -458,8 +471,11 @@ public class IPCProcessor : IDisposable
     }
 
     [EzIPC]
-    private void ApplyPresetByPtrV2(Guid guid, nint ptr) => ApplyPresetInternal(ptr, guid);
-
+    private void ApplyPresetByPtrV2(Guid guid, nint ptr)
+    {
+        if (!CharaWatcher.Rendered.Contains(ptr)) return;
+        ApplyPresetInternal(ptr, guid);
+    }
     [EzIPC]
     private void ApplyPresetByPlayerV2(Guid guid, IPlayerCharacter pc) => ApplyPresetInternal(pc.Address, guid);
 
@@ -519,7 +535,11 @@ public class IPCProcessor : IDisposable
     }
 
     [EzIPC]
-    private void RemoveMoodlesByPtrV2(List<Guid> guids, nint ptr) => RemoveMoodlesInternal(ptr, guids);
+    private void RemoveMoodlesByPtrV2(List<Guid> guids, nint ptr)
+    { 
+        if (!CharaWatcher.Rendered.Contains(ptr)) return;
+        RemoveMoodlesInternal(ptr, guids);
+    }
 
     [EzIPC]
     private void RemoveMoodlesByPlayerV2(List<Guid> guids, IPlayerCharacter pc) => RemoveMoodlesInternal(pc.Address, guids);
@@ -552,9 +572,7 @@ public class IPCProcessor : IDisposable
     }
 
     [EzIPC]
-    private void RemovePresetByPlayerV2(Guid guid, IPlayerCharacter pc)
-    {
-    }
+    private void RemovePresetByPlayerV2(Guid guid, IPlayerCharacter pc) => RemovePresetInternal(pc.Address, guid);
 
     private unsafe void RemovePresetInternal(nint charaAddr, Guid guid)
     {
