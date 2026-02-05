@@ -29,9 +29,8 @@ global using MoodlePresetInfo = (
     string Title
 );
 
-// The IPC Tuple used to define MoodleAccess permission between recipient and client.
+// The IPC Tuple used to define MoodleAccess permission between recipient and client (You)
 // Note that this should be using a MoodleAccess Flag enum, but dalamud's Newtonsoft parsing does not play
 // nice with [Flag] Enums, especially in tuples.
-global using IPCMoodleAccessTuple = (short OtherAccessFlags, long OtherMaxTime, short CallerAccessFlags, long CallerMaxTime);
-
+global using IPCMoodleAccessTuple = (short ClientAccessFlags, long ClientMaxTime, short RecipientAccessFlags, long RecipientMaxTime);
 

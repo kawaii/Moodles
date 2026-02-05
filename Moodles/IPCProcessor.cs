@@ -66,7 +66,6 @@ public class IPCProcessor : IDisposable
             PluginLog.LogDebug("GSpeak Ready, Obtaining all handled player information.");
             IPC.SundouleiaAvailable = true;
             IPC.InitSundesmoCache();
-            TabWhitelist.UpdateWhitelists();
         });
     }
 
@@ -78,7 +77,6 @@ public class IPCProcessor : IDisposable
             PluginLog.LogDebug("GSpeak Ready, Obtaining all handled player information.");
             IPC.GSpeakAvailable = true;
             IPC.InitGSpeakCache();
-            TabWhitelist.UpdateWhitelists();
         });
     }
 
@@ -88,7 +86,6 @@ public class IPCProcessor : IDisposable
         PluginLog.LogDebug("Sundouleia Disposed / Disabled. Clearing associated data.");
         IPC.ClearSundesmos();
         IPC.SundouleiaAvailable = false;
-        TabWhitelist.UpdateWhitelists();
     }
 
     [EzIPCEvent("GagSpeak.Disposing", false)]
@@ -97,7 +94,6 @@ public class IPCProcessor : IDisposable
         PluginLog.LogDebug("GSpeak Disposed / Disabled. Clearing associated data.");
         IPC.ClearGSpeakPairs();
         IPC.GSpeakAvailable = false;
-        TabWhitelist.UpdateWhitelists();
     }
 
     [EzIPCEvent("Sundouleia.PairRendered", false)]
