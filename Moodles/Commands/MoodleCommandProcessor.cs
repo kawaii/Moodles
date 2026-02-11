@@ -136,37 +136,11 @@ public static class MoodleCommandProcessor
 
             if (moodleState == MoodleState.Apply)
             {
-                if (IPC.GSpeakPlayerCache.ContainsKey((nint)sm.Owner))
-                {
-                    myStatus.SendGSpeakMessage((nint)sm.Owner);
-                }
-                else if (IPC.SundouleiaPlayerCache.ContainsKey((nint)sm.Owner))
-                {
-                    myStatus.SendSundouleiaMessage((nint)sm.Owner);
-                }
-                else
-                {
-                    sm.AddOrUpdate(myStatus.PrepareToApply(myStatus.Persistent ? PrepareOptions.Persistent : PrepareOptions.NoOption), UpdateSource.StatusTuple);
-                }
+                sm.AddOrUpdate(myStatus.PrepareToApply(myStatus.Persistent ? PrepareOptions.Persistent : PrepareOptions.NoOption), UpdateSource.StatusTuple);
             }
             else if (moodleState == MoodleState.Remove)
             {
-                if (IPC.GSpeakPlayerCache.ContainsKey((nint)sm.Owner))
-                {
-                    var newStatus = myStatus.JSONClone();
-                    newStatus.ExpiresAt = 0;
-                    newStatus.SendGSpeakMessage((nint)sm.Owner);
-                }
-                else if (IPC.SundouleiaPlayerCache.ContainsKey((nint)sm.Owner))
-                {
-                    var newStatus = myStatus.JSONClone();
-                    newStatus.ExpiresAt = 0;
-                    newStatus.SendSundouleiaMessage((nint)sm.Owner);
-                }
-                else
-                {
-                    sm.Cancel(myStatus);
-                }
+                sm.Cancel(myStatus);
             }
         }
     }

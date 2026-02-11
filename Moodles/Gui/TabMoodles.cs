@@ -37,21 +37,20 @@ public static class TabMoodles
         {
             Utils.GetMyStatusManager(LocalPlayer.NameWithWorld).AddOrUpdate(Selected.PrepareToApply(AsPermanent ? PrepareOptions.Persistent : PrepareOptions.NoOption), UpdateSource.StatusTuple);
         }
-//#if DEBUG
-//        ImGui.SameLine();
-//        if (ImGui.Button("Apply to Yourself (As Locked)"))
-//        {
-//            Utils.GetMyStatusManager(LocalPlayer.NameWithWorld).AddOrUpdateLocked(Selected.PrepareToApply(AsPermanent ? PrepareOptions.Persistent : PrepareOptions.NoOption));
-//        }
-//#endif
+
+#if DEBUG
+        ImGui.SameLine();
+        if (ImGui.Button("Apply to Yourself (As Locked)"))
+        {
+            Utils.GetMyStatusManager(LocalPlayer.NameWithWorld).AddOrUpdateLocked(Selected.PrepareToApply(AsPermanent ? PrepareOptions.Persistent : PrepareOptions.NoOption));
+        }
+#endif
 
         ImGui.SameLine();
         // Determine target state and application intent
         var targetMode = Utils.GetApplyMode();
         var buttonText = targetMode switch
         {
-            TargetApplyMode.GSpeakPair => "Apply to Target (via GSpeak)",
-            TargetApplyMode.Sundesmo => "Apply to Target (via Sundouleia)",
             TargetApplyMode.Local => "Apply to Target (Locally)",
             _ => "No Target Selected"
         };
@@ -490,10 +489,6 @@ public static class TabMoodles
         {
             switch (mode)
             {
-                case TargetApplyMode.GSpeakPair:
-                    Selected.SendGSpeakMessage((nint)chara); break;
-                case TargetApplyMode.Sundesmo:
-                    Selected.SendSundouleiaMessage((nint)chara); break;
                 case TargetApplyMode.Local:
                     chara->MyStatusManager().AddOrUpdate(Selected.PrepareToApply(AsPermanent ? PrepareOptions.Persistent : PrepareOptions.NoOption), UpdateSource.StatusTuple); break;
             }

@@ -29,7 +29,6 @@ public static unsafe class UI
             ("Moodles", TabMoodles.Draw, null, true),
             ("Presets", TabPresets.Draw, null, true),
             ("Automation", TabAutomation.Draw, null, true),
-            ("Whitelist", TabWhitelist.Draw, null, true),
             ("Settings", TabSettings.Draw, null, true),
             (C.FuckupTab2?"Cleanup":null, TabFuckup.Draw, ImGuiColors.DalamudGrey, true),
             (C.Debug?"Debugger":null, DrawDebugger, ImGuiColors.DalamudGrey, true),
@@ -97,30 +96,6 @@ public static unsafe class UI
         if(ImGui.CollapsingHeader("Friendlist"))
         {
             ImGuiEx.Text(Utils.GetFriendlist().Print("\n"));
-        }
-        if (IPC.SundouleiaAvailable && ImGui.CollapsingHeader("Sundouleia players"))
-        {
-            ImGui.Text("SundouleiaPlayers (From IPC Call)");
-            if (P.IPCProcessor.GetSundouleiaPlayers.TryInvoke(out var list) && list != null)
-            {
-                DrawIpcHandles("sdIPC", list);
-            }
-            ImGui.Separator();
-            ImGui.Text("SundouleiaPlayers (From Memory)");
-            DrawIpcHandles("sdMem", IPC.SundouleiaPlayerCache.Keys);
-        }
-        if (IPC.GSpeakAvailable && ImGui.CollapsingHeader("GSpeak players"))
-        {
-            ImGui.Text("GSpeakPlayers (From IPC Call)");
-            if(P.IPCProcessor.GetGSpeakPlayers.TryInvoke(out var list) && list != null)
-            {
-                DrawIpcHandles("gsIPC", list);
-            }
-            ImGui.Separator();
-            ImGui.Text("GSpeakPlayers (From Memory)");
-            DrawIpcHandles("gsMem", IPC.GSpeakPlayerCache.Keys);
-
-            ImGuiEx.Text(IPC.GSpeakPlayerCache.Keys.Print("\n"));
         }
         if(ImGui.CollapsingHeader("IPC"))
         {

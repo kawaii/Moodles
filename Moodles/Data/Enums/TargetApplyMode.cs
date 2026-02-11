@@ -3,7 +3,5 @@
 public enum TargetApplyMode
 {
     NoTarget,
-    GSpeakPair,
-    Sundesmo,
     Local,
 }

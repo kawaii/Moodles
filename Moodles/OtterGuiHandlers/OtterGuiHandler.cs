@@ -1,5 +1,4 @@
-﻿using Moodles.OtterGuiHandlers.Whitelist.GSpeak;
-using OtterGui.Log;
+﻿using OtterGui.Log;
 
 namespace Moodles.OtterGuiHandlers;
 #pragma warning disable CS8618 // Failing the constructors try-catch will fail Main() initialization anyways.
@@ -9,9 +8,7 @@ public sealed class OtterGuiHandler : IDisposable
     public PresetFileSystem PresetFileSystem;
     public Logger Logger;
     public AutomationList AutomationList;
-    // Not sure why we need these as item lists but sure.
-    public ItemSelectorGSpeak WhitelistGSpeak;
-    public ItemSelectorSundouleia WhitelistSundouleia;
+
     public OtterGuiHandler()
     {
         try
@@ -20,8 +17,6 @@ public sealed class OtterGuiHandler : IDisposable
             MoodleFileSystem = new(this);
             PresetFileSystem = new(this);
             AutomationList = new();
-            WhitelistGSpeak = new();
-            WhitelistSundouleia = new();
         }
         catch(Exception ex)
         {

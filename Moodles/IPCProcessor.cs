@@ -9,7 +9,6 @@ namespace Moodles;
 
 public class IPCProcessor : IDisposable
 {
-    #region Moodles Events
     [EzIPCEvent] private readonly Action Ready;
     [EzIPCEvent] private readonly Action Unloading;
 
@@ -28,175 +27,9 @@ public class IPCProcessor : IDisposable
     ///     Triggered when a <see cref="Preset"/> is updated, added, or removed. (2nd parameter indicates removal)
     /// </summary>
     [EzIPCEvent] public readonly Action<Guid, bool> PresetUpdated;
-    #endregion Moodles Events
 
-    #region GSpeak & Sundouleia Getters
-    /// <summary> Gets all handled addresses managed by the IPC Source. (Could do name string if ptr is more annoying) </summary>
-    [EzIPC("Sundouleia.GetAllRendered", false)] public readonly Func<List<nint>> GetSundouleiaPlayers;
-
-    /// <inheritdoc cref="GetSundouleiaPlayers"/>
-    [EzIPC("GagSpeak.GetAllRendered", false)] public readonly Func<List<nint>> GetGSpeakPlayers;
-
-
-    /// <summary> Get the KVP's of handles addresses with their <see cref="IPCMoodleAccessTuple"/> (Usually on initialization)./> </summary>
-    [EzIPC("Sundouleia.GetAllRenderedInfo", false)] public readonly Func<Dictionary<nint, IPCMoodleAccessTuple>> GetAllSundouleiaInfo;
-
-    /// <inheritdoc cref="GetSundouleiaAccessPerms"/>
-    [EzIPC("GagSpeak.GetAllRenderedInfo", false)] public readonly Func<Dictionary<nint, IPCMoodleAccessTuple>> GetAllGSpeakInfo;
-
-
-    /// <summary> Get the <see cref="IPCMoodleAccessTuple"/> for a specific handled address. </summary>
-    [EzIPC("Sundouleia.GetAccessInfo", false)] public readonly Func<nint, IPCMoodleAccessTuple> GetSundouleiaAccessInfo;
-
-    /// <inheritdoc cref="GetSundouleiaAccessInfo"/>
-    [EzIPC("GagSpeak.GetAccessInfo", false)] public readonly Func<nint, IPCMoodleAccessTuple> GetGSpeakAccessInfo;
-    #endregion GSpeak & Sundouleia Getters
-
-    #region GSpeak & Sundouleia Listener Events
-    // Broadcasts to the IPC to apply the statuses to the pair.
-    [EzIPC("Sundouleia.ApplyToPairRequest", false)] public readonly Action<nint, List<MoodlesStatusInfo>, bool> GSpeakTryApplyToPair;
-    [EzIPC("GagSpeak.ApplyToPairRequest", false)] public readonly Action<nint, List<MoodlesStatusInfo>, bool> SundouleiaTryApplyToPair;
-
-
-    [EzIPCEvent("Sundouleia.Ready", false)]
-    private void SundouleiaReady()
-    {
-        _ = new TickScheduler(() =>
-        {
-            PluginLog.LogDebug("GSpeak Ready, Obtaining all handled player information.");
-            IPC.SundouleiaAvailable = true;
-            IPC.InitSundesmoCache();
-        });
-    }
-
-    [EzIPCEvent("GagSpeak.Ready", false)]
-    private void GSpeakReady()
-    {
-        _ = new TickScheduler(() =>
-        {
-            PluginLog.LogDebug("GSpeak Ready, Obtaining all handled player information.");
-            IPC.GSpeakAvailable = true;
-            IPC.InitGSpeakCache();
-        });
-    }
-
-    [EzIPCEvent("Sundouleia.Disposing", false)]
-    private void SundouleiaDisposing()
-    {
-        PluginLog.LogDebug("Sundouleia Disposed / Disabled. Clearing associated data.");
-        IPC.ClearSundesmos();
-        IPC.SundouleiaAvailable = false;
-    }
-
-    [EzIPCEvent("GagSpeak.Disposing", false)]
-    private void GSpeakDisposing()
-    {
-        PluginLog.LogDebug("GSpeak Disposed / Disabled. Clearing associated data.");
-        IPC.ClearGSpeakPairs();
-        IPC.GSpeakAvailable = false;
-    }
-
-    [EzIPCEvent("Sundouleia.PairRendered", false)]
-    private void SundouleiaPairRendered(nint address)
-    {
-        PluginLog.LogDebug($"Sundouleia handling new rendered player: {address:X}");
-        IPC.AddOrUpdateSundesmo(address, GetSundouleiaAccessInfo(address));
-    }
-
-    [EzIPCEvent("GagSpeak.PairRendered", false)]
-    private void GSpeakPairRendered(nint address)
-    {
-        PluginLog.LogDebug($"GSpeak handling new rendered player: {address:X}");
-        IPC.AddOrUpdateGSpeakPair(address, GetGSpeakAccessInfo(address));
-    }
-
-    [EzIPCEvent("Sundouleia.PairUnrendered", false)]
-    private void SundouleiaPairUnrendered(nint address)
-    {
-        PluginLog.LogDebug($"Sundouleia removing unrendered player: {address:X}");
-        IPC.RemoveSundesmo(address);
-    }
-
-    [EzIPCEvent("GagSpeak.PairUnrendered", false)]
-    private void GSpeakPairUnrendered(nint address)
-    {
-        PluginLog.LogDebug($"GSpeak removing unrendered player: {address:X}");
-        IPC.RemoveGSpeakPair(address);
-    }
-
-    /// <summary>
-    ///     Invoked whenever the IpcMoodleAccessTuple is updated for <paramref name="address"/>.
-    ///     Should obtain updated IpcMoodleAccessTuple for the address to stay updated.
-    /// </summary>
-    /// <remarks> <b>Returned tuple is always in order of (CLIENT, PAIR(address))</b></remarks>
-    [EzIPCEvent("Sundouleia.AccessUpdated", false)]
-    private void SundouleiaAccessUpdated(nint address)
-    {
-        PluginLog.Verbose($"Sundouleia access updated for address: {address:X}");
-        IPC.AddOrUpdateSundesmo(address, GetSundouleiaAccessInfo(address));
-    }
-
-    [EzIPCEvent("GagSpeak.AccessUpdated", false)]
-    private void GSpeakAccessUpdated(nint address)
-    {
-        PluginLog.Verbose($"GSpeak access updated for address: {address:X}");
-        IPC.AddOrUpdateGSpeakPair(address, GetGSpeakAccessInfo(address));
-    }
-
-    [EzIPCEvent("Sundouleia.ApplyStatusInfo", false)]
-    private void SundouleiaApplyTuple(MoodlesStatusInfo status) => ApplyStatusTuples([status], false);
-
-    [EzIPCEvent("GagSpeak.ApplyStatusInfo", false)]
-    private void GSpeakApplyTuple(MoodlesStatusInfo status, bool asLocked) => ApplyStatusTuples([status], asLocked);
-
-    [EzIPCEvent("Sundouleia.ApplyStatusInfoList", false)]
-    private void SundouleiaApplyTuples(List<MoodlesStatusInfo> statuses) => ApplyStatusTuples(statuses, false);
-
-    [EzIPCEvent("GagSpeak.ApplyStatusInfoList", false)]
-    private void GSpeakApplyTuples(List<MoodlesStatusInfo> statuses, bool asLocked) => ApplyStatusTuples(statuses, asLocked);
-
-    /// <summary>
-    ///     <b>Primarily used for Apply-To-Pair functionality, or for Try-On features.</b> <para />
-    ///     By the time this method is called, any pair-applied tuples have been validated by 
-    ///     GSpeak for valid MoodleAccess and can be trusted.
-    /// </summary>
-    private unsafe void ApplyStatusTuples(List<MoodlesStatusInfo> tuples, bool asLocked)
-    {
-        if (!CharaWatcher.LocalPlayerRendered) return;
-
-        PluginLog.LogDebug($"Applying statuses: ({string.Join(",", tuples.Select(s => s.Title))})");
-        var sm = LocalPlayer.Character->MyStatusManager();
-        if (asLocked)
-        {
-            foreach (var status in tuples) sm.AddOrUpdateLocked(MyStatus.FromTuple(status).PrepareToApply());
-        }
-        else
-        {
-            foreach (var status in tuples) sm.AddOrUpdate(MyStatus.FromTuple(status).PrepareToApply(), UpdateSource.StatusTuple);
-        }
-    }
-
-    [EzIPCEvent("GagSpeak.LockIds", false)] // Only applicable to the ClientPlayer StatusManager, Identifies which Statuses cannot be removed.
-    private unsafe void GSpeakLockStatuses(List<Guid> toLock)
-    {
-        if (!CharaWatcher.LocalPlayerRendered) return;
-        LocalPlayer.Character->MyStatusManager().LockStatuses(toLock);
-    }
-
-    [EzIPCEvent("GagSpeak.UnlockIds", false)]
-    private unsafe void GSpeakUnlockStatuses(List<Guid> toUnlock)
-    {
-        if (!CharaWatcher.LocalPlayerRendered) return;
-        LocalPlayer.Character->MyStatusManager().UnlockStatuses(toUnlock);
-    }
-
-    [EzIPCEvent("GagSpeak.ClearLocks", false)]
-    private unsafe void GSpeakLockStatuses()
-    {
-        if (!CharaWatcher.LocalPlayerRendered) return;
-        LocalPlayer.Character->MyStatusManager().ClearLocks();
-    }
-    #endregion GSpeak & Sundouleia Listener Events
+    // TODO ADD SOEMTHING LIKE THIS
+    //[EzIPCEvent] public readonly Action<nint, List<MoodlesStatusInfo>, bool> OnApplyToTarget;
 
     public IPCProcessor()
     {
@@ -598,6 +431,8 @@ public class IPCProcessor : IDisposable
             }
         }
     }
+
+    void IDisposable.Dispose() => throw new NotImplementedException();
     #endregion MoodlesUpdateManager
 }
 #pragma warning restore CS0649, CS8602, CS8618

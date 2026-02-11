@@ -62,7 +62,6 @@ public class Moodles : IDalamudPlugin
             IPCTester = new();
             Utils.CleanupNulls();
             // Check connected IPC states availability & data.
-            IPC.FetchInitial();
         });
     }
 
@@ -136,23 +135,11 @@ public class Moodles : IDalamudPlugin
 
                 if (chara->MyStatusManager() is { } sm)
                 {
-                    if (IPC.SundouleiaPlayerCache.Keys.Contains((nint)chara))
+                    if (sm.Ephemeral)
                     {
-                        if(!sm.Ephemeral)
-                        {
-                            PluginLog.Debug($"{chara->GetNameWithWorld()} is now Sundouleia player. Status manager ephemeral, automation disabled.");
-                            sm.Ephemeral = true;
-                            sm.Statuses.Each(s => s.ExpiresAt = 0);
-                        }
-                    }
-                    else
-                    {
-                        if (sm.Ephemeral)
-                        {
-                            PluginLog.Debug($"{chara->GetNameWithWorld()} Sundouleia player removed from rendering. Cleaning up ephemeral status manager.");
-                            // Mark them as no longer Ephemeral.
-                            sm.Ephemeral = false;
-                        }
+                        PluginLog.Debug($"{chara->GetNameWithWorld()} Sundouleia player removed from rendering. Cleaning up ephemeral status manager.");
+                        // Mark them as no longer Ephemeral.
+                        sm.Ephemeral = false;
                     }
                 }
             }
@@ -223,22 +210,15 @@ public class Moodles : IDalamudPlugin
             PluginLog.Debug($"Begin apply automation for {identifier}");
             var mySM = chara->MyStatusManager();
 
-            // Skip if Ephemeral or Sundouleia controlled.
-            if (mySM.Ephemeral || IPC.SundouleiaPlayerCache.Keys.Contains((nint)chara))
+            foreach (var x in chara->GetSuitableAutomation())
             {
-                PluginLog.Debug($"Skipping automation for {identifier} because status manager is ephemeral or controlled by Sundouleia");
-            }
-            else
-            {
-                foreach(var x in chara->GetSuitableAutomation())
+                if (C.SavedPresets.TryGetFirst(a => a.GUID == x.Preset, out var p))
                 {
-                    if(C.SavedPresets.TryGetFirst(a => a.GUID == x.Preset, out var p))
-                    {
-                        PluginLog.Debug($"Applied preset {p.ID} / {p.Statuses.Select(z => C.SavedStatuses.FirstOrDefault(s => s.GUID == z)?.Title)}");
-                        mySM.ApplyPreset(p);
-                    }
+                    PluginLog.Debug($"Applied preset {p.ID} / {p.Statuses.Select(z => C.SavedStatuses.FirstOrDefault(s => s.GUID == z)?.Title)}");
+                    mySM.ApplyPreset(p);
                 }
             }
+
             newSeenPlayers.Add(identifier);
         }
         SeenPlayers = newSeenPlayers;

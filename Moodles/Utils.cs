@@ -17,10 +17,6 @@ public static unsafe partial class Utils
     {
         if (Svc.Targets.Target is not IPlayerCharacter pc)
             return TargetApplyMode.NoTarget;
-        if (IPC.GSpeakAvailable && IPC.GSpeakPlayerCache.ContainsKey(pc.Address))
-            return TargetApplyMode.GSpeakPair;
-        if (IPC.SundouleiaAvailable && IPC.SundouleiaPlayerCache.ContainsKey(pc.Address))
-            return TargetApplyMode.Sundesmo;
         return TargetApplyMode.Local;
     }
 
