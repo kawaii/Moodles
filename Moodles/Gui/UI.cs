@@ -2,12 +2,12 @@
 using Dalamud.Game.Gui.FlyText;
 using Dalamud.Interface.Utility.Raii;
 using ECommons.Configuration;
-using ECommons.EzIpcManager;
 using ECommons.Throttlers;
 using FFXIVClientStructs.FFXIV.Client.Game.Character;
 using FFXIVClientStructs.FFXIV.Client.Game.Object;
 
 namespace Moodles.Gui;
+
 public static unsafe class UI
 {
     public static bool Suppress = false;
@@ -20,20 +20,29 @@ public static unsafe class UI
     private static uint a8 = 0;
     private static uint StatusID = 0;
     private static bool My = false;
-    
 
+
+
+    static int selected = 0;
     public static void Draw()
     {
-        if(EzThrottler.Throttle("PeriodicConfigSave", 30 * 1000)) EzConfig.Save();
-        ImGuiEx.EzTabBar("##main", [
-            ("Moodles", TabMoodles.Draw, null, true),
-            ("Presets", TabPresets.Draw, null, true),
-            ("Automation", TabAutomation.Draw, null, true),
-            ("Settings", TabSettings.Draw, null, true),
-            (C.FuckupTab2?"Cleanup":null, TabFuckup.Draw, ImGuiColors.DalamudGrey, true),
-            (C.Debug?"Debugger":null, DrawDebugger, ImGuiColors.DalamudGrey, true),
-            InternalLog.ImGuiTab(C.Debug),
-            ]);
+        if (EzThrottler.Throttle("PeriodicConfigSave", 30 * 1000)) EzConfig.Save();
+
+        var tabs = new List<(string Name, Action Draw)>
+        {
+            ("Moodles",    TabMoodles.Draw),
+            ("Presets",    TabPresets.Draw),
+            ("Automation", TabAutomation.Draw),
+            ("Settings",   TabSettings.Draw),
+        };
+        if (C.FuckupTab2) tabs.Add(("Cleanup", TabFuckup.Draw));
+        if (C.Debug) tabs.Add(("Debugger", DrawDebugger));
+        if (C.Debug) tabs.Add(("Log", InternalLog.PrintImgui));
+
+        ImEtheirys.ButtonSelectorStrip("library_filters_selector", new(ImEtheirys.GetRemainingWidth(), ImEtheirys.GetLineHeight()), ref selected, [.. tabs.Select(t => t.Name)]);
+
+        if (selected >= 0 && selected < tabs.Count)
+            tabs[selected].Draw();
     }
 
 
@@ -46,7 +55,7 @@ public static unsafe class UI
     internal static int sa7 = 0;
     public static void DrawDebugger()
     {
-        if(ImGui.CollapsingHeader("Apply SHE"))
+        if (ImGui.CollapsingHeader("Apply SHE"))
         {
             ImGui.SetNextItemWidth(150f);
             ImGui.InputInt("id", ref ID);
@@ -58,12 +67,12 @@ public static unsafe class UI
             ImGui.InputInt("a6", ref sa6);
             ImGui.SetNextItemWidth(150f);
             ImGui.InputInt("a7", ref sa7);
-            if(ImGui.Button("Do"))
+            if (ImGui.Button("Do"))
             {
                 var addr = Svc.Targets.Target?.Address ?? LocalPlayer.Address;
                 P.Memory.SpawnSHE((uint)ID, addr, addr, sa4, (char)sa5, (UInt16)sa6, (char)sa7);
             }
-            if(ImGui.Button("Do (all players)"))
+            if (ImGui.Button("Do (all players)"))
             {
                 foreach (nint chara in CharaWatcher.Rendered)
                 {
@@ -71,7 +80,7 @@ public static unsafe class UI
                 }
             }
         }
-        if(ImGui.CollapsingHeader("Actor control hook"))
+        if (ImGui.CollapsingHeader("Actor control hook"))
         {
             ImGui.Checkbox($"Suppress", ref Suppress);
             ImGuiEx.InputUint($"dec", ref Opcode);
@@ -82,7 +91,7 @@ public static unsafe class UI
             ImGuiEx.Text($"Enabled: {P.Memory.ProcessActorControlPacketHook.IsEnabled}");
             ImGuiEx.Text($"Created: {P.Memory.ProcessActorControlPacketHook.IsCreated}");*/
         }
-        if(ImGui.CollapsingHeader("Packet hook"))
+        if (ImGui.CollapsingHeader("Packet hook"))
         {
             ImGui.Checkbox($"Suppress", ref Suppress);
             ImGuiEx.InputUint($"dec", ref Opcode);
@@ -93,19 +102,19 @@ public static unsafe class UI
             ImGuiEx.Text($"Enabled: {P.Memory.PacketDispatcher_OnReceivePacketHook.IsEnabled}");
             ImGuiEx.Text($"Created: {P.Memory.PacketDispatcher_OnReceivePacketHook.IsCreated}");*/
         }
-        if(ImGui.CollapsingHeader("Friendlist"))
+        if (ImGui.CollapsingHeader("Friendlist"))
         {
             ImGuiEx.Text(Utils.GetFriendlist().Print("\n"));
         }
-        if(ImGui.CollapsingHeader("IPC"))
+        if (ImGui.CollapsingHeader("IPC"))
         {
             P.IPCTester.Draw();
         }
-        if(ImGui.CollapsingHeader("Visible party"))
+        if (ImGui.CollapsingHeader("Visible party"))
         {
             ImGuiEx.Text(P.CommonProcessor.PartyListProcessor.GetVisibleParty().Print("\n"));
         }
-        if(ImGui.CollapsingHeader("Flytext debugger"))
+        if (ImGui.CollapsingHeader("Flytext debugger"))
         {
             /*if(ImGui.Button("Enable hook"))
             {
@@ -127,17 +136,17 @@ public static unsafe class UI
             {
                 P.Memory.ProcessActorControlPacketHook.Disable();
             }*/
-            if(ImGui.Button("Enable bl hook"))
+            if (ImGui.Button("Enable bl hook"))
             {
                 P.Memory.BattleLog_AddToScreenLogWithScreenLogKindHook.Enable();
             }
             ImGui.SameLine();
-            if(ImGui.Button("Disable bl hook"))
+            if (ImGui.Button("Disable bl hook"))
             {
                 P.Memory.BattleLog_AddToScreenLogWithScreenLogKindHook.Disable();
             }
 
-            if(ImGui.BeginCombo("object", $"{OID:X8}"))
+            if (ImGui.BeginCombo("object", $"{OID:X8}"))
             {
                 unsafe
                 {
@@ -156,9 +165,9 @@ public static unsafe class UI
             ImGuiEx.InputUint("a8", ref a8);
             ImGui.Checkbox("From me", ref My);
             ImGui.Button("Execute");
-            if(ImGui.IsItemHovered() && (ImGui.IsMouseClicked(ImGuiMouseButton.Left) || ImGui.IsMouseDown(ImGuiMouseButton.Right)))
+            if (ImGui.IsItemHovered() && (ImGui.IsMouseClicked(ImGuiMouseButton.Left) || ImGui.IsMouseDown(ImGuiMouseButton.Right)))
             {
-                if(CharaWatcher.TryGetFirst(x => x.OwnerId == OID, out var chara))
+                if (CharaWatcher.TryGetFirst(x => x.OwnerId == OID, out var chara))
                 {
                     P.Memory.BattleLog_AddToScreenLogWithScreenLogKindDetour(chara, My ? LocalPlayer.Address : chara, MessageID, 5, (byte)a4, (int)a5, (int)StatusID, (int)a7, (int)a8);
                     Notify.Info($"Success");
