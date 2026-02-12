@@ -1,8 +1,8 @@
 <?xml version="1.0" encoding="utf-8"?>
 <Project Sdk="Dalamud.NET.SDK/14.0.1">
 	<PropertyGroup>
-        <Authors>kawaii, Glyceri</Authors>
-        <Version>1.0.0.58</Version>
+        <Authors>kawaii, Glyceri, Minmoose</Authors>
+        <Version>1.1.0.0</Version>
     </PropertyGroup>
 
     <PropertyGroup>
@@ -23,6 +23,7 @@
     </ItemGroup>
 
     <ItemGroup>
+        <PackageReference Update="DotNet.ReproducibleBuilds" Version="2.0.2" />
         <PackageReference Include="MemoryPack" Version="1.21.4" />
         <PackageReference Include="MemoryPack.Core" Version="1.21.4" />
         <PackageReference Include="MemoryPack.Generator" Version="1.21.4">
