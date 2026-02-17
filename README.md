@@ -1,4 +1,5 @@
-# Moodles ![GitHub Downloads (all assets, all releases)](https://img.shields.io/github/downloads/kawaii/Moodles/total?style=flat) ![GitHub License](https://img.shields.io/github/license/kawaii/Moodles?style=flat) ![Bluesky followers](https://img.shields.io/bluesky/followers/minmoose.bsky.social?style=flat&label=bluesky%20followers)
+# Moodles ![GitHub Downloads (all assets, all releases)](https://img.shields.io/github/downloads/kawaii/Moodles/total?style=flat) ![GitHub License](https://img.shields.io/github/license/kawaii/Moodles?style=flat) ![Bluesky followers](https://img.shields.io/bluesky/followers/minmoose.bsky.social?style=flat&label=bluesky%20followers) ![Discord](https://img.shields.io/discord/1198316676865867776)
+
 
 ### Moodles is a FFXIV plugin that allows you to create custom statuses!
 
@@ -15,7 +16,7 @@
   - ***Click on the save button in the bottom right***
   - Now open the **Dalamud Plugin Installer** by opening FFXIV's System Menu then pressing ***Dalamud Plugins***
   - In the Search box type `moodles`, find & click on ***Moodles*** and then click `Install` after Dalamud has finshed installing **Moodles**, make sure the *Moodles* plugin is Enabled in the Plugin Installer.
-  - You now have **Moodles** Installed, ***Moodles will now open when you are in G-Pose***, you can also type `/moodles` in chat to open the Moodles Window.
+  - You now have **Moodles** Installed, type `/moodles` in chat to open the Moodles Window.
 
 ## Authors 
 **[kawaii](https://github.com/kawaii) - Original Developer.**
