@@ -293,6 +293,44 @@ public class IPCProcessor : IDisposable
             }
         }
     }
+    
+    [EzIPC]
+    private void AddOrUpdateStatusByDataByNameV2(MoodlesStatusInfo data, string name)
+    {
+        if (CharaWatcher.TryGetFirst(x => x.GetNameWithWorld() == name || x.NameString == name, out var chara))
+        {
+            AddOrUpdateMoodleInternal(chara, data);
+        }
+    }
+
+    [EzIPC]
+    private void AddOrUpdateMoodleByDataByPtrV2(MoodlesStatusInfo data, nint ptr)
+    {
+        if (!CharaWatcher.Rendered.Contains(ptr)) return;
+        AddOrUpdateMoodleInternal(ptr, data);
+    }
+
+    [EzIPC]
+    private void AddOrUpdateMoodleByDataByPlayerV2(MoodlesStatusInfo data, IPlayerCharacter pc) => AddOrUpdateMoodleInternal(pc.Address, data);
+
+    /// <summary>
+    ///     Adds a Status by MoodlesStatusInfo to the valid player, or reapplies it if already present.
+    /// </summary>
+    private unsafe void AddOrUpdateMoodleInternal(nint charaAddr, MoodlesStatusInfo data)
+    {
+        Character* chara = (Character*)charaAddr;
+        if (chara == null)
+        {
+            PluginLog.LogWarning("[IPC] AddOrUpdate Moodle Chara is NULL");
+            return;
+        }
+        var sm = chara->MyStatusManager();
+        if (!sm.Ephemeral)
+        {
+            PluginLog.LogDebug($"Adding or Updating Moodle {data.Title} to {chara->GetNameWithWorld()}");
+            sm.AddOrUpdate(MyStatus.FromTuple(data).PrepareToApply(), UpdateSource.StatusTuple, false, true);
+        }
+    }
 
     [EzIPC]
     private void ApplyPresetByNameV2(Guid guid, string name)
