@@ -324,6 +324,12 @@ public class IPCProcessor : IDisposable
             PluginLog.LogWarning("[IPC] AddOrUpdate Moodle Chara is NULL");
             return;
         }
+
+        if (!C.AllowApplyByData)
+        {
+            PluginLog.LogWarning("[IPC] received apply request but data apply is not enabled.");
+            return;
+        }
         var sm = chara->MyStatusManager();
         if (!sm.Ephemeral)
         {
