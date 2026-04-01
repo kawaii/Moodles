@@ -1,6 +1,8 @@
-﻿using Dalamud.Game.ClientState.Objects.SubKinds;
+﻿using System.Text.Json;
+using Dalamud.Game.ClientState.Objects.SubKinds;
 using ECommons.EzIpcManager;
 using FFXIVClientStructs.FFXIV.Client.Game.Character;
+using MemoryPack;
 using Moodles.Data;
 using Moodles.Gui;
 
@@ -27,6 +29,19 @@ public class IPCProcessor : IDisposable
     ///     Triggered when a <see cref="Preset"/> is updated, added, or removed. (2nd parameter indicates removal)
     /// </summary>
     [EzIPCEvent] public readonly Action<Guid, bool> PresetUpdated;
+
+    /// <summary>
+    ///     Triggered when a moodles is required to be applied through sync plugins.
+    /// </summary>
+    [EzIPCEvent] public readonly Action<nint, string> RequestApplyMoodles;
+
+    [EzIPC]
+    private void ApplyMoodlesByString(string moodlesString)
+    {
+        var bytes = Convert.FromBase64String(moodlesString);
+        var status = JsonSerializer.Deserialize<MyStatus>(bytes, new JsonSerializerOptions {IncludeFields = true});
+        AddOrUpdateMoodleInternal(LocalPlayer.Address, status.ToStatusTuple());
+    }
 
     // TODO ADD SOEMTHING LIKE THIS
     //[EzIPCEvent] public readonly Action<nint, List<MoodlesStatusInfo>, bool> OnApplyToTarget;
@@ -325,15 +340,15 @@ public class IPCProcessor : IDisposable
             return;
         }
 
-        if (!C.AllowApplyByData)
+        if (!C.AllowRemoteApply)
         {
-            PluginLog.LogWarning("[IPC] received apply request but data apply is not enabled.");
+            PluginLog.LogWarning("[IPC] received apply request but remote apply is not enabled.");
             return;
         }
         var sm = chara->MyStatusManager();
         if (!sm.Ephemeral)
         {
-            PluginLog.LogDebug($"Adding or Updating Moodle {data.Title} to {chara->GetNameWithWorld()}");
+            PluginLog.LogDebug($"Adding or Updating remote Moodles : {data.Title}");
             sm.AddOrUpdate(MyStatus.FromTuple(data).PrepareToApply(), UpdateSource.StatusTuple, false, true);
         }
     }

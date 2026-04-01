@@ -1,4 +1,7 @@
-﻿using FFXIVClientStructs.FFXIV.Client.Game.Character;
+﻿using System.Text.Json;
+using Dalamud.Game.ClientState.Objects.Enums;
+using FFXIVClientStructs.FFXIV.Client.Game.Character;
+using MemoryPack;
 using Moodles.Data;
 using Moodles.OtterGuiHandlers;
 using OtterGui.Raii;
@@ -45,7 +48,7 @@ public static class TabMoodles
             Utils.GetMyStatusManager(LocalPlayer.NameWithWorld).AddOrUpdateLocked(Selected.PrepareToApply(AsPermanent ? PrepareOptions.Persistent : PrepareOptions.NoOption));
         }
 #endif
-
+       
         ImGui.SameLine();
         // Determine target state and application intent
         var targetMode = Utils.GetApplyMode();
@@ -62,6 +65,18 @@ public static class TabMoodles
         {
             ApplyToTarget(targetMode);
         }
+
+        ImGui.SameLine();
+        if (ImGui.Button("Apply to Target (Synced)"))
+        {
+            ApplyToTargetRemote();
+        }
+
+        if (ImGui.IsItemHovered(ImGuiHoveredFlags.AllowWhenDisabled))
+        {
+            ImGui.SetTooltip("Sync plugins must support the IPC then this may work.");
+        }
+        
         if (dis) ImGui.EndDisabled();
 
         // Store maxStacks before drawing further.
@@ -78,6 +93,7 @@ public static class TabMoodles
             ImGui.Image(image.Handle, UI.StatusIconSize * 2);
         }
     }
+
 
     private static void DrawMoodleEssentials()
     {
@@ -497,6 +513,13 @@ public static class TabMoodles
         {
             e.Log();
         }
+    }
+    
+    private static void ApplyToTargetRemote()
+    {
+        if (Svc.Targets.Target == null || Svc.Targets.Target.ObjectKind != ObjectKind.Player) return;
+        var str = Convert.ToBase64String(JsonSerializer.SerializeToUtf8Bytes(Selected, new JsonSerializerOptions {IncludeFields =  true}));
+        P.IPCProcessor.RequestApplyMoodles(Svc.Targets.Target.Address, str);
     }
 
     public static void Formatting()

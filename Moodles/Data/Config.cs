@@ -34,7 +34,7 @@ public class Config
     public bool OthersCanEsunaMoodles = true;
     public SortOption IconSortOption = SortOption.Numerical;
 
-    public bool AllowApplyByData = true;
+    public bool AllowRemoteApply = true;
 
     public bool BroadcastAllowAll = false;
     public bool BroadcastAllowFriends = false;
