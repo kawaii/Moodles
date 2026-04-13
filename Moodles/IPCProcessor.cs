@@ -1,6 +1,8 @@
-﻿using Dalamud.Game.ClientState.Objects.SubKinds;
+﻿using System.Text.Json;
+using Dalamud.Game.ClientState.Objects.SubKinds;
 using ECommons.EzIpcManager;
 using FFXIVClientStructs.FFXIV.Client.Game.Character;
+using MemoryPack;
 using Moodles.Data;
 using Moodles.Gui;
 
@@ -27,6 +29,19 @@ public class IPCProcessor : IDisposable
     ///     Triggered when a <see cref="Preset"/> is updated, added, or removed. (2nd parameter indicates removal)
     /// </summary>
     [EzIPCEvent] public readonly Action<Guid, bool> PresetUpdated;
+
+    /// <summary>
+    ///     Triggered when a moodles is required to be applied through sync plugins.
+    /// </summary>
+    [EzIPCEvent] public readonly Action<nint, string> RequestApplyMoodles;
+
+    [EzIPC]
+    private void ApplyMoodlesByString(string moodlesString)
+    {
+        var bytes = Convert.FromBase64String(moodlesString);
+        var status = JsonSerializer.Deserialize<MyStatus>(bytes, new JsonSerializerOptions {IncludeFields = true});
+        AddOrUpdateMoodleInternal(LocalPlayer.Address, status.ToStatusTuple());
+    }
 
     // TODO ADD SOEMTHING LIKE THIS
     //[EzIPCEvent] public readonly Action<nint, List<MoodlesStatusInfo>, bool> OnApplyToTarget;
@@ -291,6 +306,50 @@ public class IPCProcessor : IDisposable
                 PluginLog.LogDebug($"Adding or Updating Moodle {status.Title} to {chara->GetNameWithWorld()}");
                 sm.AddOrUpdate(status.PrepareToApply(), UpdateSource.StatusTuple, false, true);
             }
+        }
+    }
+    
+    [EzIPC]
+    private void AddOrUpdateStatusByDataByNameV2(MoodlesStatusInfo data, string name)
+    {
+        if (CharaWatcher.TryGetFirst(x => x.GetNameWithWorld() == name || x.NameString == name, out var chara))
+        {
+            AddOrUpdateMoodleInternal(chara, data);
+        }
+    }
+
+    [EzIPC]
+    private void AddOrUpdateMoodleByDataByPtrV2(MoodlesStatusInfo data, nint ptr)
+    {
+        if (!CharaWatcher.Rendered.Contains(ptr)) return;
+        AddOrUpdateMoodleInternal(ptr, data);
+    }
+
+    [EzIPC]
+    private void AddOrUpdateMoodleByDataByPlayerV2(MoodlesStatusInfo data, IPlayerCharacter pc) => AddOrUpdateMoodleInternal(pc.Address, data);
+
+    /// <summary>
+    ///     Adds a Status by MoodlesStatusInfo to the valid player, or reapplies it if already present.
+    /// </summary>
+    private unsafe void AddOrUpdateMoodleInternal(nint charaAddr, MoodlesStatusInfo data)
+    {
+        Character* chara = (Character*)charaAddr;
+        if (chara == null)
+        {
+            PluginLog.LogWarning("[IPC] AddOrUpdate Moodle Chara is NULL");
+            return;
+        }
+
+        if (!C.AllowRemoteApply)
+        {
+            PluginLog.LogWarning("[IPC] received apply request but remote apply is not enabled.");
+            return;
+        }
+        var sm = chara->MyStatusManager();
+        if (!sm.Ephemeral)
+        {
+            PluginLog.LogDebug($"Adding or Updating remote Moodles : {data.Title}");
+            sm.AddOrUpdate(MyStatus.FromTuple(data).PrepareToApply(), UpdateSource.StatusTuple, false, true);
         }
     }
 
