@@ -21,10 +21,9 @@
 ## Authors 
 **[kawaii](https://github.com/kawaii) - Original Developer.**
 
+**[Glyceri](https://github.com/Glyceri) - Current Maintainer & Developer.**
+
 **[Minmoose](https://github.com/Minmoose) - Current Maintainer & Developer.**
-
-**[Glyceri](https://github.com/Glyceri) - Past Maintainer & Developer.**
-
 
 ## License
 Moodles is licensed under the [BSD 3-Clause license](https://github.com/kawaii/Moodles/main/LICENSE).
