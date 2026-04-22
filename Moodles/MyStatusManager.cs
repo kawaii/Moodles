@@ -15,6 +15,7 @@ public class MyStatusManager
     public HashSet<Guid> RemTextShown = [];
     public List<MyStatus> Statuses = [];
     public bool Ephemeral = false;
+    public long LastSyncUpdate = 0;
 
     // Used by GSpeak, exclusive to the Client's StatusManager.
     // Helps prevent right-click off from working on these

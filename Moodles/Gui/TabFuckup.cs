@@ -25,6 +25,7 @@ public static unsafe class TabFuckup
         {
             foreach (var x in C.StatusManagers)
             {
+                if (x.Value.Statuses.Count == 0) continue;
                 if (ImGui.Selectable(x.Key))
                 {
                     OwnerNameWorld = x.Key;

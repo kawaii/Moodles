@@ -63,6 +63,13 @@ public class IPCProcessor : IDisposable
         return 4;
     }
 
+    private unsafe void MarkSynced(nint charaAddr)
+    {
+        var chara = (Character*)charaAddr;
+        if (chara == null) return;
+        chara->MyStatusManager().LastSyncUpdate = Utils.Time;
+    }
+
     #region StatusManager
     [EzIPC("ClearStatusManagerByNameV2")]
     private unsafe void ClearStatusManager(string name)
@@ -88,6 +95,7 @@ public class IPCProcessor : IDisposable
     /// </summary>
     private unsafe void ClearStatusManagerInternal(nint charaAddr)
     {
+        MarkSynced(charaAddr);
         Character* chara = (Character*)charaAddr;
         if (chara == null)
         {
@@ -130,6 +138,7 @@ public class IPCProcessor : IDisposable
     /// </summary>
     private unsafe void SetStatusManagerInternal(nint charaAddr, string data)
     {
+        MarkSynced(charaAddr);
         Character* chara = (Character*)charaAddr;
         if (chara == null)
         {
@@ -292,10 +301,16 @@ public class IPCProcessor : IDisposable
     /// </summary>
     private unsafe void AddOrUpdateMoodleInternal(nint charaAddr, Guid guid)
     {
+        MarkSynced(charaAddr);
         Character* chara = (Character*)charaAddr;
         if (chara == null)
         {
             PluginLog.LogWarning("[IPC] AddOrUpdate Moodle Chara is NULL");
+            return;
+        }
+        if (!C.AllowRemoteApply)
+        {
+            PluginLog.LogWarning("[IPC] received apply request but remote apply is not enabled.");
             return;
         }
         if (C.SavedStatuses.TryGetFirst(x => x.GUID == guid, out var status))
@@ -333,6 +348,7 @@ public class IPCProcessor : IDisposable
     /// </summary>
     private unsafe void AddOrUpdateMoodleInternal(nint charaAddr, MoodlesStatusInfo data)
     {
+        MarkSynced(charaAddr);
         Character* chara = (Character*)charaAddr;
         if (chara == null)
         {
@@ -376,6 +392,7 @@ public class IPCProcessor : IDisposable
     /// </summary>
     private unsafe void ApplyPresetInternal(nint charaAddr, Guid guid)
     {
+        MarkSynced(charaAddr);
         Character* chara = (Character*)charaAddr;
         if (chara == null)
         {
@@ -400,6 +417,7 @@ public class IPCProcessor : IDisposable
     /// </summary>
     private unsafe void RemoveMoodleInternal(nint charaAddr, Guid guid)
     {
+        MarkSynced(charaAddr);
         Character* chara = (Character*)charaAddr;
         var sm = chara->MyStatusManager();
 
@@ -441,6 +459,7 @@ public class IPCProcessor : IDisposable
     /// </summary>
     private unsafe void RemoveMoodlesInternal(nint charaAddr, List<Guid> guids)
     {
+        MarkSynced(charaAddr);
         Character* chara = (Character*)charaAddr;
         if (chara == null)
         {
@@ -468,6 +487,7 @@ public class IPCProcessor : IDisposable
 
     private unsafe void RemovePresetInternal(nint charaAddr, Guid guid)
     {
+        MarkSynced(charaAddr);
         Character* chara = (Character*)charaAddr;
         if (chara == null)
         {

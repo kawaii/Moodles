@@ -182,12 +182,12 @@ public unsafe class CharaWatcher : IDisposable
                         sm.Owner = null;
                     }
 
-                    // If Ephemeral, remove their status manager and any SeenPlayers entry.
-                    if (sm.Ephemeral)
+                    // IPC-managed SMs are removed on leave so dead syncs don't linger.
+                    if (sm.Ephemeral || sm.LastSyncUpdate > 0)
                     {
                         C.StatusManagers.Remove(charaNameWorld);
                         P.SeenPlayers.RemoveAll(x => x.Name == charaNameWorld);
-                        PluginLog.Debug($"Removing ephemeral status manager for {charaNameWorld}");
+                        PluginLog.Debug($"Removing {(sm.Ephemeral ? "ephemeral" : "IPC-managed")} status manager for {charaNameWorld}");
                     }
                 }
             }

@@ -117,6 +117,9 @@ public unsafe class CommonProcessor : IDisposable
     {
         // List of VFX that should be handled by the StatusHitEffect.
         List<(nint PlayerAddr, string customPath)> SHECandidates = [];
+        List<string>? toAutoClean = null;
+        // Null during zone transitions. Skip cleanup to avoid false removals while pointers are stale.
+        var localPlayerName = LocalPlayer.Available ? LocalPlayer.NameWithWorld : null;
 
         if (HoveringOver != 0)
         {
@@ -198,6 +201,27 @@ public unsafe class CommonProcessor : IDisposable
                             $"One of your Plugins may have outdated IPC parameters for this IPCEvent");
                     }
                 }
+            }
+
+            // Safety net for empty non-rendered SMs that CharaWatcher didn't catch.
+            var isLocalPlayer = localPlayerName != null && ownerNameWorld == localPlayerName;
+
+            if (localPlayerName != null
+                && !isLocalPlayer
+                && !sm.OwnerValid
+                && sm.Statuses.Count == 0)
+            {
+                toAutoClean ??= [];
+                toAutoClean.Add(ownerNameWorld);
+            }
+        }
+
+        if (toAutoClean != null)
+        {
+            foreach (var key in toAutoClean)
+            {
+                PluginLog.Debug($"Auto-cleaning lingering ephemeral status manager for {key}");
+                C.StatusManagers.Remove(key);
             }
         }
 

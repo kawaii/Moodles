@@ -59,6 +59,7 @@ public class Moodles : IDalamudPlugin
             EzConfigGui.Window.SetMinSize(800, 500);
             //EzConfigGui.Open();
             CleanupStatusManagers();
+            PurgeEphemeralManagers();
             new EzTerritoryChanged((x) => CleanupStatusManagers());
             IPCProcessor = new();
             IPCTester = new();
@@ -84,6 +85,18 @@ public class Moodles : IDalamudPlugin
             if(m.Statuses.Count == 0 && !m.OwnerValid)
             {
                 PluginLog.Debug($"  Deleting empty status manager for {x}");
+                C.StatusManagers.Remove(x);
+            }
+        }
+    }
+
+    public void PurgeEphemeralManagers()
+    {
+        foreach(var x in C.StatusManagers.Keys.ToArray())
+        {
+            if(C.StatusManagers[x].Ephemeral)
+            {
+                PluginLog.Debug($"  Purging ephemeral status manager for {x}");
                 C.StatusManagers.Remove(x);
             }
         }
@@ -130,21 +143,6 @@ public class Moodles : IDalamudPlugin
                 ApplyAutomation();
             }
 
-            // Need this Tick() check because someone could become a Sundouleia user after being rendered.
-            foreach (Character* chara in CharaWatcher.Rendered)
-            {
-                if (chara == LocalPlayer.Character) continue;
-
-                if (chara->MyStatusManager() is { } sm)
-                {
-                    if (sm.Ephemeral)
-                    {
-                        PluginLog.Debug($"{chara->GetNameWithWorld()} Sundouleia player removed from rendering. Cleaning up ephemeral status manager.");
-                        // Mark them as no longer Ephemeral.
-                        sm.Ephemeral = false;
-                    }
-                }
-            }
         }
         if(CanModifyUI())
         {
@@ -248,6 +246,7 @@ public class Moodles : IDalamudPlugin
 
     public void Dispose()
     {
+        Safe(() => PurgeEphemeralManagers());
         Safe(() => CleanupStatusManagers());
         Safe(() => IPCProcessor?.Dispose());
         Safe(() => CommonProcessor?.Dispose());
