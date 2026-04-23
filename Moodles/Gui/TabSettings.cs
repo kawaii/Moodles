@@ -33,5 +33,6 @@ public static class TabSettings
         ImGui.Checkbox($"Others can Esuna Moodles", ref C.OthersCanEsunaMoodles);
 
         ImGui.Checkbox($"Allow other plugins apply Moodles.", ref C.AllowRemoteApply);
+
     }
 }
