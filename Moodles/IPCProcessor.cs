@@ -67,7 +67,7 @@ public class IPCProcessor : IDisposable
     {
         var chara = (Character*)charaAddr;
         if (chara == null) return;
-        chara->MyStatusManager().LastSyncUpdate = Utils.Time;
+        chara->MyStatusManager().WasTouchedByIPC = true;
     }
 
     #region StatusManager
