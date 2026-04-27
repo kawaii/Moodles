@@ -518,7 +518,9 @@ public static class TabMoodles
     private static void ApplyToTargetRemote()
     {
         if (Svc.Targets.Target == null || Svc.Targets.Target.ObjectKind != ObjectKind.Player) return;
-        var str = Convert.ToBase64String(JsonSerializer.SerializeToUtf8Bytes(Selected, new JsonSerializerOptions {IncludeFields =  true}));
+        var clone = Selected;
+        clone.Applier = LocalPlayer.NameWithWorld;
+        var str = Convert.ToBase64String(JsonSerializer.SerializeToUtf8Bytes(clone, new JsonSerializerOptions {IncludeFields =  true}));
         P.IPCProcessor.RequestApplyMoodles(Svc.Targets.Target.Address, str);
     }
 

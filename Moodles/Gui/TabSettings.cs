@@ -33,6 +33,13 @@ public static class TabSettings
         ImGui.Checkbox($"Others can Esuna Moodles", ref C.OthersCanEsunaMoodles);
 
         ImGui.Checkbox($"Allow other plugins apply Moodles.", ref C.AllowRemoteApply);
-
+        
+        ImGui.BeginDisabled(!C.AllowRemoteApply);
+        ImGui.Indent(20f); 
+        ImGui.Checkbox("Allow applying moodles from everyone.", ref C.BroadcastAllowAll);
+        ImGui.Checkbox("Allow applying moodles from friends.", ref C.BroadcastAllowFriends);
+        ImGui.Checkbox("Allow applying moodles from party members.", ref C.BroadcastAllowParty);
+        ImGui.Unindent(20f);
+        ImGui.EndDisabled();
     }
 }
