@@ -57,7 +57,7 @@ public static unsafe partial class Utils
     public static bool CheckWhitelistGlobal(MyStatus status)
     {
         if(C.BroadcastAllowAll) return true;
-        if(C.BroadcastAllowParty) return UniversalParty.Members.Any(x => x.Name == status.Applier);
+        if(C.BroadcastAllowParty) return UniversalParty.Members.Any(x => x.NameWithWorld == status.Applier);
         if(C.BroadcastAllowFriends) return GetFriendlist().Contains(status.Applier);
         return false;
     }

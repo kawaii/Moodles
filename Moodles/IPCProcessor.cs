@@ -345,11 +345,18 @@ public class IPCProcessor : IDisposable
             PluginLog.LogWarning("[IPC] received apply request but remote apply is not enabled.");
             return;
         }
+
+        var status = MyStatus.FromTuple(data);
+        if (!Utils.CheckWhitelistGlobal(status))
+        {
+            PluginLog.LogWarning($"[IPC] received apply request from {status.Applier} but failed whitelist check.");
+            return;
+        }
         var sm = chara->MyStatusManager();
         if (!sm.Ephemeral)
         {
             PluginLog.LogDebug($"Adding or Updating remote Moodles : {data.Title}");
-            sm.AddOrUpdate(MyStatus.FromTuple(data).PrepareToApply(), UpdateSource.StatusTuple, false, true);
+            sm.AddOrUpdate(status.PrepareToApply(), UpdateSource.StatusTuple, false, true);
         }
     }
 
