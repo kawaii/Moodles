@@ -2,6 +2,7 @@
 using Dalamud.Game.Text.SeStringHandling;
 using Dalamud.Memory;
 using Dalamud.Plugin.Services;
+using Dalamud.Utility;
 using FFXIVClientStructs.FFXIV.Client.Game.Character;
 using FFXIVClientStructs.FFXIV.Client.Game.Object;
 using FFXIVClientStructs.FFXIV.Component.GUI;
@@ -166,8 +167,8 @@ public sealed unsafe class FlyPopupTextProcessor : IDisposable
         if(!c->UldManager.NodeList[1]->IsVisible()) return false;
         if(c->UldManager.NodeList[2]->Type != NodeType.Image) return false;
         if(!c->UldManager.NodeList[2]->IsVisible()) return false;
-        
-        var text = MemoryHelper.ReadSeString(&c->UldManager.NodeList[1]->GetAsAtkTextNode()->NodeText)?.GetText();
+
+        var text = Utf8StringExtensions.AsReadOnlySeString(c->UldManager.NodeList[1]->GetAsAtkTextNode()->NodeText).GetText();
         if(text is null || !text.StartsWith('-') && !text.StartsWith('+')) return false;
         
         if(StatusData.TryGetValue((uint)CurrentElement.Status.AdjustedIconID, out var data))
