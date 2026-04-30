@@ -17,6 +17,8 @@ public sealed class OtterGuiHandler : IDisposable
             MoodleFileSystem = new(this);
             PresetFileSystem = new(this);
             AutomationList = new();
+
+            PluginLog.Warning("OtterGuiHandler");
         }
         catch(Exception ex)
         {

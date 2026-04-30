@@ -6,8 +6,7 @@ namespace Moodles;
 public unsafe partial class Memory : IDisposable
 {
     public delegate nint AtkComponentIconText_LoadIconByIDDelegate(void* iconText, int iconId);
-    // OLD -> public AtkComponentIconText_LoadIconByIDDelegate AtkComponentIconText_LoadIconByID = EzDelegate.Get<AtkComponentIconText_LoadIconByIDDelegate>("E8 ?? ?? ?? ?? 41 8D 47 2E");
-    public AtkComponentIconText_LoadIconByIDDelegate AtkComponentIconText_LoadIconByID = EzDelegate.Get<AtkComponentIconText_LoadIconByIDDelegate>("E8 ?? ?? ?? ?? 41 8D 45 3D");
+    public AtkComponentIconText_LoadIconByIDDelegate AtkComponentIconText_LoadIconByID = EzDelegate.Get<AtkComponentIconText_LoadIconByIDDelegate>("E8 ?? ?? ?? ?? 41 8D 45 3E");
 
     public Memory()
     {
@@ -23,7 +22,6 @@ public unsafe partial class Memory : IDisposable
     {
         try
         {
-            //PluginLog.Debug($"{a1:X16}, {a2}, {a3:X16}, {a4:X16}, {a5:X16}");
             if (a2 == 6)
             {
                 P.CommonProcessor.HoveringOver = a1;

@@ -517,7 +517,7 @@ public static class TabMoodles
     
     private static void ApplyToTargetRemote()
     {
-        if (Svc.Targets.Target == null || Svc.Targets.Target.ObjectKind != ObjectKind.Player) return;
+        if (Svc.Targets.Target == null || Svc.Targets.Target.ObjectKind != ObjectKind.Pc) return;
         var clone = Selected;
         clone.Applier = LocalPlayer.NameWithWorld;
         var str = Convert.ToBase64String(JsonSerializer.SerializeToUtf8Bytes(clone, new JsonSerializerOptions {IncludeFields =  true}));

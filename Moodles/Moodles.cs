@@ -39,9 +39,13 @@ public class Moodles : IDalamudPlugin
         // Define the EzConfig Deserialization factory.
         EzConfig.DefaultSerializationFactory = new MoodleSerializationFactory();
         MoodleSerializationFactory.BackupOldConfigs();
+      
+        PluginLog.Warning("Init");
 
         new TickScheduler(() =>
         {
+            PluginLog.Warning("TickScheduler");
+
             Config = EzConfig.Init<Config>();
             EzConfigGui.Init(UI.Draw);
             EzCmd.Add("/moodles", ToggleUi, "Open plugin interface");
@@ -57,13 +61,13 @@ public class Moodles : IDalamudPlugin
             new EzLogout(Logout);
             StatusSelector = new();
             EzConfigGui.Window.SetMinSize(800, 500);
-            //EzConfigGui.Open();
             CleanupStatusManagers();
             PurgeEphemeralManagers();
             new EzTerritoryChanged((x) => CleanupStatusManagers());
             IPCProcessor = new();
             IPCTester = new();
             Utils.CleanupNulls();
+            PluginLog.Warning("TickScheduler END");
             // Check connected IPC states availability & data.
         });
     }
@@ -163,26 +167,7 @@ public class Moodles : IDalamudPlugin
         }
 
         if(C.AutoOther) TickOtherPlayerAutomation();
-        
-        //var toRem = new List<string>();
-        // for each(var m in C.StatusManagers)
-        //{
-
-        //    if(m.Value.Ephemeral)
-        //    {
-        //        if(!Svc.Objects.Any(x => x is IPlayerCharacter pc && pc.GetNameWithWorld() == m.Key))
-        //        {
-        //            toRem.Add(m.Key);
-        //        }
-        //    }
-        //}
-        // for each(var m in toRem)
-        //{
-        //    PluginLog.Debug($"Removing ephemeral status manager for {m}");
-        //    C.StatusManagers.Remove(m);
-        //    SeenPlayers.RemoveAll(x => x.Name == m);
-        //}
-    }
+            }
 
     private void OnLogin()
     {
