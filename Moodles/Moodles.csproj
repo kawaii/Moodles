@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="utf-8"?>
-<Project Sdk="Dalamud.NET.SDK/14.0.1">
+<Project Sdk="Dalamud.NET.SDK/15.0.0">
 	<PropertyGroup>
         <Authors>kawaii, Glyceri, Minmoose</Authors>
         <Version>1.1.2.0</Version>
