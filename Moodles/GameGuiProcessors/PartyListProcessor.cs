@@ -10,6 +10,8 @@ namespace Moodles.Processors;
 
 public unsafe class PartyListProcessor : IDisposable
 {
+    private const int PartyUIIndex = 24;
+    
     private int[] NumStatuses = [0, 0, 0, 0, 0, 0, 0, 0];
     public PartyListProcessor()
     {
@@ -54,7 +56,7 @@ public unsafe class PartyListProcessor : IDisposable
             {
                 NumStatuses[i] = 0;
             }
-            var index = 23;
+            var index = PartyUIIndex;
             var storeIndex = 0;
             foreach (nint player in GetVisibleParty())
             {
@@ -81,7 +83,7 @@ public unsafe class PartyListProcessor : IDisposable
 
         if (addon != null && IsAddonReady(addon))
         {
-            var partyMemberNodeIndex = 23;
+            var partyMemberNodeIndex = PartyUIIndex;
             var party = GetVisibleParty();
 
             for (var n = 0; n < party.Count; n++)
