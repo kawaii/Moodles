@@ -4,15 +4,11 @@ public static class TabSettings
     public static void Draw()
     {
         ImGui.Checkbox($"Enable Moodles", ref C.Enabled);
-        ImGuiEx.Spacing();
-        //ImGui.Checkbox("Enable VFX", ref C.EnableVFX);
+        ImGui.Checkbox($"Right Click Also Means Dispell", ref C.RightClickIsDispellToo);
         ImGui.Checkbox("Enable Moodle VFX", ref C.EnableSHE);
-        ImGuiEx.Spacing();
         ImGui.Checkbox("Restrict VFX application to party, friends and nearby players", ref C.RestrictSHE);
         ImGuiEx.HelpMarker("If enabled, VFX only will be played on your friends, party or nearby players (<15 yalms)");
-        ImGuiEx.Spacing();
         ImGui.Checkbox($"Enable Fly/Popup Text", ref C.EnableFlyPopupText);
-        ImGuiEx.Spacing();
         ImGui.SetNextItemWidth(150f);
         ImGuiEx.SliderInt($"Simultaneous Fly/Popup Text Limit", ref C.FlyPopupTextLimit.ValidateRange(5, 20), 5, 20);
         ImGuiEx.CheckboxInverted($"Disable Moodles whilst Bound to Duty", ref C.EnabledDuty);

@@ -153,6 +153,11 @@ public unsafe class CommonProcessor : IDisposable
                 {
                     EnsureRemTextWasShown(sm, x, SHECandidates);
                     removed.Add(x);
+                    
+                    if (x.ClickedOff && C.RightClickIsDispellToo)
+                    {
+                        x.ApplyChain = true;
+                    }
                 }
                 else
                 {

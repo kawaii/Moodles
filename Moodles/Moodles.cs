@@ -167,7 +167,7 @@ public class Moodles : IDalamudPlugin
         }
 
         if(C.AutoOther) TickOtherPlayerAutomation();
-            }
+    }
 
     private void OnLogin()
     {
