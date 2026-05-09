@@ -110,10 +110,24 @@ public static unsafe class UI
         {
             P.IPCTester.Draw();
         }
+        
         if (ImGui.CollapsingHeader("Visible party"))
         {
-            ImGuiEx.Text(P.CommonProcessor.PartyListProcessor.GetVisibleParty().Print("\n"));
+            foreach (nint player in P.CommonProcessor.PartyListProcessor.GetVisibleParty())
+            {
+                if (player == nint.Zero)
+                {
+                    ImGuiEx.Text("[No Player]");
+                    
+                    continue;
+                }
+                
+                Character* chara = (Character*)player;
+                
+                ImGuiEx.Text($"[{chara->NameString}@{chara->HomeWorld}]");
+            }
         }
+        
         if (ImGui.CollapsingHeader("Flytext debugger"))
         {
             /*if(ImGui.Button("Enable hook"))
